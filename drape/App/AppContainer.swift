@@ -54,12 +54,12 @@ final class AppContainer {
     /// implementations, swap the placeholders here (one line each).
     static func live() -> AppContainer {
         AppContainer(
-            imageProcessor: VisionImageProcessingService(),        // on-device subject lift (Step 2)
-            imageStore: FileImageStore(),                          // disk-backed (Step 2)
-            classifier: HeuristicGarmentClassifier(),              // dominant-color guess (Step 2)
-            weather: MockWeatherService(),                         // → OpenMeteoWeatherService (Step 4)
-            location: StubLocationProvider(),                      // → CoreLocationProvider (Step 4)
-            recommendationEngine: StubRecommendationEngine(),      // → RuleBasedRecommendationEngine (Step 4)
+            imageProcessor: VisionImageProcessingService(),
+            imageStore: FileImageStore(),
+            classifier: HeuristicGarmentClassifier(),
+            weather: OpenMeteoWeatherService(),          // free, no key (Step 4)
+            location: CoreLocationProvider(),            // Step 4
+            recommendationEngine: RuleBasedRecommendationEngine(), // Step 4
             entitlements: MockEntitlementService()
         )
     }

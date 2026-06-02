@@ -252,6 +252,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Drape uses the camera to photograph your clothes for your wardrobe.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Drape uses your location to fetch local weather for outfit suggestions.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Drape needs access to your photos so you can add clothing items from your library.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -297,6 +298,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Drape uses the camera to photograph your clothes for your wardrobe.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Drape uses your location to fetch local weather for outfit suggestions.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Drape needs access to your photos so you can add clothing items from your library.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
