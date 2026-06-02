@@ -16,8 +16,10 @@ func scoreWarmth(garments: [GarmentSnapshot], weather: WeatherSnapshot?) -> (sco
     guard let weather else { return (0.5, nil) } // neutral when no weather
 
     let temp = weather.apparentTemperatureCelsius
-    // Outerwear dominates — take the warmest layer in the outfit.
-    let maxWarmth = garments.map(\.warmth).max() ?? .medium
+    // Warmth is determined by clothing layers only — footwear and accessories
+    // don't meaningfully affect how warm an outfit feels.
+    let layers = garments.filter { $0.category.slot != .footwear && $0.category.slot != .accessory }
+    let maxWarmth = layers.map(\.warmth).max() ?? .medium
     let lo = maxWarmth.comfortableDownToCelsius
     let hi = maxWarmth.comfortableUpToCelsius
 

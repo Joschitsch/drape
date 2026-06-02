@@ -45,6 +45,9 @@ struct RecommendationsView: View {
         .onChange(of: model.occasion) {
             Task { await model.refresh(wardrobe: wardrobe, profile: profile, container: container) }
         }
+        .onChange(of: wardrobe) {
+            Task { await model.refresh(wardrobe: wardrobe, profile: profile, container: container) }
+        }
     }
 
     // MARK: - Sub-views
