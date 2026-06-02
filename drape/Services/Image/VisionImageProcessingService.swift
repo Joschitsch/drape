@@ -1,0 +1,119 @@
+//
+//  VisionImageProcessingService.swift
+//  drape
+//
+//  On-device image normalization: lift the garment off its background with
+//  Vision and composite it onto a consistent neutral square canvas.
+//
+
+import Foundation
+import Vision
+import CoreImage
+import UIKit
+
+/// Produces a visually consistent wardrobe image entirely on-device (no cost,
+/// no network — see the project cost constraint).
+///
+/// Pipeline: decode → fix orientation → Vision foreground-instance mask → tint
+/// the cut-out onto a neutral square canvas with padding → encode full image +
+/// thumbnail as PNG. If no subject is found (or Vision is unavailable) it falls
+/// back to fitting the original image onto the same canvas, so capture never
+/// hard-fails.
+struct VisionImageProcessingService: ImageProcessingService {
+    /// Side length of the full normalized image, in pixels.
+    var fullSide: CGFloat = 1024
+    /// Side length of the thumbnail, in pixels.
+    var thumbnailSide: CGFloat = 320
+    /// Fraction of the canvas the subject is inset by on each side.
+    var paddingFraction: CGFloat = 0.08
+    /// Neutral canvas color (matches secondarySystemBackground-ish light gray).
+    var canvasColor = CIColor(red: 0.95, green: 0.95, blue: 0.97)
+
+    private let context = CIContext()
+
+    func normalize(imageData: Data) async throws -> ProcessedImage {
+        guard let uiImage = UIImage(data: imageData),
+              let cgImage = uiImage.orientedUp().cgImage else {
+            throw ImageProcessingError.invalidImageData
+        }
+
+        // Subject cut-out (transparent background) or fallback to the full frame.
+        let subject = (try? Self.subjectCutout(from: cgImage, context: context))
+            ?? CIImage(cgImage: cgImage)
+
+        let full = try render(subject: subject, side: fullSide)
+        let thumb = try render(subject: subject, side: thumbnailSide)
+
+        return ProcessedImage(
+            imageData: full,
+            thumbnailData: thumb,
+            pixelSize: CGSize(width: fullSide, height: fullSide)
+        )
+    }
+
+    // MARK: - Vision
+
+    /// Returns the foreground subject as a `CIImage` with a transparent
+    /// background, cropped to the subject's extent. Throws if no subject.
+    private static func subjectCutout(from cgImage: CGImage, context: CIContext) throws -> CIImage {
+        let request = VNGenerateForegroundInstanceMaskRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        try handler.perform([request])
+
+        guard let result = request.results?.first, !result.allInstances.isEmpty else {
+            throw ImageProcessingError.subjectNotFound
+        }
+
+        let masked = try result.generateMaskedImage(
+            ofInstances: result.allInstances,
+            from: handler,
+            croppedToInstancesExtent: true
+        )
+        return CIImage(cvPixelBuffer: masked)
+    }
+
+    // MARK: - Compositing
+
+    /// Centers and scales the subject onto a neutral square canvas, then encodes
+    /// PNG data at the requested side length.
+    private func render(subject: CIImage, side: CGFloat) throws -> Data {
+        let canvasRect = CGRect(x: 0, y: 0, width: side, height: side)
+        let canvas = CIImage(color: canvasColor).cropped(to: canvasRect)
+
+        // Scale the subject to fit inside the padded content area.
+        let inset = side * paddingFraction
+        let content = side - inset * 2
+        let extent = subject.extent
+        let scale = min(content / max(extent.width, 1), content / max(extent.height, 1))
+
+        let scaled = subject
+            .transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let scaledExtent = scaled.extent
+        let tx = (side - scaledExtent.width) / 2 - scaledExtent.origin.x
+        let ty = (side - scaledExtent.height) / 2 - scaledExtent.origin.y
+        let centered = scaled.transformed(by: CGAffineTransform(translationX: tx, y: ty))
+
+        let composite = centered.composited(over: canvas).cropped(to: canvasRect)
+
+        guard let cgImage = context.createCGImage(composite, from: canvasRect) else {
+            throw ImageProcessingError.renderingFailed
+        }
+        guard let data = UIImage(cgImage: cgImage).pngData() else {
+            throw ImageProcessingError.renderingFailed
+        }
+        return data
+    }
+}
+
+private extension UIImage {
+    /// Redraws the image with its orientation baked in so downstream CoreGraphics
+    /// work isn't rotated. Cheap no-op when already `.up`.
+    func orientedUp() -> UIImage {
+        guard imageOrientation != .up else { return self }
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = scale
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
+}
