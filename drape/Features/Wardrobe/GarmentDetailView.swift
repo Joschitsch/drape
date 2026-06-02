@@ -47,6 +47,7 @@ struct GarmentDetailView: View {
                 if let brand = garment.brand, !brand.isEmpty {
                     LabeledContent("Brand", value: brand)
                 }
+                LabeledContent("Used in outfits", value: "\(garment.outfits.count)")
                 LabeledContent("Times worn", value: "\(garment.wearCount)")
             }
 

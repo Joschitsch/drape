@@ -69,7 +69,34 @@ enum OutfitSlot: String, Codable, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
+    var displayName: String {
+        switch self {
+        case .top: "Top"
+        case .bottom: "Bottom"
+        case .fullBody: "Dress"
+        case .footwear: "Footwear"
+        case .outerwear: "Outerwear"
+        case .accessory: "Accessory"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .top: "tshirt"
+        case .bottom: "rectangle.portrait"
+        case .fullBody: "figure.dress.line.vertical.figure"
+        case .footwear: "shoe"
+        case .outerwear: "coat"
+        case .accessory: "eyeglasses"
+        }
+    }
+
     /// Slots an outfit is not considered complete without (a dress substitutes
     /// for top+bottom; this is resolved in the recommendation engine).
     static var required: [OutfitSlot] { [.top, .bottom, .footwear] }
+
+    /// Order the slots are presented in the outfit builder.
+    static var builderOrder: [OutfitSlot] {
+        [.fullBody, .top, .bottom, .footwear, .outerwear, .accessory]
+    }
 }
