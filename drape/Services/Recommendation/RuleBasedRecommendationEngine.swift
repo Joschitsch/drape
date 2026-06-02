@@ -33,6 +33,12 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         var scored: [(garments: [GarmentSnapshot], score: Double, rationale: [String])] = []
 
         for candidate in candidates {
+            let warmthResult = scoreWarmth(garments: candidate, weather: context.weather)
+            // Hard filter: never recommend an outfit that is temperature-wrong.
+            // When weather is known, a score of 0 means the outfit is outside
+            // the 5°C fade window on either side of its comfort range.
+            if context.weather != nil && warmthResult.score == 0 { continue }
+
             var totalWeight = 0.0
             var weightedScore = 0.0
             var rationale: [String] = []
@@ -43,7 +49,7 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
                 if let r = result.rationale { rationale.append(r) }
             }
 
-            add(weight: weights.warmth,    result: scoreWarmth(garments: candidate, weather: context.weather))
+            add(weight: weights.warmth,    result: warmthResult)
             add(weight: weights.formality, result: scoreFormality(garments: candidate, occasion: context.occasion))
             add(weight: weights.color,     result: scoreColorHarmony(garments: candidate))
             add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile))

@@ -26,14 +26,25 @@ enum WarmthLevel: Int, Codable, CaseIterable, Identifiable, Comparable, Sendable
         }
     }
 
-    /// Rough upper temperature (°C) at which this warmth is comfortable on its
-    /// own. Used as a heuristic in weather scoring; tuned later with feedback.
+    /// Upper temperature (°C) at which this warmth level is comfortable.
+    /// `.light` has no upper limit — a t-shirt is always right when it's hot.
     var comfortableUpToCelsius: Double {
         switch self {
-        case .light: 30
-        case .medium: 20
-        case .warm: 12
-        case .veryWarm: 5
+        case .light:    .infinity
+        case .medium:   20
+        case .warm:     12
+        case .veryWarm:  5
+        }
+    }
+
+    /// Lower temperature (°C) at which this warmth level is comfortable.
+    /// `.veryWarm` has no lower limit — a heavy coat is always right when it's freezing.
+    var comfortableDownToCelsius: Double {
+        switch self {
+        case .light:    20
+        case .medium:   10
+        case .warm:      0
+        case .veryWarm: -.infinity
         }
     }
 

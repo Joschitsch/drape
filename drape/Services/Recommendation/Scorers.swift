@@ -16,30 +16,24 @@ func scoreWarmth(garments: [GarmentSnapshot], weather: WeatherSnapshot?) -> (sco
     guard let weather else { return (0.5, nil) } // neutral when no weather
 
     let temp = weather.apparentTemperatureCelsius
-    // Combine warmth by taking the maximum slot warmth (outerwear dominates).
+    // Outerwear dominates — take the warmest layer in the outfit.
     let maxWarmth = garments.map(\.warmth).max() ?? .medium
-    let comfortable = maxWarmth.comfortableUpToCelsius
+    let lo = maxWarmth.comfortableDownToCelsius
+    let hi = maxWarmth.comfortableUpToCelsius
 
-    // Score peaks when temp is in the comfortable range for this warmth level.
-    let lower = comfortable - 8  // comfortable from (lower..comfortable]
+    // 1.0 inside the comfort range; linear fade to 0.0 over 5°C on either side.
     let score: Double
-    if temp > comfortable + 5 {
-        score = 0.1   // outfit is too warm
-    } else if temp < lower - 10 {
-        score = 0.1   // outfit is too light
-    } else if temp <= comfortable && temp >= lower {
-        score = 1.0   // sweet spot
+    if temp >= lo && temp <= hi {
+        score = 1.0
     } else {
-        // Linear fade outside the sweet spot.
-        let distAbove = max(0, temp - comfortable)
-        let distBelow = max(0, lower - temp)
-        score = max(0, 1.0 - (max(distAbove, distBelow) / 10.0))
+        let dist = temp < lo ? lo - temp : temp - hi
+        score = max(0, 1.0 - dist / 5.0)
     }
 
     let rationale: String?
-    if score < 0.3 {
-        rationale = temp > comfortable ? "May be too warm for \(Int(temp))°C" : "May be too light for \(Int(temp))°C"
-    } else if score > 0.8 {
+    if score == 0 {
+        rationale = temp > hi ? "May be too warm for \(Int(temp))°C" : "May be too light for \(Int(temp))°C"
+    } else if score == 1.0 {
         rationale = "Right warmth for \(Int(temp))°C"
     } else {
         rationale = nil
@@ -151,7 +145,7 @@ func scoreRainReadiness(garments: [GarmentSnapshot], weather: WeatherSnapshot?) 
     if weather.condition.isWet || weather.precipitationChance > 0.5 {
         return hasOuterwear
             ? (1.0, "Good choice for \(weather.condition == .rain ? "rain" : "wet weather")")
-            : (0.6, nil)
+            : (0.2, nil)  // strong penalty — no cover in wet conditions
     }
     return (0.7, nil) // outerwear is neutral when dry
 }
