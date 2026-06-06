@@ -76,6 +76,29 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
         let dr = c.red - r, dg = c.green - g, db = c.blue - b
         return dr * dr + dg * dg + db * db
     }
+
+    // MARK: - Tolerant decoding (migrates pre-redesign stores)
+
+    /// Maps the old generic palette's raw values onto the current named palette,
+    /// so garments saved before the redesign keep decoding instead of crashing
+    /// SwiftData. Re-saving the garment persists the new value.
+    nonisolated private static let legacyAliases: [String: ColorTag] = [
+        "white": .ivory, "black": .ink, "gray": .slate, "beige": .oat,
+        "brown": .tobacco, "blue": .denim, "teal": .sage, "green": .forest,
+        "olive": .forest, "yellow": .camel, "orange": .rust, "red": .rust,
+        "pink": .mauve, "purple": .mauve,
+        // "navy" exists in both palettes and decodes normally.
+    ]
+
+    nonisolated init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = ColorTag(rawValue: raw) ?? ColorTag.legacyAliases[raw] ?? .slate
+    }
+
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 /// Broad color groupings for the harmony scorer.
