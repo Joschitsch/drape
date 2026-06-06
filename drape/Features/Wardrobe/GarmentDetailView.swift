@@ -109,24 +109,18 @@ struct GarmentDetailView: View {
     }
 
     private var kicker: some View {
-        Text([garment.category.displayName, garment.styles.first?.displayName]
+        MonoLabel([garment.category.displayName, garment.subcategory]
             .compactMap { $0 }.joined(separator: " · "))
-            .font(.caption)
-            .foregroundStyle(Theme.inkFaint)
-            .kerning(0.5)
-            .textCase(.uppercase)
             .padding(.horizontal, Theme.contentPadding)
-            .padding(.bottom, 5)
+            .padding(.bottom, 7)
     }
 
     private var nameAndBrand: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(garment.displayName)
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 5) {
+            SerifText(garment.displayName, size: 28)
             if let brand = garment.brand, !brand.isEmpty {
                 Text(brand)
-                    .font(.subheadline)
+                    .font(Theme.body(15))
                     .foregroundStyle(Theme.inkSoft)
             }
         }
@@ -136,13 +130,9 @@ struct GarmentDetailView: View {
 
     private var storyCard: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(garment.lastWornLabel)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(.primary)
-                Text("Worn \(garment.wearCount)× · in \(garment.outfits.count) outfit\(garment.outfits.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(Theme.inkFaint)
+            VStack(alignment: .leading, spacing: 5) {
+                SerifText(garment.lastWornLabel, size: 17)
+                MonoLabel("Worn \(garment.wearCount)× · in \(garment.outfits.count) outfit\(garment.outfits.count == 1 ? "" : "s")", size: 10)
             }
             Spacer()
             Circle()
@@ -171,12 +161,11 @@ struct GarmentDetailView: View {
             HStack(spacing: 8) {
                 ForEach(tags, id: \.self) { tag in
                     Text(tag)
-                        .font(.subheadline)
+                        .font(Theme.body(12.5, weight: .medium))
+                        .foregroundStyle(Theme.inkSoft)
                         .padding(.horizontal, 13)
                         .padding(.vertical, 8)
-                        .background(Theme.surface)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 0.5))
+                        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
                 }
             }
             .padding(.horizontal, Theme.contentPadding)
@@ -210,11 +199,11 @@ struct GarmentDetailView: View {
                 logWear()
             } label: {
                 Text("I wore this today")
-                    .font(.headline)
+                    .font(Theme.body(17, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(.primary)
-                    .foregroundStyle(Color(UIColor.systemBackground))
+                    .background(Theme.ink)
+                    .foregroundStyle(Theme.paper)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, Theme.contentPadding)

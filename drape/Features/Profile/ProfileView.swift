@@ -46,6 +46,8 @@ struct ProfileView: View {
                 subscriptionSection(entitlements: entitlements)
             }
             .navigationTitle("Profile")
+            .scrollContentBackground(.hidden)
+            .background(Theme.paper)
             .sheet(item: $editingOccasion) { occasion in
                 if let profile {
                     OccasionEditSheet(occasion: occasion, profile: profile)
@@ -87,14 +89,9 @@ struct ProfileView: View {
     }
 
     private func statCell(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.system(size: 28, weight: .light, design: .rounded))
-                .foregroundStyle(.primary)
-            Text(label.uppercased())
-                .font(.caption2)
-                .foregroundStyle(Theme.inkFaint)
-                .kerning(0.5)
+        VStack(spacing: 5) {
+            SerifText(value, size: 28)
+            MonoLabel(label, size: 9.5)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -107,21 +104,18 @@ struct ProfileView: View {
                     HStack(spacing: 8) {
                         ForEach(profile.preferredStyles, id: \.self) { style in
                             Text(style.displayName)
-                                .font(.subheadline)
+                                .font(Theme.body(13, weight: .medium))
+                                .foregroundStyle(Theme.inkSoft)
                                 .padding(.horizontal, 13)
                                 .padding(.vertical, 7)
-                                .background(Theme.surface)
-                                .clipShape(Capsule())
-                                .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 0.5))
+                                .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
                         }
                     }
                 }
             }
             if !profile.preferredColors.isEmpty {
                 HStack(spacing: 10) {
-                    Text("Palette")
-                        .font(.caption)
-                        .foregroundStyle(Theme.inkFaint)
+                    MonoLabel("Palette")
                     ForEach(profile.preferredColors, id: \.self) { color in
                         Circle()
                             .fill(color.color)
@@ -137,26 +131,21 @@ struct ProfileView: View {
         Section {
             Button { showingPaywall = true } label: {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Drape Pro · 3.99/month")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.55))
-                    Text("Become the version of yourself you already own the clothes for.")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
+                    MonoLabel("Drape Pro · 3.99 / month", color: Theme.paper.opacity(0.6))
+                    SerifText("Become the version of yourself you already own the clothes for.",
+                              size: 20, color: Theme.paper)
                         .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 6) {
-                        Text("See what's inside")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(.white)
+                    HStack(spacing: 7) {
+                        MonoLabel("See what's inside", color: Theme.paper)
                         Image(systemName: "arrow.right")
                             .font(.caption)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Theme.paper)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(18)
-                .background(Color.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(20)
+                .background(Theme.ink)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
             }
             .buttonStyle(.plain)
         }

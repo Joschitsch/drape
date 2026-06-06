@@ -28,6 +28,8 @@ final class UserProfile {
     /// Home coordinates for weather lookups when live location is unavailable.
     var homeLatitude: Double?
     var homeLongitude: Double?
+    /// Display name for the home location, shown in the weather strip.
+    var homeCity: String?
 
     init(
         id: UUID = UUID(),

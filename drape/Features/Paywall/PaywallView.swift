@@ -27,15 +27,10 @@ struct PaywallView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         // ── Hero copy ────────────────────────────────
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Drape Pro")
-                                .font(.caption)
-                                .foregroundStyle(Theme.inkFaint)
-                                .kerning(0.6)
-                                .textCase(.uppercase)
-                            Text("Drape already knows your wardrobe.\nLet it know your week.")
-                                .font(.title.weight(.semibold))
-                                .foregroundStyle(.primary)
+                        VStack(alignment: .leading, spacing: 12) {
+                            MonoLabel("Drape Pro")
+                            SerifText("Drape already knows your wardrobe. Let it know your week.", size: 30)
+                                .lineSpacing(4)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(.horizontal, Theme.contentPadding)
@@ -46,11 +41,9 @@ struct PaywallView: View {
                         VStack(spacing: 0) {
                             ForEach(features, id: \.title) { feature in
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text(feature.title)
-                                        .font(.body.weight(.semibold))
-                                        .foregroundStyle(.primary)
+                                    SerifText(feature.title, size: 17)
                                     Text(feature.description)
-                                        .font(.subheadline)
+                                        .font(Theme.body(14))
                                         .foregroundStyle(Theme.inkSoft)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -71,17 +64,15 @@ struct PaywallView: View {
                         dismiss()
                     } label: {
                         Text("Start 7 days free · then 3.99/mo")
-                            .font(.headline)
+                            .font(Theme.body(17, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(.primary)
-                            .foregroundStyle(Color(UIColor.systemBackground))
+                            .background(Theme.ink)
+                            .foregroundStyle(Theme.paper)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
 
-                    Text("Cancel anytime · billed monthly · dev build")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.inkFaint)
+                    MonoLabel("Cancel anytime · billed monthly · dev build", size: 9.5)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .padding(.horizontal, Theme.contentPadding)

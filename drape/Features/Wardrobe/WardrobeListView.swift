@@ -188,15 +188,12 @@ private struct HonestMirrorNudge: View {
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("A quiet reminder")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
-                    .kerning(0.5)
-                    .textCase(.uppercase)
-                Text("You haven't worn the \(garment.displayName.lowercased()) \(neglectPhrase(garment)).")
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                MonoLabel("A quiet reminder", size: 9.5)
+                Text(reminderText)
+                    .font(Theme.body(13.5))
+                    .foregroundStyle(Theme.ink)
+                    .lineSpacing(2)
             }
 
             Spacer(minLength: 0)
@@ -213,6 +210,15 @@ private struct HonestMirrorNudge: View {
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(Theme.line, lineWidth: 0.5)
         )
+    }
+
+    private var reminderText: AttributedString {
+        var s = AttributedString("You haven't worn the ")
+        var name = AttributedString(garment.displayName.lowercased())
+        name.font = Theme.body(13.5, weight: .semibold)
+        s += name
+        s += AttributedString(" \(neglectPhrase(garment)).")
+        return s
     }
 
     private func neglectPhrase(_ g: Garment) -> String {

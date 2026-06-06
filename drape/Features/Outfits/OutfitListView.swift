@@ -79,14 +79,9 @@ struct OutfitStackCard: View {
         VStack(spacing: 0) {
             // ── Header ───────────────────────────────────────────────
             HStack(alignment: .firstTextBaseline) {
-                Text(outfit.name)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
+                SerifText(outfit.name, size: 18).lineLimit(1)
                 Spacer()
-                Text(outfit.occasion.displayName.uppercased())
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
-                    .kerning(0.5)
+                MonoLabel(outfit.occasion.displayName, size: 9)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 13)
@@ -111,13 +106,9 @@ struct OutfitStackCard: View {
 
             // ── Footer: tags + wear count ────────────────────────────
             HStack {
-                Text(outfit.tags.map { "#\($0)" }.joined(separator: "  "))
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
+                MonoLabel(outfit.tags.map { "#\($0)" }.joined(separator: "  "), size: 8.5)
                 Spacer()
-                Text(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
+                MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn", size: 8.5)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
@@ -147,14 +138,8 @@ struct GarmentStackRow: View {
                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(garment.displayName)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                Text(garment.category.displayName.uppercased())
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
-                    .kerning(0.4)
+                SerifText(garment.displayName, size: 13.5).lineLimit(1)
+                MonoLabel(garment.category.displayName, size: 8.5)
             }
 
             Spacer()

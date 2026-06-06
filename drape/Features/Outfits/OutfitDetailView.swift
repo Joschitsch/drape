@@ -21,21 +21,31 @@ struct OutfitDetailView: View {
 
     private var lastWorn: Date? { outfit.wearEvents.map(\.date).max() }
 
+    private var kickerText: String {
+        let days = Int(Date.now.timeIntervalSince(outfit.createdAt) / 86_400)
+        let saved = days <= 0 ? "saved today" : "saved \(days)d ago"
+        let worn = outfit.wearCount > 0 ? "worn \(outfit.wearCount)×" : "never worn"
+        return "\(outfit.occasion.displayName) · \(saved) · \(worn)"
+    }
+
     var body: some View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // ── Kicker ───────────────────────────────────────
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(outfit.occasion.displayName.uppercased())
-                            .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.5)
+                    VStack(alignment: .leading, spacing: 8) {
+                        MonoLabel(kickerText)
+                        SerifText(outfit.name, size: 28)
                         if !outfit.tags.isEmpty {
-                            Text(outfit.tags.map { "#\($0)" }.joined(separator: "  "))
-                                .font(.caption).foregroundStyle(Theme.inkFaint)
-                        }
-                        if outfit.wearCount > 0 {
-                            Text(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn")
-                                .font(.caption).foregroundStyle(Theme.inkFaint)
+                            HStack(spacing: 8) {
+                                ForEach(outfit.tags, id: \.self) { tag in
+                                    Text("#\(tag)")
+                                        .font(Theme.body(12.5, weight: .medium))
+                                        .foregroundStyle(Theme.inkSoft)
+                                        .padding(.horizontal, 9).padding(.vertical, 5)
+                                        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
+                                }
+                            }
                         }
                     }
 
@@ -115,11 +125,11 @@ struct OutfitDetailView: View {
                 logWear()
             } label: {
                 Text("I wore this today")
-                    .font(.headline)
+                    .font(Theme.body(17, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(.primary)
-                    .foregroundStyle(Color(UIColor.systemBackground))
+                    .background(Theme.ink)
+                    .foregroundStyle(Theme.paper)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, Theme.contentPadding)
@@ -160,13 +170,11 @@ private struct DetailGarmentRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(garment.category.displayName.uppercased())
-                    .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
-                Text(garment.displayName)
-                    .font(.body.weight(.medium)).foregroundStyle(.primary).lineLimit(1)
+            VStack(alignment: .leading, spacing: 4) {
+                MonoLabel(garment.category.displayName, size: 8.5)
+                SerifText(garment.displayName, size: 16).lineLimit(1)
                 if let brand = garment.brand, !brand.isEmpty {
-                    Text(brand).font(.subheadline).foregroundStyle(Theme.inkSoft)
+                    Text(brand).font(Theme.body(12.5)).foregroundStyle(Theme.inkSoft)
                 }
             }
 

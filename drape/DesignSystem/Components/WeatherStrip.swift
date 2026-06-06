@@ -9,43 +9,32 @@ import SwiftUI
 
 struct WeatherStrip: View {
     let weather: WeatherSnapshot
+    /// Home city, shown in the "{city} · now" kicker when known.
+    var city: String? = nil
 
     var body: some View {
         HStack(alignment: .center) {
-            // ── Left: condition ──────────────────────────────────────
-            VStack(alignment: .leading, spacing: 4) {
-                Label("Current location", systemImage: "location.fill")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
-                HStack(spacing: 6) {
-                    Image(systemName: weather.condition.systemImage)
-                        .font(.title3)
-                        .foregroundStyle(Theme.inkSoft)
-                    Text(weather.condition.displayName)
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(.primary)
-                }
+            // ── Left: location + condition ───────────────────────────
+            VStack(alignment: .leading, spacing: 6) {
+                MonoLabel(city.map { "\($0) · now" } ?? "Now")
+                SerifText(weather.condition.displayName, size: 22)
             }
 
             Spacer()
 
             // ── Right: temperature ───────────────────────────────────
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(Int(weather.apparentTemperatureCelsius))°")
-                    .font(.system(size: 34, weight: .light, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text("\(Int(weather.precipitationChance * 100))% rain")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkFaint)
+            VStack(alignment: .trailing, spacing: 5) {
+                SerifText("\(Int(weather.temperatureCelsius))°", size: 34)
+                MonoLabel("Feels \(Int(weather.apparentTemperatureCelsius))° · \(Int(weather.precipitationChance * 100))% rain", size: 10)
             }
         }
         .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding(.vertical, 14)
         .background(Theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Theme.line, lineWidth: 0.5)
+                .strokeBorder(Theme.line, lineWidth: 1)
         )
     }
 }

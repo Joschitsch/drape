@@ -56,7 +56,7 @@ struct AddGarmentView: View {
         case .empty:
             sourcePicker(error: model.errorMessage)
         case .processing:
-            ProgressView("Removing background…")
+            ProcessingRitual()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .ready, .saving:
             Form {
@@ -81,11 +81,10 @@ struct AddGarmentView: View {
             Image(systemName: "tshirt")
                 .font(.system(size: 52))
                 .foregroundStyle(.secondary)
-            Text("Add a clothing item")
-                .font(.headline)
-            Text("We'll cut out the background so your wardrobe looks consistent.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            SerifText("Add a piece", size: 22)
+            Text("We'll lift it onto a clean canvas so your wardrobe reads like a lookbook.")
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.inkSoft)
                 .multilineTextAlignment(.center)
 
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
@@ -135,6 +134,46 @@ struct AddGarmentView: View {
         Task {
             if await model.save(into: modelContext, container: container) {
                 dismiss()
+            }
+        }
+    }
+}
+
+// MARK: - Processing ritual
+
+/// The "Quiet Curator" moment: an animated ring + cycling editorial copy shown
+/// while the background is removed and the canvas is prepared.
+private struct ProcessingRitual: View {
+    private let steps = ["Reading the photo", "Lifting the subject", "Preparing the canvas"]
+    @State private var step = 0
+    @State private var rotation: Double = 0
+
+    var body: some View {
+        VStack(spacing: 28) {
+            Circle()
+                .trim(from: 0, to: 0.75)
+                .stroke(Theme.ink, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                .frame(width: 44, height: 44)
+                .rotationEffect(.degrees(rotation))
+                .onAppear {
+                    withAnimation(.linear(duration: 0.9).repeatForever(autoreverses: false)) {
+                        rotation = 360
+                    }
+                }
+
+            VStack(spacing: 10) {
+                MonoLabel(steps[step])
+                SerifText("Giving it the museum treatment…", size: 21, italic: true)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: 280)
+        }
+        .padding(40)
+        .onAppear {
+            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { t in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    step = (step + 1) % steps.count
+                }
             }
         }
     }

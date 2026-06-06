@@ -109,6 +109,7 @@ enum PreviewData {
         // Berlin — drives weather + the "{city} · now" weather strip.
         profile.homeLatitude = 52.52
         profile.homeLongitude = 13.405
+        profile.homeCity = "Berlin"
         context.insert(profile)
 
         // Garments + their wear events.

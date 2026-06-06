@@ -53,55 +53,43 @@ struct RecommendationsView: View {
     private var idleView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                MonoLabel("The morning ritual")
+
                 // Weather strip (if available)
                 if let weather = model.lastWeather {
-                    WeatherStrip(weather: weather)
+                    WeatherStrip(weather: weather, city: profile?.homeCity)
                 }
 
                 // Headline
-                Text("Where are you headed today?")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
+                SerifText("Where are you headed today?", size: 22)
 
                 // Occasion chips
-                FlowLayout(spacing: 10) {
+                FlowLayout(spacing: 9) {
                     ForEach(Occasion.allCases) { occasion in
-                        let selected = model.occasion == occasion
-                        Button {
+                        DrapeChip(label: occasion.displayName,
+                                  active: model.occasion == occasion) {
                             model.occasion = occasion
-                        } label: {
-                            Label(occasion.displayName, systemImage: occasion.systemImage)
-                                .font(.subheadline)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 9)
-                                .background(
-                                    selected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.thinMaterial),
-                                    in: Capsule()
-                                )
-                                .foregroundStyle(selected ? .white : .primary)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
 
                 // CTA
-                VStack(spacing: 10) {
+                VStack(spacing: 12) {
                     Button {
                         Task { await refresh() }
                     } label: {
                         Text("Find me something to wear")
-                            .font(.headline)
+                            .font(Theme.body(17, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(.primary)
-                            .foregroundStyle(Color(UIColor.systemBackground))
+                            .background(Theme.ink)
+                            .foregroundStyle(Theme.paper)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
 
-                    Text("Reads your weather, your wardrobe, and your week")
-                        .font(.caption)
-                        .foregroundStyle(Theme.inkFaint)
+                    MonoLabel("Reads your weather, your wardrobe, and your week", size: 10)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
                 }
             }
             .padding(Theme.contentPadding)
@@ -190,14 +178,9 @@ private struct OutfitSuggestionCard: View {
                 VStack(spacing: 0) {
                     // Header: label + rationale
                     VStack(alignment: .leading, spacing: 5) {
-                        Text(label)
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
+                        SerifText(label, size: 18)
                         if let rationale = suggestion.rationale.first {
-                            Text(rationale)
-                                .font(.caption2)
-                                .foregroundStyle(Theme.inkFaint)
-                                .kerning(0.3)
+                            MonoLabel(rationale, size: 9)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -232,10 +215,8 @@ private struct OutfitSuggestionCard: View {
                 }
             } label: {
                 HStack {
-                    Text(saved ? "Saved to outfits" : "Save this look")
-                        .font(.caption2)
-                        .foregroundStyle(saved ? Theme.inkFaint : .primary)
-                        .kerning(0.3)
+                    MonoLabel(saved ? "Saved to outfits" : "Save this look",
+                              size: 10, color: saved ? Theme.inkFaint : Theme.ink)
                     Spacer()
                     Image(systemName: saved ? "checkmark" : "plus")
                         .font(.caption)
@@ -311,13 +292,11 @@ private struct DetailGarmentRow: View {
                 .frame(width: 66, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(garment.category.displayName.uppercased())
-                    .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
-                Text(garment.displayName)
-                    .font(.body.weight(.medium)).foregroundStyle(.primary).lineLimit(1)
+            VStack(alignment: .leading, spacing: 4) {
+                MonoLabel(garment.category.displayName, size: 8.5)
+                SerifText(garment.displayName, size: 16).lineLimit(1)
                 if let brand = garment.brand, !brand.isEmpty {
-                    Text(brand).font(.subheadline).foregroundStyle(Theme.inkSoft)
+                    Text(brand).font(Theme.body(12.5)).foregroundStyle(Theme.inkSoft)
                 }
             }
             Spacer()
@@ -365,9 +344,7 @@ private struct LoadingRitualView: View {
                 }
 
             // Cycling italic text
-            Text(lines[lineIndex])
-                .font(.title3.italic())
-                .foregroundStyle(.primary)
+            SerifText(lines[lineIndex], size: 22, italic: true)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 280, minHeight: 60, alignment: .top)
                 .id(lineIndex)

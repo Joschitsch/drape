@@ -61,19 +61,14 @@ struct WoreTodayCelebration: View {
                 }
 
                 // ── Copy ─────────────────────────────────────────────
-                VStack(spacing: 8) {
-                    Text(isFirstWear ? "First wear logged" : "Noted for today")
-                        .font(.caption)
-                        .foregroundStyle(Theme.inkFaint)
-                        .kerning(0.6)
-                        .textCase(.uppercase)
+                VStack(spacing: 12) {
+                    MonoLabel(isFirstWear ? "First wear logged" : "Noted for today")
 
-                    Text(isFirstWear
+                    SerifText(isFirstWear
                          ? "The \(garment.displayName.lowercased()) is officially in your life."
-                         : "Good choice. The \(garment.displayName.lowercased()) is back in rotation.")
-                        .font(.title3.italic())
+                         : "Good choice. The \(garment.displayName.lowercased()) is back in rotation.",
+                         size: 27, italic: true)
                         .multilineTextAlignment(.center)
-                        .foregroundStyle(.primary)
                         .padding(.horizontal, 32)
                 }
             }
