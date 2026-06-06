@@ -53,4 +53,21 @@ enum Occasion: String, Codable, CaseIterable, Identifiable, Sendable {
         case .travel: .casual
         }
     }
+
+    /// Maximum allowed formality distance (in raw-value steps) before a candidate
+    /// is hard-filtered by the recommendation engine. `.infinity` means no filter.
+    ///
+    /// Examples with the Formality scale casual(0)…formal(3):
+    ///   work(target=2), tolerance=1.5 → accepts casual(0)? |0-2|=2 > 1.5 ✗ filtered
+    ///                                  → accepts smartCasual(1)? |1-2|=1 ≤ 1.5 ✓ kept
+    ///   formal(target=3), tolerance=1 → accepts business(2)? |2-3|=1 ≤ 1 ✓ kept
+    ///                                 → accepts smartCasual(1)? |1-3|=2 > 1 ✗ filtered
+    var formalityTolerance: Double {
+        switch self {
+        case .everyday, .sport, .travel: return .infinity  // relaxed — show everything
+        case .date:   return 1.5   // smart-casual ± 1 level
+        case .work:   return 1.5   // business ± 1 level
+        case .formal: return 1.0   // formal or business only
+        }
+    }
 }

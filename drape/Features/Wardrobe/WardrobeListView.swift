@@ -3,13 +3,13 @@
 //  drape
 //
 //  The wardrobe grid: browse, add (with free-tier cap), and open item details.
+//  Includes the "Honest Mirror" nudge for long-neglected favorites.
 //
 
 import SwiftUI
 import SwiftData
 
 struct WardrobeListView: View {
-    /// Live, reactive fetch of non-archived garments, newest first.
     @Query(
         filter: #Predicate<Garment> { !$0.isArchived },
         sort: \Garment.createdAt, order: .reverse
@@ -20,21 +20,33 @@ struct WardrobeListView: View {
 
     @State private var showingAdd = false
     @State private var showLimitAlert = false
-    /// nil = show all categories.
+    @State private var showingPaywall = false
     @State private var selectedCategory: GarmentCategory? = nil
+    @State private var favoritesOnly = false
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: Theme.tileSpacing)]
 
-    /// Categories present in the wardrobe, in display order.
     private var availableCategories: [GarmentCategory] {
         let present = Set(garments.map(\.category))
         return GarmentCategory.allCases.filter { present.contains($0) }
     }
 
-    /// Garments after applying the active category filter.
     private var filteredGarments: [Garment] {
-        guard let cat = selectedCategory else { return garments }
-        return garments.filter { $0.category == cat }
+        var list = garments
+        if let cat = selectedCategory { list = list.filter { $0.category == cat } }
+        if favoritesOnly { list = list.filter(\.isFavorite) }
+        return list
+    }
+
+    /// Most-neglected favorited garment (60+ days without a wear).
+    private var neglectedFavorite: Garment? {
+        garments
+            .filter { g in
+                guard g.isFavorite else { return false }
+                guard let days = g.daysSinceLastWear else { return true } // never worn
+                return days > 60
+            }
+            .max { ($0.daysSinceLastWear ?? Int.max) < ($1.daysSinceLastWear ?? Int.max) }
     }
 
     var body: some View {
@@ -43,40 +55,27 @@ struct WardrobeListView: View {
                 if garments.isEmpty {
                     emptyState
                 } else {
-                    VStack(spacing: 0) {
-                        if availableCategories.count > 1 {
-                            filterPills
-                                .padding(.horizontal)
-                                .padding(.vertical, 8)
-                                .background(.bar)
-                            Divider()
-                        }
-                        if filteredGarments.isEmpty {
-                            filteredEmptyState
-                        } else {
-                            grid
-                        }
-                    }
+                    scrollContent
                 }
             }
             .navigationTitle("Wardrobe")
-            .navigationDestination(for: Garment.self) { garment in
-                GarmentDetailView(garment: garment)
-            }
+            .navigationSubtitle("\(garments.count) of \(SubscriptionTier.free.garmentLimit ?? 30) pieces")
+            .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { addTapped() } label: { Image(systemName: "plus") }
                 }
             }
-            .sheet(isPresented: $showingAdd) {
-                AddGarmentView()
-            }
+            .sheet(isPresented: $showingAdd) { AddGarmentView() }
             .alert("Free limit reached", isPresented: $showLimitAlert) {
-                Button("OK", role: .cancel) {}
+                Button("Upgrade to Pro") { showingPaywall = true }
+                Button("Maybe Later", role: .cancel) {}
             } message: {
-                Text("You've reached the \(SubscriptionTier.free.garmentLimit ?? 0)-item limit. Upgrade to Pro in Profile for an unlimited wardrobe.")
+                Text("You've reached the \(SubscriptionTier.free.garmentLimit ?? 0)-item limit. Upgrade to Pro for an unlimited wardrobe.")
             }
-            // Reset filter when a category disappears (e.g. last item deleted/archived).
+            .sheet(isPresented: $showingPaywall) {
+                PaywallView().environment(container.entitlements)
+            }
             .onChange(of: availableCategories) {
                 if let sel = selectedCategory, !availableCategories.contains(sel) {
                     selectedCategory = nil
@@ -85,51 +84,89 @@ struct WardrobeListView: View {
         }
     }
 
-    // MARK: - Sub-views
+    // MARK: - Content
 
-    private var filterPills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                // "All" pill
-                filterPill(label: "All", systemImage: "square.grid.2x2", selected: selectedCategory == nil) {
-                    selectedCategory = nil
-                }
-                ForEach(availableCategories) { category in
-                    filterPill(label: category.displayName, systemImage: category.systemImage, selected: selectedCategory == category) {
-                        selectedCategory = selectedCategory == category ? nil : category
+    private var scrollContent: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                // ── Honest Mirror nudge ──────────────────────────────
+                if let g = neglectedFavorite,
+                   selectedCategory == nil,
+                   !favoritesOnly {
+                    NavigationLink(value: g) {
+                        HonestMirrorNudge(garment: g)
                     }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, Theme.contentPadding)
+                    .padding(.top, 14)
+                    .padding(.bottom, 4)
+                }
+
+                // ── Filter chips ─────────────────────────────────────
+                if availableCategories.count > 1 {
+                    filterPills
+                        .padding(.horizontal, Theme.contentPadding)
+                        .padding(.vertical, 12)
+                }
+
+                // ── Grid ─────────────────────────────────────────────
+                if filteredGarments.isEmpty {
+                    ContentUnavailableView {
+                        Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet",
+                              systemImage: selectedCategory?.systemImage ?? "tshirt")
+                    } description: {
+                        Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
+                    } actions: {
+                        Button("Add Item") { addTapped() }.buttonStyle(.borderedProminent)
+                    }
+                    .padding(.top, 32)
+                } else {
+                    LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
+                        ForEach(filteredGarments) { garment in
+                            NavigationLink(value: garment) {
+                                GarmentTile(garment: garment)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(Theme.contentPadding)
                 }
             }
         }
     }
 
-    private func filterPill(label: String, systemImage: String, selected: Bool, action: @escaping () -> Void) -> some View {
+    private var filterPills: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip(label: "All", active: selectedCategory == nil && !favoritesOnly) {
+                    selectedCategory = nil; favoritesOnly = false
+                }
+                ForEach(availableCategories) { cat in
+                    chip(label: cat.displayName, active: selectedCategory == cat && !favoritesOnly) {
+                        selectedCategory = selectedCategory == cat ? nil : cat
+                        favoritesOnly = false
+                    }
+                }
+                chip(label: "Favorites", active: favoritesOnly) {
+                    favoritesOnly.toggle(); selectedCategory = nil
+                }
+            }
+        }
+    }
+
+    private func chip(label: String, active: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(label, systemImage: systemImage)
+            Text(label)
                 .font(.subheadline)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(
-                    selected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.thinMaterial),
+                    active ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.thinMaterial),
                     in: Capsule()
                 )
-                .foregroundStyle(selected ? .white : .primary)
+                .foregroundStyle(active ? .white : .primary)
         }
         .buttonStyle(.plain)
-    }
-
-    private var grid: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
-                ForEach(filteredGarments) { garment in
-                    NavigationLink(value: garment) {
-                        GarmentTile(garment: garment)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(Theme.contentPadding)
-        }
     }
 
     private var emptyState: some View {
@@ -138,21 +175,8 @@ struct WardrobeListView: View {
         } description: {
             Text("Add your clothes to start building outfits.")
         } actions: {
-            Button("Add Item") { addTapped() }
-                .buttonStyle(.borderedProminent)
+            Button("Add Item") { addTapped() }.buttonStyle(.borderedProminent)
         }
-    }
-
-    private var filteredEmptyState: some View {
-        ContentUnavailableView {
-            Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet", systemImage: selectedCategory?.systemImage ?? "tshirt")
-        } description: {
-            Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
-        } actions: {
-            Button("Add Item") { addTapped() }
-                .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func addTapped() {
@@ -161,6 +185,54 @@ struct WardrobeListView: View {
         } else {
             showLimitAlert = true
         }
+    }
+}
+
+// MARK: - Honest Mirror nudge card
+
+private struct HonestMirrorNudge: View {
+    let garment: Garment
+
+    var body: some View {
+        HStack(spacing: 14) {
+            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("A quiet reminder")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.inkFaint)
+                    .kerning(0.5)
+                    .textCase(.uppercase)
+                Text("You haven't worn the \(garment.displayName.lowercased()) \(neglectPhrase(garment)).")
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(Theme.inkFaint)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Theme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(Theme.line, lineWidth: 0.5)
+        )
+    }
+
+    private func neglectPhrase(_ g: Garment) -> String {
+        guard let days = g.daysSinceLastWear else { return "— it's never been worn" }
+        if days > 60 {
+            let months = max(1, days / 30)
+            return "in \(months) \(months == 1 ? "month" : "months")"
+        }
+        return "\(days) days ago"
     }
 }
 

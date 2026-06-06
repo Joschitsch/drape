@@ -68,34 +68,47 @@ struct OutfitBuilderView: View {
 
     @ViewBuilder
     private func slotRow(_ slot: OutfitSlot, model: OutfitBuilderViewModel) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             if let garment = model.selections[slot] {
+                // ── Filled slot ──────────────────────────────────────
                 NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
-                    .frame(width: 44, height: 44)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(slot.displayName)
-                    Text("\(garment.primaryColor.displayName) \(garment.category.displayName)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .frame(width: 46, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(slot.displayName.uppercased())
+                        .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
+                    Text(garment.displayName)
+                        .font(.subheadline.weight(.medium)).foregroundStyle(.primary).lineLimit(1)
                 }
                 Spacer()
                 Button {
                     model.clear(slot)
                 } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.inkFaint)
                 }
                 .buttonStyle(.borderless)
             } else {
-                Image(systemName: slot.systemImage)
-                    .frame(width: 44, height: 44)
-                    .foregroundStyle(.secondary)
-                Text("Add \(slot.displayName)")
-                    .foregroundStyle(Color.accentColor)
+                // ── Empty slot ───────────────────────────────────────
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Theme.line, style: StrokeStyle(lineWidth: 1, dash: [4]))
+                    Image(systemName: slot.systemImage)
+                        .font(.body)
+                        .foregroundStyle(Theme.inkFaint.opacity(0.6))
+                }
+                .frame(width: 46, height: 56)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(slot.displayName.uppercased())
+                        .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
+                    Text("Add a piece")
+                        .font(.subheadline).foregroundStyle(Color.accentColor)
+                }
                 Spacer()
+                Text("+").font(.title3).foregroundStyle(Theme.inkFaint)
             }
         }
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         .onTapGesture { pickingSlot = slot }
     }

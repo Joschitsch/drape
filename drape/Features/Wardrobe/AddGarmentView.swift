@@ -88,12 +88,6 @@ struct AddGarmentView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            PhotosPicker(selection: $pickerItem, matching: .images) {
-                Label("Choose Photo", systemImage: "photo.on.rectangle")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 Button {
                     showCamera = true
@@ -101,7 +95,21 @@ struct AddGarmentView: View {
                     Label("Take Photo", systemImage: "camera")
                         .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
+            }
+
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                PhotosPicker(selection: $pickerItem, matching: .images) {
+                    Label("Choose Photo", systemImage: "photo.on.rectangle")
+                        .frame(maxWidth: .infinity)
+                }
                 .buttonStyle(.bordered)
+            } else {
+                PhotosPicker(selection: $pickerItem, matching: .images) {
+                    Label("Choose Photo", systemImage: "photo.on.rectangle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
             }
 
             if let error {

@@ -2,7 +2,8 @@
 //  OutfitDetailView.swift
 //  drape
 //
-//  Full view of a saved outfit, with wear logging, edit and delete.
+//  Full outfit view with a vertical garment stack, wear logging, and the
+//  "Wore today" celebration moment.
 //
 
 import SwiftUI
@@ -16,81 +17,128 @@ struct OutfitDetailView: View {
 
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
-    @State private var showWearConfirmation = false
+    @State private var celebration: OutfitCelebration? = nil
 
-    private let columns = [GridItem(.adaptive(minimum: 100), spacing: Theme.tileSpacing)]
-
-    private var lastWorn: Date? {
-        outfit.wearEvents.map(\.date).max()
-    }
+    private var lastWorn: Date? { outfit.wearEvents.map(\.date).max() }
 
     var body: some View {
-        List {
-            Section {
-                LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
-                    ForEach(outfit.garments) { garment in
-                        NavigationLink(value: garment) {
-                            GarmentTile(garment: garment)
+        ZStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // ── Kicker ───────────────────────────────────────
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(outfit.occasion.displayName.uppercased())
+                            .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.5)
+                        if !outfit.tags.isEmpty {
+                            Text(outfit.tags.map { "#\($0)" }.joined(separator: "  "))
+                                .font(.caption).foregroundStyle(Theme.inkFaint)
                         }
-                        .buttonStyle(.plain)
+                        if outfit.wearCount > 0 {
+                            Text(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn")
+                                .font(.caption).foregroundStyle(Theme.inkFaint)
+                        }
                     }
-                }
-                .listRowBackground(Color.clear)
-            }
 
-            Section("Details") {
-                LabeledContent("Occasion", value: outfit.occasion.displayName)
-                if !outfit.tags.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack { ForEach(outfit.tags, id: \.self) { TagChip($0) } }
+                    // ── Garment stack (larger thumbnails) ────────────
+                    VStack(spacing: 0) {
+                        let sorted = sortedGarments(outfit.garments)
+                        ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, garment in
+                            NavigationLink(value: garment) {
+                                DetailGarmentRow(garment: garment)
+                            }
+                            .buttonStyle(.plain)
+
+                            if idx < sorted.count - 1 {
+                                HStack { Color.clear.frame(height: 0) }
+                                    .overlay(alignment: .leading) {
+                                        Theme.line.frame(height: 0.5).padding(.leading, 96)
+                                    }
+                            }
+                        }
                     }
+                    .background(Theme.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.line, lineWidth: 0.5))
+
+                    Spacer(minLength: 80)
                 }
-                LabeledContent("Times worn", value: "\(outfit.wearCount)")
-                if let lastWorn {
-                    LabeledContent("Last worn", value: lastWorn.formatted(date: .abbreviated, time: .omitted))
-                }
+                .padding(Theme.contentPadding)
+            }
+            .scrollIndicators(.hidden)
+
+            // ── Sticky footer ────────────────────────────────────────
+            VStack {
+                Spacer()
+                woreFooter
             }
 
-            Section {
-                Button {
-                    logWear()
-                } label: {
-                    Label("Wore Today", systemImage: "checkmark.circle")
-                }
-            }
-
-            Section {
-                Button(role: .destructive) {
-                    showDeleteConfirm = true
-                } label: {
-                    Label("Delete Outfit", systemImage: "trash")
-                }
+            // ── Celebration overlay ───────────────────────────────────
+            if let entry = celebration {
+                WoreTodayCelebration(
+                    garment: entry.leadGarment,
+                    isFirstWear: entry.isFirstWear,
+                    onDismiss: { withAnimation { celebration = nil } }
+                )
+                .transition(.opacity)
+                .zIndex(10)
             }
         }
         .navigationTitle(outfit.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") { isEditing = true }
+                Menu {
+                    Button("Edit") { isEditing = true }
+                    Button(role: .destructive) { showDeleteConfirm = true } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                } label: { Image(systemName: "ellipsis.circle") }
             }
         }
-        .sheet(isPresented: $isEditing) {
-            OutfitBuilderView(editing: outfit)
-        }
+        .sheet(isPresented: $isEditing) { OutfitBuilderView(editing: outfit) }
         .confirmationDialog("Delete this outfit?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { delete() }
             Button("Cancel", role: .cancel) {}
         }
-        .alert("Logged today's wear", isPresented: $showWearConfirmation) {
-            Button("OK", role: .cancel) {}
+    }
+
+    // MARK: - Footer
+
+    private var woreFooter: some View {
+        VStack(spacing: 0) {
+            LinearGradient(
+                colors: [.clear, Color(UIColor.systemBackground)],
+                startPoint: .top, endPoint: .bottom
+            )
+            .frame(height: 28)
+            Button {
+                logWear()
+            } label: {
+                Text("I wore this today")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(.primary)
+                    .foregroundStyle(Color(UIColor.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(.horizontal, Theme.contentPadding)
+            .padding(.bottom, 24)
+            .background(Color(UIColor.systemBackground))
         }
     }
 
+    // MARK: - Actions
+
     private func logWear() {
+        let isFirst = outfit.wearCount == 0
         let event = WearEvent(date: .now, outfit: outfit, garments: outfit.garments)
         modelContext.insert(event)
         try? modelContext.save()
-        showWearConfirmation = true
+        let lead = sortedGarments(outfit.garments).first ?? outfit.garments[0]
+        withAnimation {
+            celebration = OutfitCelebration(leadGarment: lead, isFirstWear: isFirst)
+        }
     }
 
     private func delete() {
@@ -98,4 +146,52 @@ struct OutfitDetailView: View {
         try? modelContext.save()
         dismiss()
     }
+}
+
+// MARK: - Large garment row for detail view
+
+private struct DetailGarmentRow: View {
+    let garment: Garment
+
+    var body: some View {
+        HStack(spacing: 14) {
+            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+                .frame(width: 66, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(garment.category.displayName.uppercased())
+                    .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
+                Text(garment.displayName)
+                    .font(.body.weight(.medium)).foregroundStyle(.primary).lineLimit(1)
+                if let brand = garment.brand, !brand.isEmpty {
+                    Text(brand).font(.subheadline).foregroundStyle(Theme.inkSoft)
+                }
+            }
+
+            Spacer()
+
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(garment.primaryColor.color)
+                    .frame(width: 14, height: 14)
+                    .overlay(Circle().strokeBorder(Theme.line, lineWidth: 0.5))
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Theme.inkFaint)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .frame(minHeight: 56)
+    }
+}
+
+// MARK: - Supporting types
+
+private struct OutfitCelebration: Identifiable {
+    let id = UUID()
+    let leadGarment: Garment
+    let isFirstWear: Bool
 }

@@ -15,17 +15,27 @@ struct ClassificationSuggestion: Sendable {
     var secondaryColors: [ColorTag]
     /// Confidence 0...1 for the category guess, surfaced subtly in the UI.
     var categoryConfidence: Double
+    /// Derived from category rules; nil = leave the draft default unchanged.
+    var warmth: WarmthLevel?
+    var formality: Formality?
+    var seasons: Set<Season>?
 
     init(
         category: GarmentCategory? = nil,
         primaryColor: ColorTag? = nil,
         secondaryColors: [ColorTag] = [],
-        categoryConfidence: Double = 0
+        categoryConfidence: Double = 0,
+        warmth: WarmthLevel? = nil,
+        formality: Formality? = nil,
+        seasons: Set<Season>? = nil
     ) {
         self.category = category
         self.primaryColor = primaryColor
         self.secondaryColors = secondaryColors
         self.categoryConfidence = categoryConfidence
+        self.warmth = warmth
+        self.formality = formality
+        self.seasons = seasons
     }
 
     static let empty = ClassificationSuggestion()

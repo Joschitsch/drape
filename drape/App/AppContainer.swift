@@ -56,7 +56,7 @@ final class AppContainer {
         AppContainer(
             imageProcessor: VisionImageProcessingService(),
             imageStore: FileImageStore(),
-            classifier: HeuristicGarmentClassifier(),
+            classifier: VisionGarmentClassifier(),
             weather: OpenMeteoWeatherService(),          // free, no key (Step 4)
             location: CoreLocationProvider(),            // Step 4
             recommendationEngine: RuleBasedRecommendationEngine(), // Step 4

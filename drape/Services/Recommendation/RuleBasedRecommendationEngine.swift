@@ -35,9 +35,24 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         for candidate in candidates {
             let warmthResult = scoreWarmth(garments: candidate, weather: context.weather)
             // Hard filter: never recommend an outfit that is temperature-wrong.
-            // When weather is known, a score of 0 means the outfit is outside
-            // the 5°C fade window on either side of its comfort range.
             if context.weather != nil && warmthResult.score == 0 { continue }
+
+            // Hard filter: drop outfits whose formality is too far from the
+            // occasion's target. Uses user-defined per-occasion preferences when
+            // available, falling back to hardcoded occasion defaults.
+            let userOccasionPref = context.profile.occasionPreference(for: context.occasion)
+            let formalityTarget = userOccasionPref.map { Double($0.targetFormality.rawValue) }
+                ?? Double(context.occasion.targetFormality.rawValue)
+            let formalityTolerance = userOccasionPref != nil ? 1.5 : context.occasion.formalityTolerance
+            let core = candidate.filter {
+                $0.category.slot != .accessory && $0.category.slot != .outerwear
+            }
+            if !core.isEmpty {
+                let avgFormality = Double(core.map { $0.formality.rawValue }.reduce(0, +))
+                    / Double(core.count)
+                let formalityDist = abs(avgFormality - formalityTarget)
+                if formalityDist > formalityTolerance { continue }
+            }
 
             var totalWeight = 0.0
             var weightedScore = 0.0
@@ -50,9 +65,9 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             }
 
             add(weight: weights.warmth,    result: warmthResult)
-            add(weight: weights.formality, result: scoreFormality(garments: candidate, occasion: context.occasion))
+            add(weight: weights.formality, result: scoreFormality(garments: candidate, occasion: context.occasion, profile: context.profile))
             add(weight: weights.color,     result: scoreColorHarmony(garments: candidate))
-            add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile))
+            add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile, occasion: context.occasion))
             add(weight: weights.recency,   result: scoreRecency(garments: candidate, recentWears: context.recentWears))
             add(weight: weights.season,    result: scoreSeason(garments: candidate, season: context.season))
             add(weight: weights.rain,      result: scoreRainReadiness(garments: candidate, weather: context.weather))

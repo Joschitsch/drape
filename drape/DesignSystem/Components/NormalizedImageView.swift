@@ -34,12 +34,7 @@ struct NormalizedImageView: View {
     }
 
     private var placeholder: some View {
-        ZStack {
-            Rectangle().fill(.quaternary)
-            Image(systemName: category.systemImage)
-                .font(.system(size: 28))
-                .foregroundStyle(.secondary)
-        }
+        GarmentCanvasView(category: category, color: .brown)
     }
 
     private func load() async {

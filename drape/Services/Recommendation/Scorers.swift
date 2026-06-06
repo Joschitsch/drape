@@ -23,13 +23,17 @@ func scoreWarmth(garments: [GarmentSnapshot], weather: WeatherSnapshot?) -> (sco
     let lo = maxWarmth.comfortableDownToCelsius
     let hi = maxWarmth.comfortableUpToCelsius
 
-    // 1.0 inside the comfort range; linear fade to 0.0 over 5°C on either side.
+    // 1.0 inside the comfort range; asymmetric fade outside it.
+    // Underdressing (too cold) fades fast — 5°C window.
+    // Overdressing (too warm) fades slowly — 8°C window, since being slightly
+    // too warm is far more tolerable than actually being cold.
     let score: Double
     if temp >= lo && temp <= hi {
         score = 1.0
     } else {
         let dist = temp < lo ? lo - temp : temp - hi
-        score = max(0, 1.0 - dist / 5.0)
+        let fadeRange = temp < lo ? 5.0 : 8.0
+        score = max(0, 1.0 - dist / fadeRange)
     }
 
     let rationale: String?
@@ -46,10 +50,10 @@ func scoreWarmth(garments: [GarmentSnapshot], weather: WeatherSnapshot?) -> (sco
 // MARK: - Formality scorer
 
 /// Rewards garments close to the occasion's target formality level.
-func scoreFormality(garments: [GarmentSnapshot], occasion: Occasion) -> (score: Double, rationale: String?) {
-    let target = occasion.targetFormality.rawValue
-    // Use the average formality of core slots (dress/top/bottom); accessories
-    // don't contribute to the formality score.
+/// Uses the user's per-occasion preference when available.
+func scoreFormality(garments: [GarmentSnapshot], occasion: Occasion, profile: ProfilePreferences) -> (score: Double, rationale: String?) {
+    let userPref = profile.occasionPreference(for: occasion)
+    let target = userPref?.targetFormality.rawValue ?? occasion.targetFormality.rawValue
     let core = garments.filter { $0.category.slot != .accessory && $0.category.slot != .outerwear }
     guard !core.isEmpty else { return (0.5, nil) }
 
@@ -94,14 +98,16 @@ func scoreColorHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale
 // MARK: - Style match scorer
 
 /// Rewards outfits whose garment styles overlap with the user's preferred styles.
-func scoreStyleMatch(garments: [GarmentSnapshot], profile: ProfilePreferences) -> (score: Double, rationale: String?) {
-    guard !profile.preferredStyles.isEmpty else { return (0.5, nil) }
+/// Merges global preferences with any occasion-specific style overrides.
+func scoreStyleMatch(garments: [GarmentSnapshot], profile: ProfilePreferences, occasion: Occasion) -> (score: Double, rationale: String?) {
+    let occasionStyles = profile.occasionPreference(for: occasion)?.styles ?? []
+    let allPreferred = Set(profile.preferredStyles + occasionStyles)
+    guard !allPreferred.isEmpty else { return (0.5, nil) }
     let outfitStyles = Set(garments.flatMap(\.styles))
     guard !outfitStyles.isEmpty else { return (0.3, nil) }
 
-    let preferred = Set(profile.preferredStyles)
-    let overlap = outfitStyles.intersection(preferred).count
-    let score = min(1.0, Double(overlap) / Double(min(preferred.count, outfitStyles.count)))
+    let overlap = outfitStyles.intersection(allPreferred).count
+    let score = min(1.0, Double(overlap) / Double(min(allPreferred.count, outfitStyles.count)))
 
     let rationale: String? = score > 0.7 ? "Matches your style" : nil
     return (score, rationale)

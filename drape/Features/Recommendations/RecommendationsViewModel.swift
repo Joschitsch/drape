@@ -19,6 +19,8 @@ final class RecommendationsViewModel {
     /// Resolved suggestions, with their garment models for display.
     var suggestions: [(suggestion: OutfitSuggestion, garments: [Garment])] = []
     var weatherSummary: String?
+    /// Last successfully fetched weather snapshot — used by WeatherStrip.
+    var lastWeather: WeatherSnapshot?
 
     func refresh(
         wardrobe: [Garment],
@@ -34,6 +36,7 @@ final class RecommendationsViewModel {
         let weather = await fetchWeather(container: container)
         if let w = weather {
             weatherSummary = "\(w.condition.systemImage)  \(Int(w.apparentTemperatureCelsius))°C"
+            lastWeather = w
         }
 
         // Build wear history: garmentID → most recent WearEvent date.
@@ -50,7 +53,8 @@ final class RecommendationsViewModel {
         let prefs = ProfilePreferences(
             preferredStyles: profile?.preferredStyles ?? [],
             preferredColors: profile?.preferredColors ?? [],
-            defaultFormality: profile?.defaultFormality ?? .smartCasual
+            defaultFormality: profile?.defaultFormality ?? .smartCasual,
+            occasionPreferences: profile?.occasionPreferences ?? []
         )
         let context = RecommendationContext(
             wardrobe: wardrobe.filter { !$0.isArchived }.map(\.snapshot),

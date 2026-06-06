@@ -14,6 +14,7 @@ struct GarmentAttributeFields: View {
 
     var body: some View {
         Section("Basics") {
+            TextField("Name", text: $draft.name)
             Picker("Category", selection: $draft.category) {
                 ForEach(GarmentCategory.allCases) { category in
                     Label(category.displayName, systemImage: category.systemImage).tag(category)

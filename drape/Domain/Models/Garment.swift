@@ -36,6 +36,8 @@ final class Garment {
     var seasons: [Season] = []
     var styles: [StyleTag] = []
 
+    /// User-visible label, e.g. "Blue Jeans". Auto-generated on add; editable.
+    var name: String? = nil
     var brand: String?
     /// Optional purchase price, enabling cost-per-wear analytics (Pro).
     var purchasePrice: Decimal?
@@ -57,6 +59,7 @@ final class Garment {
         id: UUID = UUID(),
         category: GarmentCategory,
         primaryColor: ColorTag,
+        name: String? = nil,
         formality: Formality = .casual,
         warmth: WarmthLevel = .medium,
         seasons: [Season] = [],
@@ -69,6 +72,7 @@ final class Garment {
         self.id = id
         self.createdAt = .now
         self.updatedAt = .now
+        self.name = name
         self.category = category
         self.primaryColor = primaryColor
         self.formality = formality

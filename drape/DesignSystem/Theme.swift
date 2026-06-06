@@ -12,6 +12,18 @@ enum Theme {
     static let cornerRadius: CGFloat = 14
     static let tileSpacing: CGFloat = 12
     static let contentPadding: CGFloat = 16
+
+    // ── Warm neutral palette (matches the design's paper/ink system) ──
+    /// Warm off-white — main screen background.
+    static let paper   = Color(hex: "F6F4EF")
+    /// Slightly lighter — card and section fill.
+    static let surface = Color(hex: "FCFBF8")
+    /// Medium warm gray — secondary text.
+    static let inkSoft = Color(hex: "6B655C")
+    /// Light warm gray — captions, mono labels.
+    static let inkFaint = Color(hex: "A8A095")
+    /// Hairline separator (10% of ink).
+    static let line    = Color(red: 28/255, green: 26/255, blue: 23/255).opacity(0.10)
 }
 
 extension Color {

@@ -30,10 +30,10 @@ enum WarmthLevel: Int, Codable, CaseIterable, Identifiable, Comparable, Sendable
     /// `.light` has no upper limit — a t-shirt is always right when it's hot.
     var comfortableUpToCelsius: Double {
         switch self {
-        case .light:    .infinity
-        case .medium:   20
-        case .warm:     12
-        case .veryWarm:  5
+        case .light:    .infinity  // t-shirt — no upper limit
+        case .medium:   22         // light layers — fine up to 22°C
+        case .warm:     16         // jacket — fine up to 16°C
+        case .veryWarm: 10         // heavy coat — fine up to 10°C
         }
     }
 
@@ -41,10 +41,10 @@ enum WarmthLevel: Int, Codable, CaseIterable, Identifiable, Comparable, Sendable
     /// `.veryWarm` has no lower limit — a heavy coat is always right when it's freezing.
     var comfortableDownToCelsius: Double {
         switch self {
-        case .light:    20
-        case .medium:   10
-        case .warm:      0
-        case .veryWarm: -.infinity
+        case .light:    18         // t-shirt feels cold below 18°C
+        case .medium:   10         // unchanged
+        case .warm:      0         // unchanged
+        case .veryWarm: -.infinity // unchanged
         }
     }
 

@@ -35,8 +35,8 @@ enum GarmentCategory: String, Codable, CaseIterable, Identifiable, Sendable {
     var systemImage: String {
         switch self {
         case .top: "tshirt"
-        case .bottom: "rectangle.portrait"
-        case .dress: "figure.dress.line.vertical.figure"
+        case .bottom: "rectangle.portrait.split.2x1"
+        case .dress: "figure.stand.dress"
         case .footwear: "shoe"
         case .outerwear: "coat"
         case .accessory: "eyeglasses"
@@ -83,7 +83,7 @@ enum OutfitSlot: String, Codable, CaseIterable, Identifiable, Sendable {
     var systemImage: String {
         switch self {
         case .top: "tshirt"
-        case .bottom: "rectangle.portrait"
+        case .bottom: "rectangle.portrait.split.2x1"
         case .fullBody: "figure.dress.line.vertical.figure"
         case .footwear: "shoe"
         case .outerwear: "coat"

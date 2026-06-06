@@ -23,26 +23,36 @@ final class AddGarmentViewModel {
 
     private var processed: ProcessedImage?
 
-    /// Normalizes the picked photo and classifies it (run concurrently), then
-    /// pre-fills the draft with any confident guesses.
+    /// Normalizes the picked photo, classifies the normalized image for a more
+    /// accurate dominant color, then pre-fills the draft including an auto-name.
     func handlePicked(data: Data, container: AppContainer) async {
         phase = .processing
         errorMessage = nil
         do {
-            // Normalization and classification are independent — run in parallel.
-            async let normalized = container.imageProcessor.normalize(imageData: data)
-            let suggestion = await container.classifier.classify(imageData: data)
-            let result = try await normalized
+            // Normalize first so color classification runs on the background-removed
+            // image, avoiding the neutral canvas bleeding into the average.
+            let result = try await container.imageProcessor.normalize(imageData: data)
+            let suggestion = await container.classifier.classify(imageData: result.imageData)
 
             processed = result
             normalizedImage = UIImage(data: result.imageData)
-            if let color = suggestion.primaryColor { draft.primaryColor = color }
-            if let category = suggestion.category { draft.category = category }
+            if let color    = suggestion.primaryColor { draft.primaryColor = color }
+            if let category = suggestion.category    { draft.category = category }
+            if let warmth   = suggestion.warmth      { draft.warmth = warmth }
+            if let formality = suggestion.formality  { draft.formality = formality }
+            if let seasons  = suggestion.seasons     { draft.seasons = seasons }
+            draft.name = Self.generateName(color: draft.primaryColor, category: draft.category)
             phase = .ready
         } catch {
             errorMessage = "Couldn't process that photo. Please try another."
             phase = .empty
         }
+    }
+
+    /// Produces a human-readable default name from the auto-detected attributes.
+    /// e.g. "Blue Top", "Black Sneakers", "White Coat".
+    private static func generateName(color: ColorTag, category: GarmentCategory) -> String {
+        "\(color.displayName) \(category.displayName)"
     }
 
     /// Persists the normalized image and inserts the garment. Returns whether it

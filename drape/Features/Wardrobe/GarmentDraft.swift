@@ -13,6 +13,7 @@ import Foundation
 /// and writes it back on save. Using a value type keeps the form free of
 /// SwiftData side effects until the user commits.
 struct GarmentDraft {
+    var name: String = ""
     var category: GarmentCategory = .top
     var primaryColor: ColorTag = .black
     var secondaryColors: [ColorTag] = []
@@ -28,6 +29,7 @@ struct GarmentDraft {
 
     /// Loads attributes from an existing garment for editing.
     init(from garment: Garment) {
+        name = garment.name ?? ""
         category = garment.category
         primaryColor = garment.primaryColor
         secondaryColors = garment.secondaryColors
@@ -42,6 +44,7 @@ struct GarmentDraft {
 
     /// Writes the draft back onto a garment and bumps `updatedAt`.
     func apply(to garment: Garment) {
+        garment.name = name.trimmed.isEmpty ? nil : name.trimmed
         garment.category = category
         garment.primaryColor = primaryColor
         garment.secondaryColors = secondaryColors

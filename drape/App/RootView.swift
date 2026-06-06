@@ -10,13 +10,17 @@ import SwiftData
 
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [UserProfile]
+
+    private var profile: UserProfile? { profiles.first }
+    private var showOnboarding: Bool { !(profile?.hasCompletedOnboarding ?? true) }
 
     var body: some View {
         TabView {
             Tab("Wardrobe", systemImage: "tshirt") {
                 WardrobeListView()
             }
-            Tab("Outfits", systemImage: "square.stack.3d.up") {
+            Tab("Outfits", systemImage: "figure.stand") {
                 OutfitListView()
             }
             Tab("Style", systemImage: "sparkles") {
@@ -27,6 +31,11 @@ struct RootView: View {
             }
         }
         .task { PreviewData.ensureProfile(into: modelContext) }
+        .fullScreenCover(isPresented: .constant(showOnboarding)) {
+            if let profile {
+                OnboardingView(profile: profile)
+            }
+        }
     }
 }
 
