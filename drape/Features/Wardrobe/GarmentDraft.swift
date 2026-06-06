@@ -15,7 +15,7 @@ import Foundation
 struct GarmentDraft {
     var name: String = ""
     var category: GarmentCategory = .top
-    var primaryColor: ColorTag = .black
+    var primaryColor: ColorTag = .ink
     var secondaryColors: [ColorTag] = []
     var formality: Formality = .casual
     var warmth: WarmthLevel = .medium

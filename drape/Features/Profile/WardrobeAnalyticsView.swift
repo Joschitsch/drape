@@ -47,7 +47,7 @@ struct WardrobeAnalyticsView: View {
                     Section("Cost per wear") {
                         ForEach(costPerWearItems) { item in
                             HStack {
-                                NormalizedImageView(assetID: item.garment.thumbnailAssetID, category: item.garment.category)
+                                NormalizedImageView(assetID: item.garment.thumbnailAssetID, category: item.garment.category, colorTag: item.garment.primaryColor)
                                     .frame(width: 44, height: 44)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                                 VStack(alignment: .leading, spacing: 2) {
@@ -70,7 +70,7 @@ struct WardrobeAnalyticsView: View {
                     Section {
                         ForEach(rarelyUsed) { garment in
                             HStack {
-                                NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+                                NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                                     .frame(width: 44, height: 44)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                                 VStack(alignment: .leading, spacing: 2) {

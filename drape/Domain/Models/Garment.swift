@@ -28,7 +28,7 @@ final class Garment {
     var category: GarmentCategory = GarmentCategory.top
     var subcategory: String?
 
-    var primaryColor: ColorTag = ColorTag.black
+    var primaryColor: ColorTag = ColorTag.ink
     var secondaryColors: [ColorTag] = []
 
     var formality: Formality = Formality.casual

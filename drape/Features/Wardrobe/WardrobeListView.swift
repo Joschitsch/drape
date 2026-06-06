@@ -155,18 +155,7 @@ struct WardrobeListView: View {
     }
 
     private func chip(label: String, active: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(.subheadline)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    active ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.thinMaterial),
-                    in: Capsule()
-                )
-                .foregroundStyle(active ? .white : .primary)
-        }
-        .buttonStyle(.plain)
+        DrapeChip(label: label, active: active, small: true, action: action)
     }
 
     private var emptyState: some View {
@@ -195,7 +184,7 @@ private struct HonestMirrorNudge: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
 

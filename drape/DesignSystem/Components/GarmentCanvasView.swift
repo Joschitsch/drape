@@ -4,46 +4,74 @@
 //
 //  The "museum canvas" — a tonal placeholder that gives every garment a
 //  considered, editorial look when no real photograph is available (preview
-//  data, loading skeleton, missing image). Background color is derived from
-//  the garment's primary color.
+//  data, loading skeleton, missing image). The wash, glyph and color name are
+//  all derived from the garment's primary color.
 //
 
 import SwiftUI
 
 struct GarmentCanvasView: View {
     let category: GarmentCategory
-    let color: Color
+    let colorTag: ColorTag
+    /// Draw the category outline glyph in the center.
+    var showGlyph: Bool = true
+    /// Show the uppercase color name in the bottom-left (the `mono` treatment).
+    var showColorName: Bool = false
+
+    private var base: Color { colorTag.color }
+    /// Wash tints: the design mixes the color toward white (26% / 13% color).
+    private var washTop: Color { base.mix(with: .white, by: 0.74) }
+    private var washBottom: Color { base.mix(with: .white, by: 0.87) }
+    /// Glyph / label ink: color mixed toward a warm graphite.
+    private var mark: Color { base.mix(with: Color(hex: "4A4A46"), by: 0.38) }
 
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // ── Tonal gradient wash ──────────────────────────────
+                // ── Tonal gradient wash (≈155°) ──────────────────────
                 LinearGradient(
-                    colors: [color.opacity(0.26), color.opacity(0.13)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    colors: [washTop, washBottom],
+                    startPoint: UnitPoint(x: 0.15, y: 0),
+                    endPoint: UnitPoint(x: 0.85, y: 1)
                 )
 
-                // ── Vertical stripe texture ──────────────────────────
+                // ── Vertical stripe texture (1pt every 7pt, 10%) ─────
                 Canvas { ctx, size in
                     var x: CGFloat = 0
                     while x < size.width {
                         var path = Path()
                         path.move(to: CGPoint(x: x, y: 0))
                         path.addLine(to: CGPoint(x: x, y: size.height))
-                        ctx.stroke(path, with: .color(color.opacity(0.06)), lineWidth: 1)
+                        ctx.stroke(path, with: .color(base.opacity(0.10)), lineWidth: 1)
                         x += 7
                     }
                 }
 
-                // ── Category glyph ───────────────────────────────────
-                let side = min(geo.size.width, geo.size.height) * 0.42
-                Image(systemName: category.systemImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: side, height: side)
-                    .foregroundStyle(color.opacity(0.45))
-                    .fontWeight(.ultraLight)
+                // ── Category glyph (hand-drawn outline) ──────────────
+                if showGlyph {
+                    let side = min(geo.size.width, geo.size.height) * 0.58
+                    CategoryGlyph(category: category)
+                        .stroke(mark.opacity(0.5),
+                                style: StrokeStyle(lineWidth: max(1, side / 48 * 1.4),
+                                                   lineCap: .round, lineJoin: .round))
+                        .frame(width: side, height: side)
+                }
+
+                // ── Color name (mono, bottom-left) ───────────────────
+                if showColorName {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Text(colorTag.displayName.uppercased())
+                                .font(Theme.mono(9.5))
+                                .tracking(0.3)
+                                .foregroundStyle(mark.opacity(0.85))
+                            Spacer()
+                        }
+                    }
+                    .padding(.leading, 10)
+                    .padding(.bottom, 9)
+                }
             }
         }
     }
@@ -51,11 +79,12 @@ struct GarmentCanvasView: View {
 
 #Preview {
     HStack(spacing: 12) {
-        ForEach(GarmentCategory.allCases) { cat in
-            GarmentCanvasView(category: cat, color: .brown)
+        ForEach(Array(zip(GarmentCategory.allCases, ColorTag.allCases)), id: \.0) { cat, tag in
+            GarmentCanvasView(category: cat, colorTag: tag, showColorName: true)
                 .frame(width: 80, height: 100)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
     .padding()
+    .background(Theme.paper)
 }

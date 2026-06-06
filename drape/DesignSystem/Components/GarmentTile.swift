@@ -15,30 +15,31 @@ struct GarmentTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             // ── Image / canvas ───────────────────────────────────────
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+            NormalizedImageView(assetID: garment.thumbnailAssetID,
+                                category: garment.category,
+                                colorTag: garment.primaryColor,
+                                showColorName: true)
                 .frame(maxWidth: .infinity)
-                .aspectRatio(0.85, contentMode: .fit)
+                .aspectRatio(0.806, contentMode: .fit)   // design canvas ≈124% tall
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 6)
+                .shadow(color: Theme.ink.opacity(0.18), radius: 11, x: 0, y: 8)
                 .overlay(alignment: .topTrailing) {
                     if garment.isFavorite {
                         Circle()
-                            .fill(Color.primary)
+                            .fill(Theme.ink)
                             .frame(width: 8, height: 8)
-                            .padding(10)
+                            .padding(4)
+                            .background(Theme.paper.opacity(0.7), in: Circle())
+                            .padding(6)
                     }
                 }
 
             // ── Name ─────────────────────────────────────────────────
-            Text(garment.displayName)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+            SerifText(garment.displayName, size: 16)
                 .lineLimit(1)
 
             // ── Last-worn timestamp ───────────────────────────────────
-            Text(garment.lastWornLabel)
-                .font(.caption2)
-                .foregroundStyle(Theme.inkFaint)
+            MonoLabel(garment.lastWornLabel, size: 10)
                 .lineLimit(1)
         }
     }

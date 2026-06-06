@@ -30,6 +30,7 @@ struct RootView: View {
                 ProfileView()
             }
         }
+        .tint(Theme.ink)
         .task { PreviewData.ensureProfile(into: modelContext) }
         .fullScreenCover(isPresented: .constant(showOnboarding)) {
             if let profile {

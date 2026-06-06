@@ -12,9 +12,10 @@ import Foundation
 /// consistent. The hex swatch lives here; the SwiftUI `Color` is built in the
 /// DesignSystem layer so the domain stays UI-free.
 enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
-    case black, white, gray, beige, brown
-    case navy, blue, teal, green, olive
-    case yellow, orange, red, pink, purple
+    // Muted editorial fashion palette (matches the design's named swatches).
+    case ecru, ivory, oat, camel, tobacco, chocolate
+    case charcoal, ink, sage, forest, denim, navy
+    case rust, burgundy, mauve, slate
 
     var id: String { rawValue }
 
@@ -23,30 +24,31 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
     /// Hex used to render the swatch (no leading `#`).
     var hex: String {
         switch self {
-        case .black: "1C1C1E"
-        case .white: "F5F5F7"
-        case .gray: "8E8E93"
-        case .beige: "D9C7A8"
-        case .brown: "8B5E3C"
-        case .navy: "1F2A44"
-        case .blue: "3478F6"
-        case .teal: "30B0C7"
-        case .green: "34A853"
-        case .olive: "6B7339"
-        case .yellow: "F2C200"
-        case .orange: "F5803E"
-        case .red: "E5484D"
-        case .pink: "F06595"
-        case .purple: "8E59D6"
+        case .ecru: "E4DCC9"
+        case .ivory: "F0EADB"
+        case .oat: "D8CDB6"
+        case .camel: "BD9A6E"
+        case .tobacco: "8A6A4A"
+        case .chocolate: "5B463A"
+        case .charcoal: "3A3833"
+        case .ink: "23211D"
+        case .sage: "9AA487"
+        case .forest: "3F4A3C"
+        case .denim: "6C82A0"
+        case .navy: "2C3A4F"
+        case .rust: "A8563B"
+        case .burgundy: "6B2F36"
+        case .mauve: "9C8189"
+        case .slate: "6A6E72"
         }
     }
 
     /// Coarse family used for harmony heuristics. Neutrals pair with anything.
     var family: ColorFamily {
         switch self {
-        case .black, .white, .gray, .beige, .brown: .neutral
-        case .red, .orange, .yellow, .pink: .warm
-        case .navy, .blue, .teal, .green, .olive, .purple: .cool
+        case .ecru, .ivory, .oat, .charcoal, .ink, .slate: .neutral
+        case .camel, .tobacco, .chocolate, .rust, .burgundy: .warm
+        case .sage, .forest, .denim, .navy, .mauve: .cool
         }
     }
 
@@ -66,7 +68,7 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
     static func nearest(red: Double, green: Double, blue: Double) -> ColorTag {
         allCases.min { lhs, rhs in
             squaredDistance(lhs, red, green, blue) < squaredDistance(rhs, red, green, blue)
-        } ?? .black
+        } ?? .ink
     }
 
     private static func squaredDistance(_ tag: ColorTag, _ r: Double, _ g: Double, _ b: Double) -> Double {

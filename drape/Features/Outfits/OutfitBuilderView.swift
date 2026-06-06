@@ -71,7 +71,7 @@ struct OutfitBuilderView: View {
         HStack(spacing: 14) {
             if let garment = model.selections[slot] {
                 // ── Filled slot ──────────────────────────────────────
-                NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+                NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                     .frame(width: 46, height: 56)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)

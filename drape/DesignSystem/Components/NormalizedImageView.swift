@@ -15,6 +15,10 @@ import UIKit
 struct NormalizedImageView: View {
     let assetID: String
     let category: GarmentCategory
+    /// Tints the museum-canvas placeholder when no photo exists.
+    var colorTag: ColorTag = .slate
+    /// Show the color name on the placeholder (used on larger canvases).
+    var showColorName: Bool = false
     var useThumbnail: Bool = true
 
     @Environment(AppContainer.self) private var container
@@ -34,7 +38,7 @@ struct NormalizedImageView: View {
     }
 
     private var placeholder: some View {
-        GarmentCanvasView(category: category, color: .brown)
+        GarmentCanvasView(category: category, colorTag: colorTag, showColorName: showColorName)
     }
 
     private func load() async {

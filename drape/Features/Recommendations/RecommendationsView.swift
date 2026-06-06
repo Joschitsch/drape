@@ -307,7 +307,7 @@ private struct DetailGarmentRow: View {
     let garment: Garment
     var body: some View {
         HStack(spacing: 14) {
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                 .frame(width: 66, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
@@ -381,46 +381,6 @@ private struct LoadingRitualView: View {
                 }
                 if lineIndex == lines.count - 1 { t.invalidate() }
             }
-        }
-    }
-}
-
-// MARK: - Minimal wrapping chip layout
-
-private struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .infinity
-        var height: CGFloat = 0
-        var rowX: CGFloat = 0
-        var rowH: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if rowX + size.width > width && rowX > 0 {
-                height += rowH + spacing
-                rowX = 0; rowH = 0
-            }
-            rowX += size.width + spacing
-            rowH = max(rowH, size.height)
-        }
-        height += rowH
-        return CGSize(width: width, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var rowX = bounds.minX
-        var rowY = bounds.minY
-        var rowH: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if rowX + size.width > bounds.maxX && rowX > bounds.minX {
-                rowY += rowH + spacing
-                rowX = bounds.minX; rowH = 0
-            }
-            view.place(at: CGPoint(x: rowX, y: rowY), proposal: ProposedViewSize(size))
-            rowX += size.width + spacing
-            rowH = max(rowH, size.height)
         }
     }
 }

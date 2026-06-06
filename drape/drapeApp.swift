@@ -16,6 +16,7 @@ struct drapeApp: App {
     @State private var appContainer = AppContainer.live()
 
     init() {
+        DrapeFonts.registerAll()
         do {
             modelContainer = try .drape()
         } catch {

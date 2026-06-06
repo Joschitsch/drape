@@ -38,7 +38,8 @@ struct WoreTodayCelebration: View {
                     // Garment canvas
                     GarmentCanvasView(
                         category: garment.category,
-                        color: garment.primaryColor.color
+                        colorTag: garment.primaryColor,
+                        showColorName: true
                     )
                     .frame(width: 150, height: 172)
                     .clipShape(RoundedRectangle(cornerRadius: 18))

@@ -155,7 +155,7 @@ private struct DetailGarmentRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category)
+            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                 .frame(width: 66, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)

@@ -99,9 +99,11 @@ struct GarmentDetailView: View {
         NormalizedImageView(
             assetID: garment.imageAssetID,
             category: garment.category,
+            colorTag: garment.primaryColor,
+            showColorName: true,
             useThumbnail: false
         )
-        .aspectRatio(0.93, contentMode: .fit)
+        .aspectRatio(0.926, contentMode: .fit)   // design hero ≈108% tall
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .shadow(color: .black.opacity(0.18), radius: 28, x: 0, y: 14)
     }
@@ -184,14 +186,9 @@ struct GarmentDetailView: View {
 
     private func notesCard(_ notes: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Note to self")
-                .font(.caption2)
-                .foregroundStyle(Theme.inkFaint)
-                .kerning(0.5)
-                .textCase(.uppercase)
-            Text(""\(notes)"")
-                .font(.body.italic())
-                .foregroundStyle(.primary)
+            MonoLabel("Note to self", size: 9.5)
+            SerifText("\u{201C}\(notes)\u{201D}", size: 17, italic: true)
+                .lineSpacing(3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
