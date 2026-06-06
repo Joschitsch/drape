@@ -19,20 +19,9 @@ struct SelectableChipsRow<Item: Hashable & Identifiable>: View {
             HStack(spacing: 8) {
                 ForEach(items) { item in
                     let isOn = selection.contains(item)
-                    Button {
+                    DrapeChip(label: title(item), active: isOn) {
                         if isOn { selection.remove(item) } else { selection.insert(item) }
-                    } label: {
-                        Text(title(item))
-                            .font(.subheadline)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
-                            .background(
-                                isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.thinMaterial),
-                                in: Capsule()
-                            )
-                            .foregroundStyle(isOn ? .white : .primary)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.vertical, 2)

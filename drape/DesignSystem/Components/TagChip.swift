@@ -7,8 +7,9 @@
 
 import SwiftUI
 
-/// A compact rounded label. Optionally shows a leading color swatch (used for
-/// `ColorTag`).
+/// A compact outlined pill for attributes, occasions and tags — the single tag
+/// vocabulary across the app. Optionally shows a leading color swatch (used for
+/// `ColorTag`). Non-interactive; styled entirely with adaptive Theme tokens.
 struct TagChip: View {
     let text: String
     var swatch: Color?
@@ -24,13 +25,17 @@ struct TagChip: View {
                 Circle()
                     .fill(swatch)
                     .frame(width: 10, height: 10)
-                    .overlay(Circle().strokeBorder(.separator, lineWidth: 0.5))
+                    .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
             }
             Text(text)
-                .font(.caption)
+                .font(Theme.body(12.5, weight: .medium))
+                .foregroundStyle(Theme.inkSoft)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 9)
         .padding(.vertical, 5)
-        .background(.thinMaterial, in: Capsule())
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Theme.line, lineWidth: 1)
+        )
     }
 }

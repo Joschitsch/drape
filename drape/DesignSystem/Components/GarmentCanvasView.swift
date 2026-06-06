@@ -19,11 +19,12 @@ struct GarmentCanvasView: View {
     var showColorName: Bool = false
 
     private var base: Color { colorTag.color }
-    /// Wash tints: the design mixes the color toward white (26% / 13% color).
-    private var washTop: Color { base.mix(with: .white, by: 0.74) }
-    private var washBottom: Color { base.mix(with: .white, by: 0.87) }
-    /// Glyph / label ink: color mixed toward a warm graphite.
-    private var mark: Color { base.mix(with: Color(hex: "4A4A46"), by: 0.38) }
+    /// Wash tints: the design mixes the color toward the neutral canvas base
+    /// (white in light, deep warm graphite in dark) — 26% / 13% color.
+    private var washTop: Color { base.mix(with: Theme.canvasBase, by: 0.74) }
+    private var washBottom: Color { base.mix(with: Theme.canvasBase, by: 0.87) }
+    /// Glyph / label ink: color mixed toward an adaptive warm graphite.
+    private var mark: Color { base.mix(with: Theme.canvasGraphite, by: 0.38) }
 
     var body: some View {
         GeometryReader { geo in

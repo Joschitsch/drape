@@ -27,7 +27,13 @@ enum DrapeFonts {
     /// Renders navigation-bar titles (large + inline) in Newsreader, so the
     /// editorial voice carries into the system chrome.
     private static func applyNavigationBarAppearance() {
-        let ink = UIColor(red: 0x1C/255, green: 0x1A/255, blue: 0x17/255, alpha: 1)
+        // Dynamic so titles invert with the system appearance (warm ink on
+        // paper in light, warm off-white on the deep canvas in dark).
+        let ink = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(red: 0xF2/255, green: 0xEE/255, blue: 0xE6/255, alpha: 1)
+                : UIColor(red: 0x1C/255, green: 0x1A/255, blue: 0x17/255, alpha: 1)
+        }
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
         if let large = UIFont(name: Serif.medium, size: 34) {

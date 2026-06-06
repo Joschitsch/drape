@@ -13,23 +13,42 @@ enum Theme {
     static let tileSpacing: CGFloat = 12
     static let contentPadding: CGFloat = 16
 
-    // ── Warm neutral palette (matches the design's paper/ink system) ──
-    /// Near-black warm ink — primary text and solid fills.
-    static let ink     = Color(hex: "1C1A17")
-    /// Warm off-white — main screen background.
-    static let paper   = Color(hex: "F6F4EF")
-    /// Slightly lighter — card and section fill.
-    static let surface = Color(hex: "FCFBF8")
-    /// Pure white — raised/selected surfaces.
-    static let raised  = Color(hex: "FFFFFF")
-    /// Medium warm gray — secondary text.
-    static let inkSoft = Color(hex: "6B655C")
-    /// Light warm gray — captions, mono labels.
-    static let inkFaint = Color(hex: "A8A095")
-    /// Hairline separator (10% of ink).
-    static let line    = Color(red: 28/255, green: 26/255, blue: 23/255).opacity(0.10)
-    /// Softer hairline for inset row separators (6% of ink).
-    static let lineSoft = Color(red: 28/255, green: 26/255, blue: 23/255).opacity(0.06)
+    // ── Warm neutral palette — adaptive light ("paper") / dark ("ink") ──
+    // Every token resolves per the active interface style so the whole app
+    // follows the system appearance. Light values are the design's `paper`
+    // LOOK; dark values are its `ink` LOOK.
+    //
+    /// Near-black warm ink (light) / warm off-white (dark) — primary text & fills.
+    static let ink     = adaptive(Color(hex: "1C1A17"), Color(hex: "F2EEE6"))
+    /// Main screen background.
+    static let paper   = adaptive(Color(hex: "F6F4EF"), Color(hex: "171614"))
+    /// Card / section fill.
+    static let surface = adaptive(Color(hex: "FCFBF8"), Color(hex: "201E1B"))
+    /// Raised / selected surfaces.
+    static let raised  = adaptive(Color(hex: "FFFFFF"), Color(hex: "27241F"))
+    /// Secondary text.
+    static let inkSoft = adaptive(Color(hex: "6B655C"), Color(hex: "A39C90"))
+    /// Captions, mono labels.
+    static let inkFaint = adaptive(Color(hex: "A8A095"), Color(hex: "6E675C"))
+    /// Hairline separator (10% ink light / 13% paper dark).
+    static let line    = adaptive(Color(hex: "1C1A17").opacity(0.10), Color(hex: "F2EEE6").opacity(0.13))
+    /// Softer hairline for inset row separators (6% / 7%).
+    static let lineSoft = adaptive(Color(hex: "1C1A17").opacity(0.06), Color(hex: "F2EEE6").opacity(0.07))
+    /// Drop-shadow color — subtle in light, deeper in dark where shadows read less.
+    static let shadow  = adaptive(Color.black.opacity(0.15), Color.black.opacity(0.45))
+    /// Graphite the museum-canvas glyph mixes toward; lightened in dark so the
+    /// outline stays visible against the deep canvas wash.
+    static let canvasGraphite = adaptive(Color(hex: "4A4A46"), Color(hex: "C9C4BA"))
+    /// Neutral base the museum-canvas wash mixes the garment color toward —
+    /// white in light, a deep warm graphite in dark so tiles sit in the UI.
+    static let canvasBase = adaptive(.white, Color(hex: "2A2722"))
+
+    /// Resolves to `light` or `dark` based on the active `userInterfaceStyle`.
+    static func adaptive(_ light: Color, _ dark: Color) -> Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+    }
 
     // ── Editorial type ramp (bundled faces, see DrapeFonts) ──────────────
     /// Newsreader serif display — titles, garment names, story lines.

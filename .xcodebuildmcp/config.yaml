@@ -1,0 +1,7 @@
+schemaVersion: 1
+sessionDefaults:
+  projectPath: /Users/joschaaxthammer/Repos/drape/drape.xcodeproj
+  scheme: drape
+  simulatorName: iPhone 17
+  simulatorId: FF6F64AC-47B1-40BF-A00E-5BDCBAE9A720
+  simulatorPlatform: iOS Simulator
