@@ -11,6 +11,7 @@ import SwiftUI
 /// of `Section`s; the host view supplies the enclosing `Form`.
 struct GarmentAttributeFields: View {
     @Binding var draft: GarmentDraft
+    @State private var customColor: Color = .clear
 
     var body: some View {
         Section("Basics") {
@@ -50,7 +51,14 @@ struct GarmentAttributeFields: View {
 
     private var colorRow: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Color").font(.subheadline).foregroundStyle(.secondary)
+            HStack {
+                Text("Color").font(.subheadline).foregroundStyle(.secondary)
+                Spacer()
+                // Custom color → snapped to the nearest named tag.
+                ColorPicker("Custom", selection: $customColor, supportsOpacity: false)
+                    .labelsHidden()
+                    .onChange(of: customColor) { _, newValue in snapToNearest(newValue) }
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(ColorTag.allCases) { tag in
@@ -60,7 +68,7 @@ struct GarmentAttributeFields: View {
                             .overlay(Circle().strokeBorder(.separator, lineWidth: 0.5))
                             .overlay {
                                 if draft.primaryColor == tag {
-                                    Circle().strokeBorder(Color.accentColor, lineWidth: 3)
+                                    Circle().strokeBorder(Theme.ink, lineWidth: 3)
                                         .padding(-3)
                                 }
                             }
@@ -71,5 +79,14 @@ struct GarmentAttributeFields: View {
                 .padding(.vertical, 4)
             }
         }
+    }
+
+    /// Maps an arbitrary picked color to the closest entry in the named palette,
+    /// so the editorial color labels stay meaningful (reuses `ColorTag.nearest`).
+    private func snapToNearest(_ color: Color) {
+        guard color != .clear else { return }
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        draft.primaryColor = ColorTag.nearest(red: Double(r), green: Double(g), blue: Double(b))
     }
 }
