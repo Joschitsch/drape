@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import MapKit
 
 /// Requests "when in use" location permission if needed, then returns the
 /// current coordinate. Uses a continuation so callers get a clean async/await
@@ -22,12 +23,13 @@ final class CoreLocationProvider: NSObject, LocationProvider, @unchecked Sendabl
         manager.desiredAccuracy = kCLLocationAccuracyKilometer // city-level is fine for weather
     }
 
-    /// Reverse-geocodes a coordinate to its locality (city) for display.
+    /// Reverse-geocodes a coordinate to its city name for display (iOS 26 MapKit).
     func placeName(for coordinate: Coordinate) async -> String? {
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        let placemarks = try? await CLGeocoder().reverseGeocodeLocation(location)
-        let place = placemarks?.first
-        return place?.locality ?? place?.administrativeArea ?? place?.country
+        guard let request = MKReverseGeocodingRequest(location: location) else { return nil }
+        guard let item = try? await request.mapItems.first else { return nil }
+        let reps = item.addressRepresentations
+        return reps?.cityName ?? reps?.cityWithContext ?? item.name
     }
 
     func currentCoordinate() async throws -> Coordinate {
