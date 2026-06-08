@@ -26,11 +26,14 @@ struct RootView: View {
             Tab("Style", image: "drape.style") {
                 RecommendationsView()
             }
-            Tab("Profile", systemImage: "person") {
+            Tab("Profile", image: "drape.profile") {
                 ProfileView()
             }
         }
         .tint(Theme.ink)
+        // Honor Dynamic Type, but clamp so the dense editorial layout scales
+        // generously without collapsing at the largest accessibility sizes.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .task { PreviewData.ensureProfile(into: modelContext) }
         .fullScreenCover(isPresented: .constant(showOnboarding)) {
             if let profile {
