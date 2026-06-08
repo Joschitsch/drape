@@ -50,17 +50,14 @@ struct WardrobeAnalyticsView: View {
                                 NormalizedImageView(assetID: item.garment.thumbnailAssetID, category: item.garment.category, colorTag: item.garment.primaryColor)
                                     .frame(width: 44, height: 44)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.garment.category.displayName)
-                                        .font(.subheadline)
-                                    Text("\(item.garment.wearCount) wear\(item.garment.wearCount == 1 ? "" : "s")")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    SerifText(item.garment.displayName, size: 16).lineLimit(1)
+                                    MonoLabel("\(item.garment.wearCount) wear\(item.garment.wearCount == 1 ? "" : "s")", size: 9)
                                 }
                                 Spacer()
                                 Text(item.value, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .font(.subheadline.monospacedDigit())
-                                    .foregroundStyle(item.value < 5 ? .green : item.value < 20 ? .primary : .red)
+                                    .font(Theme.mono(14, weight: .medium))
+                                    .foregroundStyle(item.value < 5 ? .green : item.value < 20 ? Theme.ink : .red)
                             }
                         }
                     }
@@ -73,12 +70,9 @@ struct WardrobeAnalyticsView: View {
                                 NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                                     .frame(width: 44, height: 44)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(garment.category.displayName)
-                                        .font(.subheadline)
-                                    Text(garment.wearCount == 0 ? "Never worn" : "Last worn 90+ days ago")
-                                        .font(.caption)
-                                        .foregroundStyle(.orange)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    SerifText(garment.displayName, size: 16).lineLimit(1)
+                                    MonoLabel(garment.wearCount == 0 ? "Never worn" : "Last worn 90+ days ago", size: 9)
                                 }
                             }
                         }
@@ -90,6 +84,8 @@ struct WardrobeAnalyticsView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Theme.paper.ignoresSafeArea())
         .navigationTitle("Analytics")
         .navigationBarTitleDisplayMode(.large)
     }
