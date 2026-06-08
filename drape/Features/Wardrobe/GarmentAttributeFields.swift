@@ -32,11 +32,11 @@ struct GarmentAttributeFields: View {
                 ForEach(WarmthLevel.allCases) { Text($0.displayName).tag($0) }
             }
             VStack(alignment: .leading, spacing: 6) {
-                Text("Seasons").font(.subheadline).foregroundStyle(.secondary)
+                Text("Seasons").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
                 SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)
             }
             VStack(alignment: .leading, spacing: 6) {
-                Text("Styles").font(.subheadline).foregroundStyle(.secondary)
+                Text("Styles").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
                 SelectableChipsRow(items: StyleTag.allCases, title: \.displayName, selection: $draft.styles)
             }
         }
@@ -52,7 +52,7 @@ struct GarmentAttributeFields: View {
     private var colorRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Color").font(.subheadline).foregroundStyle(.secondary)
+                Text("Color").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
                 Spacer()
                 // Custom color → snapped to the nearest named tag.
                 ColorPicker("Custom", selection: $customColor, supportsOpacity: false)
@@ -60,23 +60,13 @@ struct GarmentAttributeFields: View {
                     .onChange(of: customColor) { _, newValue in snapToNearest(newValue) }
             }
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: 4) {
                     ForEach(ColorTag.allCases) { tag in
-                        Circle()
-                            .fill(tag.color)
-                            .frame(width: 30, height: 30)
-                            .overlay(Circle().strokeBorder(.separator, lineWidth: 0.5))
-                            .overlay {
-                                if draft.primaryColor == tag {
-                                    Circle().strokeBorder(Theme.ink, lineWidth: 3)
-                                        .padding(-3)
-                                }
-                            }
-                            .onTapGesture { draft.primaryColor = tag }
-                            .accessibilityLabel(tag.displayName)
+                        SwatchButton(colorTag: tag, isSelected: draft.primaryColor == tag) {
+                            draft.primaryColor = tag
+                        }
                     }
                 }
-                .padding(.vertical, 4)
             }
         }
     }

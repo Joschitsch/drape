@@ -58,6 +58,7 @@ struct WardrobeListView: View {
                     scrollContent
                 }
             }
+            .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Wardrobe")
             .navigationSubtitle("\(garments.count) of \(SubscriptionTier.free.garmentLimit ?? 30) pieces")
             .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
@@ -204,12 +205,7 @@ private struct HonestMirrorNudge: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Theme.line, lineWidth: 0.5)
-        )
+        .drapeCard(radius: 16)
     }
 
     private var reminderText: AttributedString {

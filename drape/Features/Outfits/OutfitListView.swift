@@ -21,6 +21,7 @@ struct OutfitListView: View {
             Group {
                 if outfits.isEmpty { emptyState } else { list }
             }
+            .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Outfits")
             .navigationSubtitle("\(outfits.count) look\(outfits.count == 1 ? "" : "s")")
             .navigationDestination(for: Outfit.self)  { OutfitDetailView(outfit: $0) }
@@ -113,12 +114,7 @@ struct OutfitStackCard: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
         }
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .strokeBorder(Theme.line, lineWidth: 0.5)
-        )
+        .drapeCard(radius: 18)
     }
 }
 
@@ -135,7 +131,7 @@ struct GarmentStackRow: View {
             NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                 .frame(width: thumbW, height: thumbH)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)
 
             VStack(alignment: .leading, spacing: 2) {
                 SerifText(garment.displayName, size: 13.5).lineLimit(1)
@@ -147,7 +143,7 @@ struct GarmentStackRow: View {
             Circle()
                 .fill(garment.primaryColor.color)
                 .frame(width: 10, height: 10)
-                .overlay(Circle().strokeBorder(Theme.line, lineWidth: 0.5))
+                .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
         }
         .padding(.horizontal, 14)
         .frame(minHeight: 44)

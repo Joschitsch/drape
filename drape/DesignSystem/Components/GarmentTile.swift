@@ -22,7 +22,7 @@ struct GarmentTile: View {
                 .frame(maxWidth: .infinity)
                 .aspectRatio(0.806, contentMode: .fit)   // design canvas ≈124% tall
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                .shadow(color: Theme.ink.opacity(0.18), radius: 11, x: 0, y: 8)
+                .shadow(color: Theme.shadow, radius: 11, x: 0, y: 8)
                 .overlay(alignment: .topTrailing) {
                     if garment.isFavorite {
                         Circle()

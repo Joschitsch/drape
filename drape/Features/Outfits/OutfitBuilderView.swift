@@ -44,6 +44,8 @@ struct OutfitBuilderView: View {
                     Text("Pick footwear and either a dress or a top and bottom.")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.paper.ignoresSafeArea())
             .navigationTitle(model.isEditing ? "Edit Outfit" : "New Outfit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -74,12 +76,11 @@ struct OutfitBuilderView: View {
                 NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                     .frame(width: 46, height: 56)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(slot.displayName.uppercased())
-                        .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
+                    MonoLabel(slot.displayName, size: 9)
                     Text(garment.displayName)
-                        .font(.subheadline.weight(.medium)).foregroundStyle(.primary).lineLimit(1)
+                        .font(Theme.body(15, weight: .medium)).foregroundStyle(Theme.ink).lineLimit(1)
                 }
                 Spacer()
                 Button {
@@ -99,13 +100,14 @@ struct OutfitBuilderView: View {
                 }
                 .frame(width: 46, height: 56)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(slot.displayName.uppercased())
-                        .font(.caption2).foregroundStyle(Theme.inkFaint).kerning(0.4)
+                    MonoLabel(slot.displayName, size: 9)
                     Text("Add a piece")
-                        .font(.subheadline).foregroundStyle(Color.accentColor)
+                        .font(Theme.body(15)).foregroundStyle(Theme.inkSoft)
                 }
                 Spacer()
-                Text("+").font(.title3).foregroundStyle(Theme.inkFaint)
+                Image(systemName: "plus")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Theme.inkFaint)
             }
         }
         .frame(minHeight: 44)

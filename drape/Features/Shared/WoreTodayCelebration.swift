@@ -30,7 +30,7 @@ struct WoreTodayCelebration: View {
                 ZStack(alignment: .bottomTrailing) {
                     // Expanding ring
                     RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(.primary.opacity(0.12), lineWidth: 1)
+                        .strokeBorder(Theme.ink.opacity(0.12), lineWidth: 1)
                         .frame(width: 170, height: 192)
                         .scaleEffect(ringScale)
                         .opacity(ringOpacity)
@@ -43,18 +43,18 @@ struct WoreTodayCelebration: View {
                     )
                     .frame(width: 150, height: 172)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .shadow(color: .black.opacity(0.22), radius: 24, x: 0, y: 12)
+                    .shadow(color: Theme.shadow, radius: 24, x: 0, y: 12)
                     .scaleEffect(canvasVisible ? 1 : 0.88)
                     .opacity(canvasVisible ? 1 : 0)
 
                     // Checkmark badge
                     ZStack {
                         Circle()
-                            .fill(.primary)
+                            .fill(Theme.ink)
                             .frame(width: 42, height: 42)
                         Image(systemName: "checkmark")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Color(UIColor.systemBackground))
+                            .foregroundStyle(Theme.paper)
                     }
                     .scaleEffect(checkmarkScale)
                     .offset(x: 10, y: 10)

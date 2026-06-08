@@ -59,17 +59,9 @@ struct PaywallView: View {
 
                 // ── Sticky footer ────────────────────────────────────
                 VStack(spacing: 10) {
-                    Button {
+                    CTAButton(title: "Start 7 days free · then 3.99/mo") {
                         entitlements.tier = .pro
                         dismiss()
-                    } label: {
-                        Text("Start 7 days free · then 3.99/mo")
-                            .font(Theme.body(17, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Theme.ink)
-                            .foregroundStyle(Theme.paper)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
 
                     MonoLabel("Cancel anytime · billed monthly · dev build", size: 9.5)
@@ -78,26 +70,17 @@ struct PaywallView: View {
                 .padding(.horizontal, Theme.contentPadding)
                 .padding(.top, 14)
                 .padding(.bottom, 28)
-                .background(Color(UIColor.systemBackground))
+                .background(Theme.paper)
                 .overlay(alignment: .top) {
                     Divider().overlay(Theme.line)
                 }
             }
+            .background(Theme.paper.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button {
+                    CircleIconButton(systemName: "xmark", accessibilityLabel: "Close") {
                         dismiss()
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(Theme.surface)
-                                .overlay(Circle().strokeBorder(Theme.line, lineWidth: 0.5))
-                                .frame(width: 30, height: 30)
-                            Image(systemName: "xmark")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.primary)
-                        }
                     }
                 }
             }

@@ -120,6 +120,27 @@ struct SwatchButton: View {
     }
 }
 
+// MARK: - Sticky footer
+
+/// The bottom CTA chrome shared by detail screens: a short paper gradient that
+/// fades the scrolling content out, then the action(s) on a solid paper base
+/// above the home indicator.
+struct StickyFooter<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LinearGradient(colors: [Theme.paper.opacity(0), Theme.paper],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 28)
+            content
+                .padding(.horizontal, Theme.contentPadding)
+                .padding(.bottom, 24)
+                .background(Theme.paper)
+        }
+    }
+}
+
 // MARK: - Press gesture helper
 
 private struct PressGesture: ViewModifier {

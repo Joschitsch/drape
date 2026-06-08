@@ -103,12 +103,7 @@ struct ProfileView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(profile.preferredStyles, id: \.self) { style in
-                            Text(style.displayName)
-                                .font(Theme.body(13, weight: .medium))
-                                .foregroundStyle(Theme.inkSoft)
-                                .padding(.horizontal, 13)
-                                .padding(.vertical, 7)
-                                .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
+                            TagChip(style.displayName)
                         }
                     }
                 }
@@ -120,7 +115,7 @@ struct ProfileView: View {
                         Circle()
                             .fill(color.color)
                             .frame(width: 22, height: 22)
-                            .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
+                            .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
                     }
                 }
             }
@@ -161,7 +156,7 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Formality")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.inkSoft)
                             Spacer()
                             Text(pref?.targetFormality.displayName ?? occasion.targetFormality.displayName)
                         }
@@ -169,7 +164,7 @@ struct ProfileView: View {
                             chips(styles.map(\.displayName))
                         } else {
                             Text("No styles set")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.inkSoft)
                                 .font(.caption)
                         }
                         Button("Edit") { editingOccasion = occasion }
@@ -187,7 +182,7 @@ struct ProfileView: View {
         Section("Global style fallback") {
             if profile.preferredStyles.isEmpty {
                 Text("None set")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkSoft)
             } else {
                 chips(profile.preferredStyles.map(\.displayName))
             }
@@ -200,7 +195,7 @@ struct ProfileView: View {
         Section("Preferred colors") {
             if profile.preferredColors.isEmpty {
                 Text("None set")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkSoft)
             } else {
                 chips(profile.preferredColors.map(\.displayName),
                       swatches: profile.preferredColors.map(\.color))
@@ -229,7 +224,7 @@ struct ProfileView: View {
                         Text("Home location set")
                         Text(String(format: "%.4f, %.4f", lat, lon))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.inkSoft)
                     }
                     Spacer()
                     Button("Edit") { showingLocationEdit = true }
@@ -259,12 +254,11 @@ struct ProfileView: View {
                         Label("Wardrobe Analytics", systemImage: "chart.bar.fill")
                         Spacer()
                         Text("Pro")
-                            .font(.caption.bold())
+                            .font(Theme.mono(10, weight: .medium))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(.yellow.opacity(0.2))
-                            .foregroundStyle(.yellow)
-                            .clipShape(Capsule())
+                            .background(Theme.ink, in: Capsule())
+                            .foregroundStyle(Theme.paper)
                     }
                 }
             }
@@ -284,7 +278,7 @@ struct ProfileView: View {
                  ? "Pro features unlocked."
                  : "Free tier — up to \(SubscriptionTier.free.garmentLimit ?? 0) items.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSoft)
             if entitlements.tier == .free {
                 Button("Upgrade to Pro") { showingPaywall = true }
             }

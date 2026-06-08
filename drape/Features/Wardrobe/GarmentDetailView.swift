@@ -68,7 +68,7 @@ struct GarmentDetailView: View {
                     try? modelContext.save()
                 } label: {
                     Image(systemName: garment.isFavorite ? "heart.fill" : "heart")
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(Theme.ink)
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -105,7 +105,7 @@ struct GarmentDetailView: View {
         )
         .aspectRatio(0.926, contentMode: .fit)   // design hero ≈108% tall
         .clipShape(RoundedRectangle(cornerRadius: 22))
-        .shadow(color: .black.opacity(0.18), radius: 28, x: 0, y: 14)
+        .shadow(color: Theme.shadow, radius: 28, x: 0, y: 14)
     }
 
     private var kicker: some View {
@@ -138,13 +138,11 @@ struct GarmentDetailView: View {
             Circle()
                 .fill(garment.primaryColor.color)
                 .frame(width: 28, height: 28)
-                .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
+                .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.line, lineWidth: 0.5))
+        .drapeCard(radius: 14)
         .padding(.horizontal, Theme.contentPadding)
         .padding(.bottom, 16)
     }
@@ -160,12 +158,7 @@ struct GarmentDetailView: View {
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(tags, id: \.self) { tag in
-                    Text(tag)
-                        .font(Theme.body(12.5, weight: .medium))
-                        .foregroundStyle(Theme.inkSoft)
-                        .padding(.horizontal, 13)
-                        .padding(.vertical, 8)
-                        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
+                    TagChip(tag)
                 }
             }
             .padding(.horizontal, Theme.contentPadding)
@@ -181,34 +174,14 @@ struct GarmentDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.line, lineWidth: 0.5))
+        .drapeCard(radius: 14)
         .padding(.horizontal, Theme.contentPadding)
         .padding(.bottom, 16)
     }
 
     private var woreFooter: some View {
-        VStack(spacing: 0) {
-            LinearGradient(
-                colors: [.clear, Color(UIColor.systemBackground)],
-                startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: 32)
-            Button {
-                logWear()
-            } label: {
-                Text("I wore this today")
-                    .font(Theme.body(17, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Theme.ink)
-                    .foregroundStyle(Theme.paper)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .padding(.horizontal, Theme.contentPadding)
-            .padding(.bottom, 24)
-            .background(Color(UIColor.systemBackground))
+        StickyFooter {
+            CTAButton(title: "I wore this today") { logWear() }
         }
     }
 

@@ -39,11 +39,7 @@ struct OutfitDetailView: View {
                         if !outfit.tags.isEmpty {
                             HStack(spacing: 8) {
                                 ForEach(outfit.tags, id: \.self) { tag in
-                                    Text("#\(tag)")
-                                        .font(Theme.body(12.5, weight: .medium))
-                                        .foregroundStyle(Theme.inkSoft)
-                                        .padding(.horizontal, 9).padding(.vertical, 5)
-                                        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
+                                    TagChip("#\(tag)")
                                 }
                             }
                         }
@@ -59,16 +55,11 @@ struct OutfitDetailView: View {
                             .buttonStyle(.plain)
 
                             if idx < sorted.count - 1 {
-                                HStack { Color.clear.frame(height: 0) }
-                                    .overlay(alignment: .leading) {
-                                        Theme.line.frame(height: 0.5).padding(.leading, 96)
-                                    }
+                                Theme.line.frame(height: 0.5).padding(.leading, 96)
                             }
                         }
                     }
-                    .background(Theme.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.line, lineWidth: 0.5))
+                    .drapeCard(radius: 18)
 
                     Spacer(minLength: 80)
                 }
@@ -115,26 +106,8 @@ struct OutfitDetailView: View {
     // MARK: - Footer
 
     private var woreFooter: some View {
-        VStack(spacing: 0) {
-            LinearGradient(
-                colors: [.clear, Color(UIColor.systemBackground)],
-                startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: 28)
-            Button {
-                logWear()
-            } label: {
-                Text("I wore this today")
-                    .font(Theme.body(17, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Theme.ink)
-                    .foregroundStyle(Theme.paper)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .padding(.horizontal, Theme.contentPadding)
-            .padding(.bottom, 24)
-            .background(Color(UIColor.systemBackground))
+        StickyFooter {
+            CTAButton(title: "I wore this today") { logWear() }
         }
     }
 
@@ -155,44 +128,6 @@ struct OutfitDetailView: View {
         modelContext.delete(outfit)
         try? modelContext.save()
         dismiss()
-    }
-}
-
-// MARK: - Large garment row for detail view
-
-private struct DetailGarmentRow: View {
-    let garment: Garment
-
-    var body: some View {
-        HStack(spacing: 14) {
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
-                .frame(width: 66, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
-
-            VStack(alignment: .leading, spacing: 4) {
-                MonoLabel(garment.category.displayName, size: 8.5)
-                SerifText(garment.displayName, size: 16).lineLimit(1)
-                if let brand = garment.brand, !brand.isEmpty {
-                    Text(brand).font(Theme.body(12.5)).foregroundStyle(Theme.inkSoft)
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(garment.primaryColor.color)
-                    .frame(width: 14, height: 14)
-                    .overlay(Circle().strokeBorder(Theme.line, lineWidth: 0.5))
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(Theme.inkFaint)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(minHeight: 56)
     }
 }
 

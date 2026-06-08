@@ -33,6 +33,7 @@ struct RecommendationsView: View {
                 case .results: resultsView
                 }
             }
+            .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Style")
             .toolbar {
                 if case .results = loadingPhase {
@@ -75,16 +76,8 @@ struct RecommendationsView: View {
 
                 // CTA
                 VStack(spacing: 12) {
-                    Button {
+                    CTAButton(title: "Find me something to wear") {
                         Task { await refresh() }
-                    } label: {
-                        Text("Find me something to wear")
-                            .font(Theme.body(17, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Theme.ink)
-                            .foregroundStyle(Theme.paper)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
 
                     MonoLabel("Reads your weather, your wardrobe, and your week", size: 10)
@@ -113,7 +106,7 @@ struct RecommendationsView: View {
                     loadingPhase = .idle
                 } label: {
                     Label("Change occasion", systemImage: "chevron.left")
-                        .font(.subheadline)
+                        .font(Theme.body(15))
                         .foregroundStyle(Theme.inkSoft)
                 }
                 .buttonStyle(.plain)
@@ -220,17 +213,16 @@ private struct OutfitSuggestionCard: View {
                     Spacer()
                     Image(systemName: saved ? "checkmark" : "plus")
                         .font(.caption)
-                        .foregroundStyle(saved ? Theme.inkFaint : .primary)
+                        .foregroundStyle(saved ? Theme.inkFaint : Theme.ink)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
+                .frame(minHeight: 44)
             }
             .buttonStyle(.plain)
             .disabled(saved)
         }
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.line, lineWidth: 0.5))
+        .drapeCard(radius: 18)
         .navigationDestination(isPresented: $showDetail) {
             SuggestionDetailView(garments: garments, suggestion: suggestion, label: label)
         }
@@ -247,12 +239,10 @@ private struct SuggestionDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 4) {
-                    if let rationale = suggestion.rationale.first {
-                        Text(rationale)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.inkSoft)
-                    }
+                if let rationale = suggestion.rationale.first {
+                    Text(rationale)
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.inkSoft)
                 }
 
                 VStack(spacing: 0) {
@@ -263,52 +253,17 @@ private struct SuggestionDetailView: View {
                         }
                         .buttonStyle(.plain)
                         if idx < sorted.count - 1 {
-                            HStack { Color.clear.frame(height: 0) }
-                                .overlay(alignment: .leading) {
-                                    Theme.line.frame(height: 0.5).padding(.leading, 96)
-                                }
+                            Theme.line.frame(height: 0.5).padding(.leading, 96)
                         }
                     }
                 }
-                .background(Theme.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.line, lineWidth: 0.5))
+                .drapeCard(radius: 18)
             }
             .padding(Theme.contentPadding)
         }
         .navigationTitle(label)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
-    }
-}
-
-// MARK: - DetailGarmentRow (also used in OutfitDetailView, redeclared here for access)
-// NOTE: this duplicates the private struct in OutfitDetailView; extract to shared file if needed.
-private struct DetailGarmentRow: View {
-    let garment: Garment
-    var body: some View {
-        HStack(spacing: 14) {
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
-                .frame(width: 66, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
-            VStack(alignment: .leading, spacing: 4) {
-                MonoLabel(garment.category.displayName, size: 8.5)
-                SerifText(garment.displayName, size: 16).lineLimit(1)
-                if let brand = garment.brand, !brand.isEmpty {
-                    Text(brand).font(Theme.body(12.5)).foregroundStyle(Theme.inkSoft)
-                }
-            }
-            Spacer()
-            HStack(spacing: 10) {
-                Circle().fill(garment.primaryColor.color).frame(width: 14, height: 14)
-                    .overlay(Circle().strokeBorder(Theme.line, lineWidth: 0.5))
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.inkFaint)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(minHeight: 56)
     }
 }
 
@@ -334,7 +289,7 @@ private struct LoadingRitualView: View {
             // Spinner ring
             Circle()
                 .trim(from: 0, to: 0.75)
-                .stroke(.primary.opacity(0.15), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                .stroke(Theme.ink.opacity(0.55), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                 .frame(width: 44, height: 44)
                 .rotationEffect(.degrees(rotation))
                 .onAppear {

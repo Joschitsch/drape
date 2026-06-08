@@ -22,6 +22,8 @@ struct AddGarmentView: View {
         @Bindable var model = model
         return NavigationStack {
             content(model: model)
+                .scrollContentBackground(.hidden)
+                .background(Theme.paper.ignoresSafeArea())
                 .navigationTitle("Add Item")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -80,7 +82,7 @@ struct AddGarmentView: View {
         VStack(spacing: 16) {
             Image(systemName: "tshirt")
                 .font(.system(size: 52))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkFaint)
             SerifText("Add a piece", size: 22)
             Text("We'll lift it onto a clean canvas so your wardrobe reads like a lookbook.")
                 .font(Theme.body(14))
