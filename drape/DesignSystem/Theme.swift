@@ -51,10 +51,30 @@ enum Theme {
     }
 
     // ── Editorial type ramp (bundled faces, see DrapeFonts) ──────────────
+    // All three helpers scale with Dynamic Type via `relativeTo:` so the app
+    // honors the user's text-size setting (clamped at the screen roots so the
+    // editorial layout doesn't break). `size` is the size at the default
+    // content size and scales proportionally from there.
+
+    /// Maps a point size to the Dynamic Type text style it should scale with.
+    private static func textStyle(for size: CGFloat) -> Font.TextStyle {
+        switch size {
+        case 30...:    .largeTitle
+        case 24..<30:  .title
+        case 20..<24:  .title2
+        case 17..<20:  .title3
+        case 15..<17:  .body
+        case 13..<15:  .subheadline
+        case 11..<13:  .footnote
+        default:       .caption2
+        }
+    }
+
     /// Newsreader serif display — titles, garment names, story lines.
     /// Defaults to the medium (≈500) optical weight the design uses.
     static func serif(_ size: CGFloat, italic: Bool = false) -> Font {
-        Font.custom(italic ? DrapeFonts.Serif.mediumItalic : DrapeFonts.Serif.medium, size: size)
+        Font.custom(italic ? DrapeFonts.Serif.mediumItalic : DrapeFonts.Serif.medium,
+                    size: size, relativeTo: textStyle(for: size))
     }
     /// Hanken Grotesk — body copy, nav titles, rows.
     static func body(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
@@ -65,11 +85,12 @@ enum Theme {
         case .medium:                     name = DrapeFonts.Body.medium
         default:                          name = DrapeFonts.Body.regular
         }
-        return Font.custom(name, size: size)
+        return Font.custom(name, size: size, relativeTo: textStyle(for: size))
     }
     /// Spline Sans Mono — uppercase letter-spaced kickers and captions.
     static func mono(_ size: CGFloat = 11, weight: Font.Weight = .regular) -> Font {
-        Font.custom(weight == .regular ? DrapeFonts.Mono.regular : DrapeFonts.Mono.medium, size: size)
+        Font.custom(weight == .regular ? DrapeFonts.Mono.regular : DrapeFonts.Mono.medium,
+                    size: size, relativeTo: textStyle(for: size))
     }
 }
 

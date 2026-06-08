@@ -22,6 +22,14 @@ final class CoreLocationProvider: NSObject, LocationProvider, @unchecked Sendabl
         manager.desiredAccuracy = kCLLocationAccuracyKilometer // city-level is fine for weather
     }
 
+    /// Reverse-geocodes a coordinate to its locality (city) for display.
+    func placeName(for coordinate: Coordinate) async -> String? {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let placemarks = try? await CLGeocoder().reverseGeocodeLocation(location)
+        let place = placemarks?.first
+        return place?.locality ?? place?.administrativeArea ?? place?.country
+    }
+
     func currentCoordinate() async throws -> Coordinate {
         switch manager.authorizationStatus {
         case .denied, .restricted:

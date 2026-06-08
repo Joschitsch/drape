@@ -25,8 +25,9 @@ struct MonoLabel: View {
     }
 
     var body: some View {
+        // Floor the size so dense captions never drop below a readable ~10pt.
         Text(text.uppercased())
-            .font(Theme.mono(size))
+            .font(Theme.mono(max(size, 10)))
             .tracking(tracking)
             .foregroundStyle(color)
     }
@@ -73,6 +74,7 @@ struct SerifText: View {
         Text(text)
             .font(Theme.serif(size, italic: italic))
             .tracking(0.1)
+            .lineSpacing(size >= 20 ? 3 : 2)   // editorial leading for readability
             .foregroundStyle(color)
     }
 }

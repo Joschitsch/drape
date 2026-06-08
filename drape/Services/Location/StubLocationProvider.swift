@@ -20,4 +20,6 @@ struct StubLocationProvider: LocationProvider {
     func currentCoordinate() async throws -> Coordinate {
         coordinate
     }
+
+    func placeName(for coordinate: Coordinate) async -> String? { "Berlin" }
 }

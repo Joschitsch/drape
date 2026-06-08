@@ -12,6 +12,13 @@ import Foundation
 /// `Coordinate` so callers never import CoreLocation.
 protocol LocationProvider: Sendable {
     func currentCoordinate() async throws -> Coordinate
+    /// A human-readable place name (locality) for a coordinate, for display in
+    /// the weather widget. Best-effort; returns nil if unavailable.
+    func placeName(for coordinate: Coordinate) async -> String?
+}
+
+extension LocationProvider {
+    func placeName(for coordinate: Coordinate) async -> String? { nil }
 }
 
 enum LocationError: Error {

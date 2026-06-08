@@ -34,6 +34,7 @@ struct RecommendationsView: View {
                 }
             }
             .background(Theme.paper.ignoresSafeArea())
+            .task { await model.loadWeather(container: container) }
             .navigationTitle("Style")
             .toolbar {
                 if case .results = loadingPhase {
@@ -58,7 +59,7 @@ struct RecommendationsView: View {
 
                 // Weather strip (if available)
                 if let weather = model.lastWeather {
-                    WeatherStrip(weather: weather, city: profile?.homeCity)
+                    WeatherStrip(weather: weather, city: model.locationName ?? profile?.homeCity)
                 }
 
                 // Headline

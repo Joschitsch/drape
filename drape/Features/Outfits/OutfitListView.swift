@@ -37,7 +37,7 @@ struct OutfitListView: View {
 
     private var list: some View {
         ScrollView {
-            LazyVStack(spacing: 14) {
+            LazyVStack(spacing: 18) {
                 ForEach(outfits) { outfit in
                     NavigationLink(value: outfit) {
                         OutfitStackCard(outfit: outfit)
@@ -82,10 +82,10 @@ struct OutfitStackCard: View {
             HStack(alignment: .firstTextBaseline) {
                 SerifText(outfit.name, size: 18).lineLimit(1)
                 Spacer()
-                MonoLabel(outfit.occasion.displayName, size: 9)
+                MonoLabel(outfit.occasion.displayName, size: 10)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 13)
+            .padding(.vertical, 14)
 
             Divider().overlay(Theme.line)
 
@@ -98,7 +98,7 @@ struct OutfitStackCard: View {
                         .overlay(alignment: .leading) {
                             Theme.line
                                 .frame(height: 0.5)
-                                .padding(.leading, 68) // inset past thumbnail
+                                .padding(.leading, 72) // inset past thumbnail
                         }
                 }
             }
@@ -107,12 +107,12 @@ struct OutfitStackCard: View {
 
             // ── Footer: tags + wear count ────────────────────────────
             HStack {
-                MonoLabel(outfit.tags.map { "#\($0)" }.joined(separator: "  "), size: 8.5)
+                MonoLabel(outfit.tags.map { "#\($0)" }.joined(separator: "  "), size: 10)
                 Spacer()
-                MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn", size: 8.5)
+                MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn", size: 10)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 9)
+            .padding(.vertical, 11)
         }
         .drapeCard(radius: 18)
     }
@@ -123,30 +123,31 @@ struct GarmentStackRow: View {
     let garment: Garment
     var compact: Bool = true
 
-    private let thumbW: CGFloat = 38
-    private let thumbH: CGFloat = 46
+    private let thumbW: CGFloat = 42
+    private let thumbH: CGFloat = 52
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
                 .frame(width: thumbW, height: thumbH)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)
 
-            VStack(alignment: .leading, spacing: 2) {
-                SerifText(garment.displayName, size: 13.5).lineLimit(1)
-                MonoLabel(garment.category.displayName, size: 8.5)
+            VStack(alignment: .leading, spacing: 4) {
+                SerifText(garment.displayName, size: 15).lineLimit(1)
+                MonoLabel(garment.category.displayName, size: 10)
             }
 
             Spacer()
 
             Circle()
                 .fill(garment.primaryColor.color)
-                .frame(width: 10, height: 10)
+                .frame(width: 12, height: 12)
                 .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 44)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(minHeight: 56)
     }
 }
 

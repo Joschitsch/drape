@@ -21,6 +21,24 @@ final class RecommendationsViewModel {
     var weatherSummary: String?
     /// Last successfully fetched weather snapshot — used by WeatherStrip.
     var lastWeather: WeatherSnapshot?
+    /// Reverse-geocoded current location name — shown in WeatherStrip.
+    var locationName: String?
+
+    /// Eagerly loads weather + location name (no engine run) so the weather
+    /// widget is populated as soon as the Style tab appears. Cheap to call;
+    /// no-ops the heavy work, only fetching when we don't already have weather.
+    func loadWeather(container: AppContainer) async {
+        guard lastWeather == nil else { return }
+        do {
+            let coord = try await container.location.currentCoordinate()
+            async let name = container.location.placeName(for: coord)
+            let weather = try await container.weather.currentWeather(at: coord)
+            lastWeather = weather
+            locationName = await name
+        } catch {
+            // Leave weather unset; the idle view simply omits the strip.
+        }
+    }
 
     func refresh(
         wardrobe: [Garment],
@@ -84,7 +102,10 @@ final class RecommendationsViewModel {
     private func fetchWeather(container: AppContainer) async -> WeatherSnapshot? {
         do {
             let coord = try await container.location.currentCoordinate()
-            return try await container.weather.currentWeather(at: coord)
+            async let name = container.location.placeName(for: coord)
+            let weather = try await container.weather.currentWeather(at: coord)
+            locationName = await name
+            return weather
         } catch {
             return nil
         }
