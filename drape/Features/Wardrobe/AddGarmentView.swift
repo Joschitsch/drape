@@ -24,6 +24,7 @@ struct AddGarmentView: View {
             content(model: model)
                 .scrollContentBackground(.hidden)
                 .background(Theme.paper.ignoresSafeArea())
+                .presentationDragIndicator(.visible)
                 .navigationTitle("Add Item")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {

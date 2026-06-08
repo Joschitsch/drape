@@ -15,51 +15,36 @@ struct OccasionPreferenceStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
             VStack(alignment: .leading, spacing: 8) {
-                Label(occasion.displayName, systemImage: occasion.systemImage)
-                    .font(.title2.bold())
+                HStack(spacing: 8) {
+                    Image(systemName: occasion.systemImage)
+                        .font(.system(size: 20))
+                        .foregroundStyle(Theme.ink)
+                    SerifText(occasion.displayName, size: 24)
+                }
                 Text("How do you like to dress for \(occasion.displayName.lowercased())?")
-                    .foregroundStyle(.secondary)
+                    .font(Theme.body(15))
+                    .foregroundStyle(Theme.inkSoft)
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Formality")
-                    .font(.subheadline.weight(.semibold))
-                HStack(spacing: 8) {
+                MonoLabel("Formality")
+                FlowLayout(spacing: 8) {
                     ForEach(Formality.allCases) { level in
-                        Button {
+                        DrapeChip(label: level.displayName, active: formality == level) {
                             formality = level
-                        } label: {
-                            Text(level.displayName)
-                                .font(.subheadline)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(formality == level ? Color.accentColor : Color(.secondarySystemBackground),
-                                            in: Capsule())
-                                .foregroundStyle(formality == level ? .white : .primary)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Style vibes  ·  pick any")
-                    .font(.subheadline.weight(.semibold))
+                MonoLabel("Style vibes · pick any")
                 FlowLayout(spacing: 8) {
                     ForEach(StyleTag.allCases) { tag in
                         let selected = styles.contains(tag)
-                        Button {
+                        DrapeChip(label: tag.displayName, active: selected) {
                             if selected { styles.remove(tag) } else { styles.insert(tag) }
-                        } label: {
-                            Text(tag.displayName)
-                                .font(.subheadline)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(selected ? Color.accentColor : Color(.secondarySystemBackground),
-                                            in: Capsule())
-                                .foregroundStyle(selected ? .white : .primary)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -68,6 +53,8 @@ struct OccasionPreferenceStep: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.paper.ignoresSafeArea())
     }
 }
 

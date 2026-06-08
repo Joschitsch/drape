@@ -46,6 +46,7 @@ struct OutfitBuilderView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Theme.paper.ignoresSafeArea())
+            .presentationDragIndicator(.visible)
             .navigationTitle(model.isEditing ? "Edit Outfit" : "New Outfit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

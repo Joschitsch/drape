@@ -19,8 +19,8 @@ struct OnboardingView: View {
             GeometryReader { geo in
                 let progress = Double(model.currentStep + 1) / Double(model.totalSteps)
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color(.systemFill))
-                    Capsule().fill(Color.accentColor)
+                    Capsule().fill(Theme.line)
+                    Capsule().fill(Theme.ink)
                         .frame(width: geo.size.width * progress)
                 }
                 .frame(height: 4)
@@ -46,38 +46,56 @@ struct OnboardingView: View {
             // Navigation buttons
             HStack {
                 if model.currentStep > 0 {
-                    Button("Back") { model.back() }
-                        .foregroundStyle(.secondary)
+                    Button { model.back() } label: {
+                        Text("Back")
+                            .font(Theme.body(17))
+                            .foregroundStyle(Theme.inkSoft)
+                            .frame(minHeight: 44)
+                            .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.plain)
                 }
                 Spacer()
-                Button(model.isOnLastStep ? "Let's go" : "Next") {
+                Button {
                     if model.isOnLastStep {
                         model.apply(to: profile)
                         try? modelContext.save()
                     } else {
                         model.next()
                     }
+                } label: {
+                    Text(model.isOnLastStep ? "Let's go" : "Next")
+                        .font(Theme.body(17, weight: .semibold))
+                        .foregroundStyle(Theme.paper)
+                        .frame(minHeight: 50)
+                        .padding(.horizontal, 28)
+                        .background(Theme.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
         }
+        .background(Theme.paper.ignoresSafeArea())
     }
 
     // MARK: - Steps
 
     private var welcomeStep: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 18) {
             Spacer()
-            Image(systemName: "tshirt.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.tint)
-            Text("Welcome to Drape")
-                .font(.largeTitle.bold())
-            Text("Let's personalise your outfit recommendations.\nTell us how you like to dress for different occasions.")
+            Image(systemName: "tshirt")
+                .font(.system(size: 56, weight: .ultraLight))
+                .foregroundStyle(Theme.ink)
+            MonoLabel("Welcome to Drape")
+            SerifText("Become the version of yourself you already own the clothes for.", size: 28)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
+            Text("Tell us how you like to dress for a few occasions, and Drape will read your wardrobe, the weather, and your week.")
+                .font(Theme.body(15))
+                .foregroundStyle(Theme.inkSoft)
+                .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
             Spacer()
         }
@@ -98,11 +116,11 @@ struct OnboardingView: View {
     private var globalStyleStep: some View {
         VStack(alignment: .leading, spacing: 32) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Your overall style")
-                    .font(.title2.bold())
+                SerifText("Your overall style", size: 24)
                     .padding(.horizontal, 24)
                 Text("Any general styles you love? Used as a fallback for occasions you skipped.")
-                    .foregroundStyle(.secondary)
+                    .font(Theme.body(15))
+                    .foregroundStyle(Theme.inkSoft)
                     .padding(.horizontal, 24)
             }
             .padding(.top, 32)
@@ -144,18 +162,9 @@ private struct GlobalStylePicker: View {
         FlowLayout(spacing: 8) {
             ForEach(StyleTag.allCases) { tag in
                 let isSelected = selected.contains(tag)
-                Button {
+                DrapeChip(label: tag.displayName, active: isSelected) {
                     if isSelected { selected.remove(tag) } else { selected.insert(tag) }
-                } label: {
-                    Text(tag.displayName)
-                        .font(.subheadline)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(isSelected ? Color.accentColor : Color(.secondarySystemBackground),
-                                    in: Capsule())
-                        .foregroundStyle(isSelected ? .white : .primary)
                 }
-                .buttonStyle(.plain)
             }
         }
     }

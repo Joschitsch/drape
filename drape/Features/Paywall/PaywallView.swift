@@ -76,6 +76,7 @@ struct PaywallView: View {
                 }
             }
             .background(Theme.paper.ignoresSafeArea())
+            .presentationDragIndicator(.visible)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
