@@ -81,7 +81,7 @@ struct AddGarmentView: View {
 
     private func sourcePicker(error: String?) -> some View {
         VStack(spacing: 16) {
-            Image(systemName: "tshirt")
+            Image("drape.wardrobe")
                 .font(.system(size: 52))
                 .foregroundStyle(Theme.inkFaint)
             SerifText("Add a piece", size: 22)

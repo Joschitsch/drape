@@ -29,7 +29,7 @@ struct GarmentPickerSheet: View {
                 if matching.isEmpty {
                     ContentUnavailableView(
                         "No \(slot.displayName.lowercased()) items",
-                        systemImage: slot.systemImage,
+                        image: slot.iconName,
                         description: Text("Add \(slot.displayName.lowercased()) pieces to your wardrobe first.")
                     )
                 } else {

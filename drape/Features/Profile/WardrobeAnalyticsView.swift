@@ -39,7 +39,7 @@ struct WardrobeAnalyticsView: View {
             if costPerWearItems.isEmpty && rarelyUsed.isEmpty {
                 ContentUnavailableView(
                     "No data yet",
-                    systemImage: "chart.bar",
+                    image: "drape.analytics",
                     description: Text("Log some wears and add purchase prices to see analytics.")
                 )
             } else {

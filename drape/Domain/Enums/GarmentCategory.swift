@@ -31,15 +31,16 @@ enum GarmentCategory: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// SF Symbol used in lists, slot pickers and placeholders.
-    var systemImage: String {
+    /// Custom symbol (Assets.xcassets) used in lists, slot pickers and chrome.
+    /// The same silhouette family as the museum-canvas `CategoryGlyph`.
+    var iconName: String {
         switch self {
-        case .top: "tshirt"
-        case .bottom: "rectangle.portrait.split.2x1"
-        case .dress: "figure.stand.dress"
-        case .footwear: "shoe"
-        case .outerwear: "coat"
-        case .accessory: "eyeglasses"
+        case .top: "drape.top"
+        case .bottom: "drape.bottom"
+        case .dress: "drape.dress"
+        case .footwear: "drape.footwear"
+        case .outerwear: "drape.outerwear"
+        case .accessory: "drape.accessory"
         }
     }
 
@@ -80,14 +81,14 @@ enum OutfitSlot: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    var systemImage: String {
+    var iconName: String {
         switch self {
-        case .top: "tshirt"
-        case .bottom: "rectangle.portrait.split.2x1"
-        case .fullBody: "figure.dress.line.vertical.figure"
-        case .footwear: "shoe"
-        case .outerwear: "coat"
-        case .accessory: "eyeglasses"
+        case .top: "drape.top"
+        case .bottom: "drape.bottom"
+        case .fullBody: "drape.dress"   // aligned with GarmentCategory.dress
+        case .footwear: "drape.footwear"
+        case .outerwear: "drape.outerwear"
+        case .accessory: "drape.accessory"
         }
     }
 

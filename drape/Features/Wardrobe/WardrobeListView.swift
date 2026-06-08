@@ -114,7 +114,7 @@ struct WardrobeListView: View {
                 if filteredGarments.isEmpty {
                     ContentUnavailableView {
                         Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet",
-                              systemImage: selectedCategory?.systemImage ?? "tshirt")
+                              image: selectedCategory?.iconName ?? "drape.wardrobe")
                     } description: {
                         Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
                     } actions: {
@@ -161,7 +161,7 @@ struct WardrobeListView: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label("Your wardrobe is empty", systemImage: "tshirt")
+            Label("Your wardrobe is empty", image: "drape.wardrobe")
         } description: {
             Text("Add your clothes to start building outfits.")
         } actions: {

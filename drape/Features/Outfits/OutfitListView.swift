@@ -51,7 +51,7 @@ struct OutfitListView: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label("No outfits yet", systemImage: "square.stack.3d.up")
+            Label("No outfits yet", image: "drape.outfits")
         } description: {
             Text("Combine wardrobe items into outfits.")
         } actions: {

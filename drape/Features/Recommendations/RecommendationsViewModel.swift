@@ -35,7 +35,7 @@ final class RecommendationsViewModel {
         // either service fails (recommendations still run without weather).
         let weather = await fetchWeather(container: container)
         if let w = weather {
-            weatherSummary = "\(w.condition.systemImage)  \(Int(w.apparentTemperatureCelsius))°C"
+            weatherSummary = "\(w.condition.displayName) · \(Int(w.apparentTemperatureCelsius))°C"
             lastWeather = w
         }
 

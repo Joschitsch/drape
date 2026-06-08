@@ -67,7 +67,7 @@ struct GarmentDetailView: View {
                     garment.isFavorite.toggle()
                     try? modelContext.save()
                 } label: {
-                    Image(systemName: garment.isFavorite ? "heart.fill" : "heart")
+                    Image(garment.isFavorite ? "drape.heart.fill" : "drape.heart")
                         .foregroundStyle(Theme.ink)
                 }
             }

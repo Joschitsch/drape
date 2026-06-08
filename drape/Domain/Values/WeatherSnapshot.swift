@@ -42,13 +42,13 @@ enum WeatherCondition: String, Codable, CaseIterable, Sendable {
     case snow
     case storm
 
-    var systemImage: String {
+    var iconName: String {
         switch self {
-        case .clear: "sun.max"
-        case .cloudy: "cloud"
-        case .rain: "cloud.rain"
-        case .snow: "snowflake"
-        case .storm: "cloud.bolt.rain"
+        case .clear: "drape.weather.clear"
+        case .cloudy: "drape.weather.cloudy"
+        case .rain: "drape.weather.rain"
+        case .snow: "drape.weather.snow"
+        case .storm: "drape.weather.storm"
         }
     }
 

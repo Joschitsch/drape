@@ -172,7 +172,7 @@ struct ProfileView: View {
                     }
                     .padding(.vertical, 4)
                 } label: {
-                    Label(occasion.displayName, systemImage: occasion.systemImage)
+                    Label(occasion.displayName, image: occasion.iconName)
                 }
             }
         }
@@ -251,7 +251,7 @@ struct ProfileView: View {
                     showingPaywall = true
                 } label: {
                     HStack {
-                        Label("Wardrobe Analytics", systemImage: "chart.bar.fill")
+                        Label("Wardrobe Analytics", image: "drape.analytics")
                         Spacer()
                         Text("Pro")
                             .font(Theme.mono(10, weight: .medium))

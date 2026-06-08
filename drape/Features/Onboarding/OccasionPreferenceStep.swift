@@ -16,7 +16,7 @@ struct OccasionPreferenceStep: View {
         VStack(alignment: .leading, spacing: 32) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    Image(systemName: occasion.systemImage)
+                    Image(occasion.iconName)
                         .font(.system(size: 20))
                         .foregroundStyle(Theme.ink)
                     SerifText(occasion.displayName, size: 24)

@@ -84,8 +84,8 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         VStack(spacing: 18) {
             Spacer()
-            Image(systemName: "tshirt")
-                .font(.system(size: 56, weight: .ultraLight))
+            Image("drape.wardrobe")
+                .font(.system(size: 56))
                 .foregroundStyle(Theme.ink)
             MonoLabel("Welcome to Drape")
             SerifText("Become the version of yourself you already own the clothes for.", size: 28)

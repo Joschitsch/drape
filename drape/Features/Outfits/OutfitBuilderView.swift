@@ -27,7 +27,7 @@ struct OutfitBuilderView: View {
                     TextField("Outfit name", text: $model.name)
                     Picker("Occasion", selection: $model.occasion) {
                         ForEach(Occasion.allCases) { occasion in
-                            Label(occasion.displayName, systemImage: occasion.systemImage).tag(occasion)
+                            Label(occasion.displayName, image: occasion.iconName).tag(occasion)
                         }
                     }
                     TextField("Tags (comma separated)", text: $model.tagsText)
@@ -95,7 +95,7 @@ struct OutfitBuilderView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(Theme.line, style: StrokeStyle(lineWidth: 1, dash: [4]))
-                    Image(systemName: slot.systemImage)
+                    Image(slot.iconName)
                         .font(.body)
                         .foregroundStyle(Theme.inkFaint.opacity(0.6))
                 }

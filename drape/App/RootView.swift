@@ -17,16 +17,16 @@ struct RootView: View {
 
     var body: some View {
         TabView {
-            Tab("Wardrobe", systemImage: "tshirt") {
+            Tab("Wardrobe", image: "drape.wardrobe") {
                 WardrobeListView()
             }
-            Tab("Outfits", systemImage: "figure.stand") {
+            Tab("Outfits", image: "drape.outfits") {
                 OutfitListView()
             }
-            Tab("Style", systemImage: "sparkles") {
+            Tab("Style", image: "drape.style") {
                 RecommendationsView()
             }
-            Tab("Profile", systemImage: "person.crop.circle") {
+            Tab("Profile", systemImage: "person") {
                 ProfileView()
             }
         }

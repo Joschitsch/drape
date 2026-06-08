@@ -18,7 +18,7 @@ struct GarmentAttributeFields: View {
             TextField("Name", text: $draft.name)
             Picker("Category", selection: $draft.category) {
                 ForEach(GarmentCategory.allCases) { category in
-                    Label(category.displayName, systemImage: category.systemImage).tag(category)
+                    Label(category.displayName, image: category.iconName).tag(category)
                 }
             }
             colorRow

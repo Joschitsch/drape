@@ -30,14 +30,14 @@ enum Occasion: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    var systemImage: String {
+    var iconName: String {
         switch self {
-        case .everyday: "sun.max"
-        case .work: "briefcase"
-        case .date: "heart"
-        case .sport: "figure.run"
-        case .formal: "sparkles"
-        case .travel: "airplane"
+        case .everyday: "drape.everyday"
+        case .work: "drape.work"
+        case .date: "drape.date"
+        case .sport: "drape.sport"
+        case .formal: "drape.formal"
+        case .travel: "drape.travel"
         }
     }
 
