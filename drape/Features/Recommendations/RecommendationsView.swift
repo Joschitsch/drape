@@ -115,7 +115,7 @@ struct RecommendationsView: View {
                 if model.suggestions.isEmpty {
                     ContentUnavailableView(
                         "Not enough items",
-                        systemImage: "tshirt",
+                        image: "drape.style",
                         description: Text("Add more wardrobe items — you need footwear and a top + bottom (or a dress) to get suggestions.")
                     )
                 } else {
