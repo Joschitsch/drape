@@ -72,13 +72,14 @@ struct GarmentDetailView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") { isEditing = true }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button { isEditing = true } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
                     Button(role: .destructive) { showDeleteConfirm = true } label: {
                         Label("Delete", systemImage: "trash")
                     }
+                    .tint(.red)
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }

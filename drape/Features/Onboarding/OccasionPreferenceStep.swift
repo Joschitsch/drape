@@ -15,10 +15,11 @@ struct OccasionPreferenceStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(occasion.iconName)
                         .font(.system(size: 20))
                         .foregroundStyle(Theme.ink)
+                        .frame(width: 30, alignment: .leading)
                     SerifText(occasion.displayName, size: 24)
                 }
                 Text("How do you like to dress for \(occasion.displayName.lowercased())?")
@@ -55,42 +56,5 @@ struct OccasionPreferenceStep: View {
         .padding(.top, 32)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.paper.ignoresSafeArea())
-    }
-}
-
-// MARK: - Simple flow layout
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 0
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if x + size.width > width && x > 0 {
-                x = 0; y += lineHeight + spacing; lineHeight = 0
-            }
-            x += size.width + spacing
-            lineHeight = max(lineHeight, size.height)
-        }
-        return CGSize(width: width, height: y + lineHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        var y = bounds.minY
-        var lineHeight: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if x + size.width > bounds.maxX && x > bounds.minX {
-                x = bounds.minX; y += lineHeight + spacing; lineHeight = 0
-            }
-            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-            x += size.width + spacing
-            lineHeight = max(lineHeight, size.height)
-        }
     }
 }

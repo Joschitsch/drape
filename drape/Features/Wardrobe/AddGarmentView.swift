@@ -90,28 +90,19 @@ struct AddGarmentView: View {
                 .foregroundStyle(Theme.inkSoft)
                 .multilineTextAlignment(.center)
 
-            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                Button {
-                    showCamera = true
-                } label: {
-                    Label("Take Photo", systemImage: "camera")
-                        .frame(maxWidth: .infinity)
+            let hasCamera = UIImagePickerController.isSourceTypeAvailable(.camera)
+
+            if hasCamera {
+                Button { showCamera = true } label: {
+                    Label("Take Photo", systemImage: "camera").drapePrimaryFill()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
             }
 
-            if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                PhotosPicker(selection: $pickerItem, matching: .images) {
-                    Label("Choose Photo", systemImage: "photo.on.rectangle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            } else {
-                PhotosPicker(selection: $pickerItem, matching: .images) {
-                    Label("Choose Photo", systemImage: "photo.on.rectangle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
+            // The library picker is primary when there's no camera, otherwise secondary.
+            PhotosPicker(selection: $pickerItem, matching: .images) {
+                Label("Choose Photo", systemImage: "photo.on.rectangle")
+                    .modifier(PhotoButtonFill(primary: !hasCamera))
             }
 
             if let error {
@@ -139,6 +130,14 @@ struct AddGarmentView: View {
                 dismiss()
             }
         }
+    }
+}
+
+/// Applies the primary or secondary pill fill to a (non-Button) PhotosPicker label.
+private struct PhotoButtonFill: ViewModifier {
+    let primary: Bool
+    func body(content: Content) -> some View {
+        if primary { content.drapePrimaryFill() } else { content.drapeSecondaryFill() }
     }
 }
 

@@ -18,10 +18,10 @@ struct GarmentAttributeFields: View {
             TextField("Name", text: $draft.name)
             Picker("Category", selection: $draft.category) {
                 ForEach(GarmentCategory.allCases) { category in
-                    Label(category.displayName, image: category.iconName).tag(category)
+                    Text(category.displayName).tag(category)
                 }
             }
-            .labelStyle(.drapeIcon)
+            .pickerStyle(.menu)
             colorRow
         }
 
@@ -29,9 +29,11 @@ struct GarmentAttributeFields: View {
             Picker("Formality", selection: $draft.formality) {
                 ForEach(Formality.allCases) { Text($0.displayName).tag($0) }
             }
+            .pickerStyle(.menu)
             Picker("Warmth", selection: $draft.warmth) {
                 ForEach(WarmthLevel.allCases) { Text($0.displayName).tag($0) }
             }
+            .pickerStyle(.menu)
             VStack(alignment: .leading, spacing: 6) {
                 Text("Seasons").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
                 SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)

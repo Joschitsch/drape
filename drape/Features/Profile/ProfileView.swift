@@ -2,8 +2,10 @@
 //  ProfileView.swift
 //  drape
 //
-//  Profile editing: per-occasion prefs, global styles/colors/formality,
-//  home location, Pro-gated analytics, and the dev tier toggle.
+//  Profile: stats, register (styles + palette), per-occasion prefs, default
+//  formality, home location, Pro-gated analytics, dev tier toggle. Everything is
+//  edited in place — chips/swatches/pickers apply immediately (auto-save), so
+//  there are no separate editor sheets.
 //
 
 import SwiftUI
@@ -12,16 +14,13 @@ import SwiftData
 struct ProfileView: View {
     @Query private var profiles: [UserProfile]
     @Environment(MockEntitlementService.self) private var entitlements
+    @Environment(AppContainer.self) private var container
     @Environment(\.modelContext) private var modelContext
 
     private var profile: UserProfile? { profiles.first }
 
-    @State private var editingOccasion: Occasion? = nil
-    @State private var showingStyleEdit = false
-    @State private var showingColorEdit = false
-    @State private var showingFormalityEdit = false
-    @State private var showingLocationEdit = false
     @State private var showingPaywall = false
+    @State private var fetchingLocation = false
 
     @Query(filter: #Predicate<Garment> { !$0.isArchived }) private var garments: [Garment]
     @Query private var outfits: [Outfit]
@@ -32,14 +31,12 @@ struct ProfileView: View {
             Form {
                 if let profile {
                     statCardSection
-                    registerSection(profile: profile)
                     if !entitlements.isEnabled(.wardrobeAnalytics) {
                         proUpsellSection
                     }
-                    occasionSection(profile: profile)
-                    globalStyleSection(profile: profile)
-                    colorSection(profile: profile)
+                    registerSection(profile: profile)
                     formalitySection(profile: profile)
+                    occasionSection(profile: profile)
                     locationSection(profile: profile)
                     analyticsSection
                 }
@@ -48,31 +45,13 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .scrollContentBackground(.hidden)
             .background(Theme.paper)
-            .sheet(item: $editingOccasion) { occasion in
-                if let profile {
-                    OccasionEditSheet(occasion: occasion, profile: profile)
-                        .environment(\.modelContext, modelContext)
-                }
-            }
-            .sheet(isPresented: $showingStyleEdit) {
-                if let profile { StyleEditSheet(profile: profile).environment(\.modelContext, modelContext) }
-            }
-            .sheet(isPresented: $showingColorEdit) {
-                if let profile { ColorEditSheet(profile: profile).environment(\.modelContext, modelContext) }
-            }
-            .sheet(isPresented: $showingFormalityEdit) {
-                if let profile { FormalityEditSheet(profile: profile).environment(\.modelContext, modelContext) }
-            }
-            .sheet(isPresented: $showingLocationEdit) {
-                if let profile { LocationEditSheet(profile: profile).environment(\.modelContext, modelContext) }
-            }
             .sheet(isPresented: $showingPaywall) {
                 PaywallView().environment(entitlements)
             }
         }
     }
 
-    // MARK: - Sections
+    // MARK: - Stats
 
     private var statCardSection: some View {
         Section {
@@ -97,30 +76,97 @@ struct ProfileView: View {
         .padding(.vertical, 18)
     }
 
+    // MARK: - Register (styles + palette) — edited in place
+
     private func registerSection(profile: UserProfile) -> some View {
         Section("Your register") {
-            if !profile.preferredStyles.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(profile.preferredStyles, id: \.self) { style in
-                            TagChip(style.displayName)
+            VStack(alignment: .leading, spacing: 10) {
+                MonoLabel("Styles you lean on")
+                SelectableChipsRow(items: StyleTag.allCases, title: \.displayName,
+                                   selection: stylesBinding(profile))
+            }
+            .padding(.vertical, 4)
+
+            VStack(alignment: .leading, spacing: 10) {
+                MonoLabel("Palette")
+                SelectableSwatchRow(selection: colorsBinding(profile))
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    // MARK: - Default formality — inline picker
+
+    private func formalitySection(profile: UserProfile) -> some View {
+        Section("Default formality") {
+            Picker("Usual formality", selection: formalityBinding(profile)) {
+                ForEach(Formality.allCases) { Text($0.displayName).tag($0) }
+            }
+            .pickerStyle(.menu)
+        }
+    }
+
+    // MARK: - Occasion preferences — inline disclosure editor
+
+    private func occasionSection(profile: UserProfile) -> some View {
+        Section("Occasion preferences") {
+            ForEach(OnboardingViewModel.occasions) { occasion in
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Picker("Formality", selection: occasionFormalityBinding(profile, occasion)) {
+                            ForEach(Formality.allCases) { Text($0.displayName).tag($0) }
+                        }
+                        .pickerStyle(.menu)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            MonoLabel("Style vibes")
+                            SelectableChipsRow(items: StyleTag.allCases, title: \.displayName,
+                                               selection: occasionStylesBinding(profile, occasion))
                         }
                     }
-                }
-            }
-            if !profile.preferredColors.isEmpty {
-                HStack(spacing: 10) {
-                    MonoLabel("Palette")
-                    ForEach(profile.preferredColors, id: \.self) { color in
-                        Circle()
-                            .fill(color.color)
-                            .frame(width: 22, height: 22)
-                            .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
-                    }
+                    .padding(.vertical, 6)
+                } label: {
+                    Label(occasion.displayName, image: occasion.iconName)
+                        .labelStyle(.drapeIcon)
                 }
             }
         }
     }
+
+    // MARK: - Location — inline
+
+    private func locationSection(profile: UserProfile) -> some View {
+        Section {
+            HStack {
+                Text("Home")
+                Spacer()
+                Text(locationLabel(profile)).foregroundStyle(Theme.inkSoft)
+            }
+            Button {
+                Task { await useCurrentLocation(profile) }
+            } label: {
+                HStack {
+                    Label("Use current location", systemImage: "location.fill")
+                    if fetchingLocation { Spacer(); ProgressView() }
+                }
+            }
+            .disabled(fetchingLocation)
+            if profile.homeLatitude != nil {
+                Button("Clear home location", role: .destructive) {
+                    profile.homeLatitude = nil
+                    profile.homeLongitude = nil
+                    profile.homeCity = nil
+                    persist()
+                }
+            }
+        } header: {
+            Text("Location")
+        } footer: {
+            Text("Used for weather when live location is unavailable.")
+        }
+    }
+
+    // MARK: - Analytics + Pro
 
     private var proUpsellSection: some View {
         Section {
@@ -146,99 +192,6 @@ struct ProfileView: View {
         }
         .listRowInsets(.init())
         .listRowBackground(Color.clear)
-    }
-
-    private func occasionSection(profile: UserProfile) -> some View {
-        Section("Occasion preferences") {
-            ForEach(OnboardingViewModel.occasions) { occasion in
-                let pref = profile.preference(for: occasion)
-                DisclosureGroup {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Formality")
-                                .foregroundStyle(Theme.inkSoft)
-                            Spacer()
-                            Text(pref?.targetFormality.displayName ?? occasion.targetFormality.displayName)
-                        }
-                        if let styles = pref?.styles, !styles.isEmpty {
-                            chips(styles.map(\.displayName))
-                        } else {
-                            Text("No styles set")
-                                .foregroundStyle(Theme.inkSoft)
-                                .font(.caption)
-                        }
-                        Button("Edit") { editingOccasion = occasion }
-                            .font(.caption)
-                    }
-                    .padding(.vertical, 4)
-                } label: {
-                    Label(occasion.displayName, image: occasion.iconName)
-                        .labelStyle(.drapeIcon)
-                }
-            }
-        }
-    }
-
-    private func globalStyleSection(profile: UserProfile) -> some View {
-        Section("Global style fallback") {
-            if profile.preferredStyles.isEmpty {
-                Text("None set")
-                    .foregroundStyle(Theme.inkSoft)
-            } else {
-                chips(profile.preferredStyles.map(\.displayName))
-            }
-            Button("Edit styles") { showingStyleEdit = true }
-                .font(.footnote)
-        }
-    }
-
-    private func colorSection(profile: UserProfile) -> some View {
-        Section("Preferred colors") {
-            if profile.preferredColors.isEmpty {
-                Text("None set")
-                    .foregroundStyle(Theme.inkSoft)
-            } else {
-                chips(profile.preferredColors.map(\.displayName),
-                      swatches: profile.preferredColors.map(\.color))
-            }
-            Button("Edit colors") { showingColorEdit = true }
-                .font(.footnote)
-        }
-    }
-
-    private func formalitySection(profile: UserProfile) -> some View {
-        Section("Default formality") {
-            HStack {
-                Text(profile.defaultFormality.displayName)
-                Spacer()
-                Button("Edit") { showingFormalityEdit = true }
-                    .font(.footnote)
-            }
-        }
-    }
-
-    private func locationSection(profile: UserProfile) -> some View {
-        Section {
-            if let lat = profile.homeLatitude, let lon = profile.homeLongitude {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Home location set")
-                        Text(String(format: "%.4f, %.4f", lat, lon))
-                            .font(.caption)
-                            .foregroundStyle(Theme.inkSoft)
-                    }
-                    Spacer()
-                    Button("Edit") { showingLocationEdit = true }
-                        .font(.footnote)
-                }
-            } else {
-                Button("Set home location") { showingLocationEdit = true }
-            }
-        } header: {
-            Text("Location")
-        } footer: {
-            Text("Used for weather when live location is unavailable.")
-        }
     }
 
     private var analyticsSection: some View {
@@ -291,299 +244,78 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Bindings (edit-in-place, auto-saving)
 
-    private func chips(_ labels: [String], swatches: [Color]? = nil) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
-                ForEach(Array(labels.enumerated()), id: \.offset) { offset, label in
-                    TagChip(label, swatch: swatches?[safe: offset])
-                }
-            }
-        }
+    private func persist() { try? modelContext.save() }
+
+    private func stylesBinding(_ profile: UserProfile) -> Binding<Set<StyleTag>> {
+        Binding(
+            get: { Set(profile.preferredStyles) },
+            set: { profile.preferredStyles = StyleTag.allCases.filter($0.contains); persist() }
+        )
     }
-}
 
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
+    private func colorsBinding(_ profile: UserProfile) -> Binding<Set<ColorTag>> {
+        Binding(
+            get: { Set(profile.preferredColors) },
+            set: { profile.preferredColors = ColorTag.allCases.filter($0.contains); persist() }
+        )
     }
-}
 
-// MARK: - Occasion edit sheet
+    private func formalityBinding(_ profile: UserProfile) -> Binding<Formality> {
+        Binding(
+            get: { profile.defaultFormality },
+            set: { profile.defaultFormality = $0; persist() }
+        )
+    }
 
-private struct OccasionEditSheet: View {
-    let occasion: Occasion
-    let profile: UserProfile
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    private func occasionFormalityBinding(_ profile: UserProfile, _ occasion: Occasion) -> Binding<Formality> {
+        Binding(
+            get: { profile.preference(for: occasion)?.targetFormality ?? occasion.targetFormality },
+            set: { setOccasion(profile, occasion, formality: $0, styles: nil) }
+        )
+    }
 
-    @State private var formality: Formality
-    @State private var styles: Set<StyleTag>
+    private func occasionStylesBinding(_ profile: UserProfile, _ occasion: Occasion) -> Binding<Set<StyleTag>> {
+        Binding(
+            get: { Set(profile.preference(for: occasion)?.styles ?? []) },
+            set: { setOccasion(profile, occasion, formality: nil, styles: $0) }
+        )
+    }
 
-    init(occasion: Occasion, profile: UserProfile) {
-        self.occasion = occasion
-        self.profile = profile
+    private func setOccasion(_ profile: UserProfile, _ occasion: Occasion,
+                             formality: Formality?, styles: Set<StyleTag>?) {
         let existing = profile.preference(for: occasion)
-        _formality = State(initialValue: existing?.targetFormality ?? occasion.targetFormality)
-        _styles = State(initialValue: Set(existing?.styles ?? []))
+        let newFormality = formality ?? existing?.targetFormality ?? occasion.targetFormality
+        let newStyles = styles.map { set in StyleTag.allCases.filter(set.contains) }
+            ?? existing?.styles ?? []
+        var prefs = profile.occasionPreferences.filter { $0.occasion != occasion }
+        prefs.append(OccasionPreference(occasion: occasion, targetFormality: newFormality, styles: newStyles))
+        profile.occasionPreferences = prefs
+        persist()
     }
 
-    var body: some View {
-        NavigationStack {
-            OccasionPreferenceStep(occasion: occasion, formality: $formality, styles: $styles)
-                .navigationTitle(occasion.displayName)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            var prefs = profile.occasionPreferences.filter { $0.occasion != occasion }
-                            prefs.append(OccasionPreference(occasion: occasion, targetFormality: formality, styles: Array(styles)))
-                            profile.occasionPreferences = prefs
-                            try? modelContext.save()
-                            dismiss()
-                        }
-                    }
-                }
+    // MARK: - Location helpers
+
+    private func locationLabel(_ profile: UserProfile) -> String {
+        if let city = profile.homeCity, !city.isEmpty { return city }
+        if let lat = profile.homeLatitude, let lon = profile.homeLongitude {
+            return String(format: "%.3f, %.3f", lat, lon)
         }
-    }
-}
-
-// MARK: - Style edit sheet
-
-private struct StyleEditSheet: View {
-    let profile: UserProfile
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-    @State private var selection: Set<StyleTag>
-
-    init(profile: UserProfile) {
-        self.profile = profile
-        _selection = State(initialValue: Set(profile.preferredStyles))
+        return "Not set"
     }
 
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Choose your global style defaults") {
-                    SelectableChipsRow(
-                        items: StyleTag.allCases,
-                        title: \.displayName,
-                        selection: $selection
-                    )
-                }
-            }
-            .navigationTitle("Global Styles")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        profile.preferredStyles = Array(selection)
-                        try? modelContext.save()
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Color edit sheet
-
-private struct ColorEditSheet: View {
-    let profile: UserProfile
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-    @State private var selection: Set<ColorTag>
-
-    init(profile: UserProfile) {
-        self.profile = profile
-        _selection = State(initialValue: Set(profile.preferredColors))
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Colors you gravitate toward") {
-                    SelectableChipsRow(
-                        items: ColorTag.allCases,
-                        title: \.displayName,
-                        selection: $selection
-                    )
-                }
-            }
-            .navigationTitle("Preferred Colors")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        profile.preferredColors = Array(selection)
-                        try? modelContext.save()
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Formality edit sheet
-
-private struct FormalityEditSheet: View {
-    let profile: UserProfile
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-    @State private var formality: Formality
-
-    init(profile: UserProfile) {
-        self.profile = profile
-        _formality = State(initialValue: profile.defaultFormality)
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Your default dress level") {
-                    Picker("Formality", selection: $formality) {
-                        ForEach(Formality.allCases) { f in
-                            Text(f.displayName).tag(f)
-                        }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                }
-            }
-            .navigationTitle("Default Formality")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        profile.defaultFormality = formality
-                        try? modelContext.save()
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Location edit sheet
-
-private struct LocationEditSheet: View {
-    let profile: UserProfile
-    @Environment(\.modelContext) private var modelContext
-    @Environment(AppContainer.self) private var container
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var latText: String
-    @State private var lonText: String
-    @State private var isFetching = false
-    @State private var fetchError: String? = nil
-
-    init(profile: UserProfile) {
-        self.profile = profile
-        _latText = State(initialValue: profile.homeLatitude.map { String(format: "%.6f", $0) } ?? "")
-        _lonText = State(initialValue: profile.homeLongitude.map { String(format: "%.6f", $0) } ?? "")
-    }
-
-    private var parsedCoords: (Double, Double)? {
-        guard let lat = Double(latText), let lon = Double(lonText),
-              (-90...90).contains(lat), (-180...180).contains(lon) else { return nil }
-        return (lat, lon)
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    LabeledContent("Latitude") {
-                        TextField("e.g. 48.8566", text: $latText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    LabeledContent("Longitude") {
-                        TextField("e.g. 2.3522", text: $lonText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                    }
-                } header: {
-                    Text("Home coordinates")
-                } footer: {
-                    if let err = fetchError {
-                        Text(err).foregroundStyle(.red)
-                    } else {
-                        Text("Used as a weather fallback when live location is off.")
-                    }
-                }
-
-                Section {
-                    Button {
-                        fetchCurrentLocation()
-                    } label: {
-                        HStack {
-                            Label("Use current location", systemImage: "location.fill")
-                            if isFetching {
-                                Spacer()
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .disabled(isFetching)
-                }
-
-                if profile.homeLatitude != nil {
-                    Section {
-                        Button("Clear home location", role: .destructive) {
-                            profile.homeLatitude = nil
-                            profile.homeLongitude = nil
-                            try? modelContext.save()
-                            dismiss()
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Home Location")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        guard let (lat, lon) = parsedCoords else { return }
-                        profile.homeLatitude = lat
-                        profile.homeLongitude = lon
-                        try? modelContext.save()
-                        dismiss()
-                    }
-                    .disabled(parsedCoords == nil)
-                }
-            }
-        }
-    }
-
-    private func fetchCurrentLocation() {
-        isFetching = true
-        fetchError = nil
-        Task {
-            do {
-                let coord = try await container.location.currentCoordinate()
-                await MainActor.run {
-                    latText = String(format: "%.6f", coord.latitude)
-                    lonText = String(format: "%.6f", coord.longitude)
-                    isFetching = false
-                }
-            } catch {
-                await MainActor.run {
-                    fetchError = "Could not get location: \(error.localizedDescription)"
-                    isFetching = false
-                }
-            }
+    private func useCurrentLocation(_ profile: UserProfile) async {
+        fetchingLocation = true
+        defer { fetchingLocation = false }
+        do {
+            let coord = try await container.location.currentCoordinate()
+            profile.homeLatitude = coord.latitude
+            profile.homeLongitude = coord.longitude
+            profile.homeCity = await container.location.placeName(for: coord)
+            persist()
+        } catch {
+            // Leave the existing location in place on failure.
         }
     }
 }

@@ -35,6 +35,32 @@ extension View {
     }
 }
 
+// MARK: - Button fills (shared by buttons and non-Button controls like PhotosPicker)
+
+extension View {
+    /// Primary pill fill — ink background, paper label. Visible in both modes.
+    func drapePrimaryFill() -> some View {
+        self
+            .font(Theme.body(17, weight: .semibold))
+            .foregroundStyle(Theme.paper)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(Theme.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    /// Secondary pill fill — ink outline + ink label on surface.
+    func drapeSecondaryFill() -> some View {
+        self
+            .font(Theme.body(17, weight: .semibold))
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Theme.ink.opacity(0.25), lineWidth: 1)
+            )
+    }
+}
+
 // MARK: - Primary CTA
 
 /// The primary action pill — ink fill, paper label, full width. Used for every
@@ -48,11 +74,7 @@ struct CTAButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(Theme.body(17, weight: .semibold))
-                .foregroundStyle(Theme.paper)
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .background(Theme.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            Text(title).drapePrimaryFill()
         }
         .buttonStyle(.plain)
         .opacity(enabled ? 1 : 0.4)
@@ -60,6 +82,32 @@ struct CTAButton: View {
         .scaleEffect(pressed ? 0.97 : 1)
         .animation(.easeOut(duration: 0.12), value: pressed)
         ._onPressGesture { pressed = $0 }
+    }
+}
+
+// MARK: - Secondary button
+
+/// The secondary action — ink outline + ink label on paper. Pairs with
+/// `CTAButton` so non-primary actions share one consistent look (and stay
+/// visible in both light and dark, unlike `.borderedProminent` under the ink
+/// tint).
+struct SecondaryButton: View {
+    let title: String
+    var systemImage: String? = nil
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 16, weight: .medium))
+                }
+                Text(title)
+            }
+            .drapeSecondaryFill()
+        }
+        .buttonStyle(.plain)
     }
 }
 

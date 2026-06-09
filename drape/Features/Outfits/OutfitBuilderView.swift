@@ -27,10 +27,10 @@ struct OutfitBuilderView: View {
                     TextField("Outfit name", text: $model.name)
                     Picker("Occasion", selection: $model.occasion) {
                         ForEach(Occasion.allCases) { occasion in
-                            Label(occasion.displayName, image: occasion.iconName).tag(occasion)
+                            Text(occasion.displayName).tag(occasion)
                         }
                     }
-                    .labelStyle(.drapeIcon)
+                    .pickerStyle(.menu)
                     TextField("Tags (comma separated)", text: $model.tagsText)
                         .textInputAutocapitalization(.never)
                 }
