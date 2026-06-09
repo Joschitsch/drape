@@ -16,30 +16,26 @@ struct GarmentAttributeFields: View {
     var body: some View {
         Section("Basics") {
             TextField("Name", text: $draft.name)
-            Picker("Category", selection: $draft.category) {
-                ForEach(GarmentCategory.allCases) { category in
-                    Text(category.displayName).tag(category)
-                }
+            field("Category") {
+                SingleChoiceChips(items: GarmentCategory.allCases, title: \.displayName,
+                                  selection: $draft.category)
             }
-            .pickerStyle(.menu)
             colorRow
         }
 
         Section("Suitability") {
-            Picker("Formality", selection: $draft.formality) {
-                ForEach(Formality.allCases) { Text($0.displayName).tag($0) }
+            field("Formality") {
+                SingleChoiceChips(items: Formality.allCases, title: \.displayName,
+                                  selection: $draft.formality)
             }
-            .pickerStyle(.menu)
-            Picker("Warmth", selection: $draft.warmth) {
-                ForEach(WarmthLevel.allCases) { Text($0.displayName).tag($0) }
+            field("Warmth") {
+                SingleChoiceChips(items: WarmthLevel.allCases, title: \.displayName,
+                                  selection: $draft.warmth)
             }
-            .pickerStyle(.menu)
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Seasons").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
+            field("Seasons") {
                 SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)
             }
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Styles").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
+            field("Styles") {
                 SelectableChipsRow(items: StyleTag.allCases, title: \.displayName, selection: $draft.styles)
             }
         }
@@ -52,26 +48,34 @@ struct GarmentAttributeFields: View {
         }
     }
 
+    /// A labeled selector group — one consistent layout for every chip/swatch field.
+    private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel(label)
+            content()
+        }
+        .padding(.vertical, 4)
+    }
+
     private var colorRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Color").font(Theme.body(13)).foregroundStyle(Theme.inkSoft)
+                MonoLabel("Color")
                 Spacer()
                 // Custom color → snapped to the nearest named tag.
                 ColorPicker("Custom", selection: $customColor, supportsOpacity: false)
                     .labelsHidden()
                     .onChange(of: customColor) { _, newValue in snapToNearest(newValue) }
             }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(ColorTag.allCases) { tag in
-                        SwatchButton(colorTag: tag, isSelected: draft.primaryColor == tag) {
-                            draft.primaryColor = tag
-                        }
+            FlowLayout(spacing: 6) {
+                ForEach(ColorTag.allCases) { tag in
+                    SwatchButton(colorTag: tag, isSelected: draft.primaryColor == tag) {
+                        draft.primaryColor = tag
                     }
                 }
             }
         }
+        .padding(.vertical, 4)
     }
 
     /// Maps an arbitrary picked color to the closest entry in the named palette,

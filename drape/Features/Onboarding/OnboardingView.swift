@@ -159,13 +159,6 @@ private struct GlobalStylePicker: View {
     @Binding var selected: Set<StyleTag>
 
     var body: some View {
-        FlowLayout(spacing: 8) {
-            ForEach(StyleTag.allCases) { tag in
-                let isSelected = selected.contains(tag)
-                DrapeChip(label: tag.displayName, active: isSelected) {
-                    if isSelected { selected.remove(tag) } else { selected.insert(tag) }
-                }
-            }
-        }
+        SelectableChipsRow(items: StyleTag.allCases, title: \.displayName, selection: $selected)
     }
 }

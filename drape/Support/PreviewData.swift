@@ -119,8 +119,6 @@ enum PreviewData {
     static func seed(into context: ModelContext) {
         let profile = UserProfile(
             preferredStyles: [.minimal, .classic, .elegant],
-            preferredColors: [.ecru, .charcoal, .camel, .navy],
-            defaultFormality: .smartCasual,
             hasCompletedOnboarding: true
         )
         // Berlin — drives weather + the "{city} · now" weather strip.

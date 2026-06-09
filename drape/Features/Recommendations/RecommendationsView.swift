@@ -66,14 +66,8 @@ struct RecommendationsView: View {
                 SerifText("Where are you headed today?", size: 22)
 
                 // Occasion chips
-                FlowLayout(spacing: 9) {
-                    ForEach(Occasion.allCases) { occasion in
-                        DrapeChip(label: occasion.displayName,
-                                  active: model.occasion == occasion) {
-                            model.occasion = occasion
-                        }
-                    }
-                }
+                SingleChoiceChips(items: Occasion.allCases, title: \.displayName,
+                                  selection: Bindable(model).occasion)
 
                 // CTA
                 VStack(spacing: 12) {

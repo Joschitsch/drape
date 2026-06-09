@@ -70,8 +70,6 @@ final class RecommendationsViewModel {
 
         let prefs = ProfilePreferences(
             preferredStyles: profile?.preferredStyles ?? [],
-            preferredColors: profile?.preferredColors ?? [],
-            defaultFormality: profile?.defaultFormality ?? .smartCasual,
             occasionPreferences: profile?.occasionPreferences ?? []
         )
         let context = RecommendationContext(

@@ -25,14 +25,17 @@ struct OutfitBuilderView: View {
             Form {
                 Section("Details") {
                     TextField("Outfit name", text: $model.name)
-                    Picker("Occasion", selection: $model.occasion) {
-                        ForEach(Occasion.allCases) { occasion in
-                            Text(occasion.displayName).tag(occasion)
-                        }
+                    VStack(alignment: .leading, spacing: 10) {
+                        MonoLabel("Occasion")
+                        SingleChoiceChips(items: Occasion.allCases, title: \.displayName,
+                                          selection: $model.occasion)
                     }
-                    .pickerStyle(.menu)
-                    TextField("Tags (comma separated)", text: $model.tagsText)
-                        .textInputAutocapitalization(.never)
+                    .padding(.vertical, 4)
+                    VStack(alignment: .leading, spacing: 10) {
+                        MonoLabel("Tags")
+                        TagEditor(tags: $model.tags)
+                    }
+                    .padding(.vertical, 4)
                 }
 
                 Section {

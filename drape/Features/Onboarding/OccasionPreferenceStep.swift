@@ -29,25 +29,12 @@ struct OccasionPreferenceStep: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 MonoLabel("Formality")
-                FlowLayout(spacing: 8) {
-                    ForEach(Formality.allCases) { level in
-                        DrapeChip(label: level.displayName, active: formality == level) {
-                            formality = level
-                        }
-                    }
-                }
+                SingleChoiceChips(items: Formality.allCases, title: \.displayName, selection: $formality)
             }
 
             VStack(alignment: .leading, spacing: 12) {
                 MonoLabel("Style vibes · pick any")
-                FlowLayout(spacing: 8) {
-                    ForEach(StyleTag.allCases) { tag in
-                        let selected = styles.contains(tag)
-                        DrapeChip(label: tag.displayName, active: selected) {
-                            if selected { styles.remove(tag) } else { styles.insert(tag) }
-                        }
-                    }
-                }
+                SelectableChipsRow(items: StyleTag.allCases, title: \.displayName, selection: $styles)
             }
 
             Spacer()

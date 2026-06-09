@@ -27,26 +27,3 @@ struct SelectableChipsRow<Item: Hashable & Identifiable>: View {
         }
     }
 }
-
-/// Multi-select color control: a wrapping grid of `SwatchButton`s that toggle
-/// membership in a `Set<ColorTag>` — the color counterpart to `SelectableChipsRow`.
-struct SelectableSwatchRow: View {
-    let colors: [ColorTag]
-    @Binding var selection: Set<ColorTag>
-
-    init(colors: [ColorTag] = ColorTag.allCases, selection: Binding<Set<ColorTag>>) {
-        self.colors = colors
-        self._selection = selection
-    }
-
-    var body: some View {
-        FlowLayout(spacing: 6) {
-            ForEach(colors) { tag in
-                let isOn = selection.contains(tag)
-                SwatchButton(colorTag: tag, isSelected: isOn) {
-                    if isOn { selection.remove(tag) } else { selection.insert(tag) }
-                }
-            }
-        }
-    }
-}

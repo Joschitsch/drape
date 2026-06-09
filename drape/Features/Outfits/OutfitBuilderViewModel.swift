@@ -14,8 +14,7 @@ import Observation
 final class OutfitBuilderViewModel {
     var name: String
     var occasion: Occasion
-    /// Comma-separated tags, parsed on save.
-    var tagsText: String
+    var tags: [String]
     /// The chosen garment per slot. A `.fullBody` (dress) is mutually exclusive
     /// with `.top`/`.bottom`.
     var selections: [OutfitSlot: Garment]
@@ -27,7 +26,7 @@ final class OutfitBuilderViewModel {
         editingOutfit = outfit
         name = outfit?.name ?? ""
         occasion = outfit?.occasion ?? .everyday
-        tagsText = outfit?.tags.joined(separator: ", ") ?? ""
+        tags = outfit?.tags ?? []
         var selections: [OutfitSlot: Garment] = [:]
         for garment in outfit?.garments ?? [] {
             selections[garment.category.slot] = garment
@@ -73,10 +72,6 @@ final class OutfitBuilderViewModel {
     @discardableResult
     func save(into context: ModelContext) -> Outfit {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let tags = tagsText
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
 
         let outfit = editingOutfit ?? Outfit(name: trimmedName)
         outfit.name = trimmedName

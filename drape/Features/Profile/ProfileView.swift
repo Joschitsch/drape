@@ -35,7 +35,6 @@ struct ProfileView: View {
                         proUpsellSection
                     }
                     registerSection(profile: profile)
-                    formalitySection(profile: profile)
                     occasionSection(profile: profile)
                     locationSection(profile: profile)
                     analyticsSection
@@ -79,30 +78,17 @@ struct ProfileView: View {
     // MARK: - Register (styles + palette) — edited in place
 
     private func registerSection(profile: UserProfile) -> some View {
-        Section("Your register") {
+        Section {
             VStack(alignment: .leading, spacing: 10) {
                 MonoLabel("Styles you lean on")
                 SelectableChipsRow(items: StyleTag.allCases, title: \.displayName,
                                    selection: stylesBinding(profile))
             }
             .padding(.vertical, 4)
-
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("Palette")
-                SelectableSwatchRow(selection: colorsBinding(profile))
-            }
-            .padding(.vertical, 4)
-        }
-    }
-
-    // MARK: - Default formality — inline picker
-
-    private func formalitySection(profile: UserProfile) -> some View {
-        Section("Default formality") {
-            Picker("Usual formality", selection: formalityBinding(profile)) {
-                ForEach(Formality.allCases) { Text($0.displayName).tag($0) }
-            }
-            .pickerStyle(.menu)
+        } header: {
+            Text("Your register")
+        } footer: {
+            Text("Outfits featuring these styles are scored higher.")
         }
     }
 
@@ -112,12 +98,12 @@ struct ProfileView: View {
         Section("Occasion preferences") {
             ForEach(OnboardingViewModel.occasions) { occasion in
                 DisclosureGroup {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Picker("Formality", selection: occasionFormalityBinding(profile, occasion)) {
-                            ForEach(Formality.allCases) { Text($0.displayName).tag($0) }
+                    VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            MonoLabel("Formality")
+                            SingleChoiceChips(items: Formality.allCases, title: \.displayName,
+                                              selection: occasionFormalityBinding(profile, occasion))
                         }
-                        .pickerStyle(.menu)
-
                         VStack(alignment: .leading, spacing: 10) {
                             MonoLabel("Style vibes")
                             SelectableChipsRow(items: StyleTag.allCases, title: \.displayName,
@@ -252,20 +238,6 @@ struct ProfileView: View {
         Binding(
             get: { Set(profile.preferredStyles) },
             set: { profile.preferredStyles = StyleTag.allCases.filter($0.contains); persist() }
-        )
-    }
-
-    private func colorsBinding(_ profile: UserProfile) -> Binding<Set<ColorTag>> {
-        Binding(
-            get: { Set(profile.preferredColors) },
-            set: { profile.preferredColors = ColorTag.allCases.filter($0.contains); persist() }
-        )
-    }
-
-    private func formalityBinding(_ profile: UserProfile) -> Binding<Formality> {
-        Binding(
-            get: { profile.defaultFormality },
-            set: { profile.defaultFormality = $0; persist() }
         )
     }
 

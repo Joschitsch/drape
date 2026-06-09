@@ -18,8 +18,6 @@ final class UserProfile {
     var createdAt: Date = Date.now
 
     var preferredStyles: [StyleTag] = []
-    var preferredColors: [ColorTag] = []
-    var defaultFormality: Formality = Formality.smartCasual
 
     /// Per-occasion formality + style overrides set during onboarding or Profile editing.
     var occasionPreferences: [OccasionPreference] = []
@@ -34,16 +32,12 @@ final class UserProfile {
     init(
         id: UUID = UUID(),
         preferredStyles: [StyleTag] = [],
-        preferredColors: [ColorTag] = [],
-        defaultFormality: Formality = .smartCasual,
         occasionPreferences: [OccasionPreference] = [],
         hasCompletedOnboarding: Bool = false
     ) {
         self.id = id
         self.createdAt = .now
         self.preferredStyles = preferredStyles
-        self.preferredColors = preferredColors
-        self.defaultFormality = defaultFormality
         self.occasionPreferences = occasionPreferences
         self.hasCompletedOnboarding = hasCompletedOnboarding
     }
