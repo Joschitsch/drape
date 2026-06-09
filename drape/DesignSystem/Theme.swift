@@ -36,12 +36,6 @@ enum Theme {
     static let lineSoft = adaptive(Color(hex: "1C1A17").opacity(0.06), Color(hex: "F2EEE6").opacity(0.07))
     /// Drop-shadow color — subtle in light, deeper in dark where shadows read less.
     static let shadow  = adaptive(Color.black.opacity(0.15), Color.black.opacity(0.45))
-    /// Graphite the museum-canvas glyph mixes toward; lightened in dark so the
-    /// outline stays visible against the deep canvas wash.
-    static let canvasGraphite = adaptive(Color(hex: "4A4A46"), Color(hex: "C9C4BA"))
-    /// Neutral base the museum-canvas wash mixes the garment color toward —
-    /// white in light, a deep warm graphite in dark so tiles sit in the UI.
-    static let canvasBase = adaptive(.white, Color(hex: "2A2722"))
 
     /// Resolves to `light` or `dark` based on the active `userInterfaceStyle`.
     static func adaptive(_ light: Color, _ dark: Color) -> Color {

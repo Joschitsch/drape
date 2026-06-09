@@ -98,9 +98,6 @@ struct GarmentDetailView: View {
     private var heroImage: some View {
         NormalizedImageView(
             assetID: garment.imageAssetID,
-            category: garment.category,
-            colorTag: garment.primaryColor,
-            showColorName: true,
             useThumbnail: false
         )
         .aspectRatio(0.926, contentMode: .fit)   // design hero ≈108% tall

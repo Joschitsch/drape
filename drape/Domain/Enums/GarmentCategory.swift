@@ -32,7 +32,6 @@ enum GarmentCategory: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 
     /// Custom symbol (Assets.xcassets) used in lists, slot pickers and chrome.
-    /// The same silhouette family as the museum-canvas `CategoryGlyph`.
     var iconName: String {
         switch self {
         case .top: "drape.top"

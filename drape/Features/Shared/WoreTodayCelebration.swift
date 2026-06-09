@@ -35,12 +35,8 @@ struct WoreTodayCelebration: View {
                         .scaleEffect(ringScale)
                         .opacity(ringOpacity)
 
-                    // Garment canvas
-                    GarmentCanvasView(
-                        category: garment.category,
-                        colorTag: garment.primaryColor,
-                        showColorName: true
-                    )
+                    // Garment image
+                    NormalizedImageView(assetID: garment.thumbnailAssetID, useThumbnail: true)
                     .frame(width: 150, height: 172)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .shadow(color: Theme.shadow, radius: 24, x: 0, y: 12)

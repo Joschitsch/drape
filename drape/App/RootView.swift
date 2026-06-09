@@ -10,6 +10,7 @@ import SwiftData
 
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppContainer.self) private var container
     @Query private var profiles: [UserProfile]
 
     private var profile: UserProfile? { profiles.first }
@@ -34,7 +35,10 @@ struct RootView: View {
         // Honor Dynamic Type, but clamp so the dense editorial layout scales
         // generously without collapsing at the largest accessibility sizes.
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-        .task { PreviewData.ensureProfile(into: modelContext) }
+        .task {
+            PreviewData.ensureProfile(into: modelContext)
+            await PreviewData.backfillImages(context: modelContext, imageStore: container.imageStore)
+        }
         .fullScreenCover(isPresented: .constant(showOnboarding)) {
             if let profile {
                 OnboardingView(profile: profile)

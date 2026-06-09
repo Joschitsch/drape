@@ -30,6 +30,7 @@ struct OutfitBuilderView: View {
                             Label(occasion.displayName, image: occasion.iconName).tag(occasion)
                         }
                     }
+                    .labelStyle(.drapeIcon)
                     TextField("Tags (comma separated)", text: $model.tagsText)
                         .textInputAutocapitalization(.never)
                 }
@@ -74,7 +75,7 @@ struct OutfitBuilderView: View {
         HStack(spacing: 14) {
             if let garment = model.selections[slot] {
                 // ── Filled slot ──────────────────────────────────────
-                NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
+                NormalizedImageView(assetID: garment.thumbnailAssetID)
                     .frame(width: 46, height: 56)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)

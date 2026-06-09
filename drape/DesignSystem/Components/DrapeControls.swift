@@ -120,6 +120,27 @@ struct SwatchButton: View {
     }
 }
 
+// MARK: - Icon label style
+
+/// Consistent icon↔title spacing for labels that carry a leading glyph. The
+/// custom `drape.*` symbols have no side bearing, so a default `Label` renders
+/// them flush against the text; this gives every icon-label a uniform gap and a
+/// fixed icon column so rows line up.
+struct DrapeIconLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 8) {
+            configuration.icon
+                .frame(width: 24, alignment: .center)
+            configuration.title
+        }
+    }
+}
+
+extension LabelStyle where Self == DrapeIconLabelStyle {
+    /// Uniform icon-to-text spacing for labels with a leading symbol.
+    static var drapeIcon: DrapeIconLabelStyle { .init() }
+}
+
 // MARK: - Sticky footer
 
 /// The bottom CTA chrome shared by detail screens: a short paper gradient that

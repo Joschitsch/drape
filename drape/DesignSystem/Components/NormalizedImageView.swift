@@ -2,23 +2,18 @@
 //  NormalizedImageView.swift
 //  drape
 //
-//  Loads a garment image (or thumbnail) from the ImageStore by asset id, with a
-//  category-appropriate placeholder when no image exists yet.
+//  Loads a garment image (or thumbnail) from the ImageStore by asset id. Every
+//  garment has an image (the capture flow requires one; demo data is seeded with
+//  generated images), so the only no-image state is the brief moment while the
+//  bytes load — shown as a neutral surface.
 //
 
 import SwiftUI
 import UIKit
 
 /// Displays a garment image resolved from the `ImageStore` in the environment.
-/// Shows a tinted placeholder while loading or when the asset is missing — the
-/// common case in Step 1 before real capture exists.
 struct NormalizedImageView: View {
     let assetID: String
-    let category: GarmentCategory
-    /// Tints the museum-canvas placeholder when no photo exists.
-    var colorTag: ColorTag = .slate
-    /// Show the color name on the placeholder (used on larger canvases).
-    var showColorName: Bool = false
     var useThumbnail: Bool = true
 
     @Environment(AppContainer.self) private var container
@@ -31,14 +26,11 @@ struct NormalizedImageView: View {
                     .resizable()
                     .scaledToFit()
             } else {
-                placeholder
+                // Neutral block while the image loads.
+                Theme.surface
             }
         }
         .task(id: assetID) { await load() }
-    }
-
-    private var placeholder: some View {
-        GarmentCanvasView(category: category, colorTag: colorTag, showColorName: showColorName)
     }
 
     private func load() async {

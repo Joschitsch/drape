@@ -173,6 +173,7 @@ struct ProfileView: View {
                     .padding(.vertical, 4)
                 } label: {
                     Label(occasion.displayName, image: occasion.iconName)
+                        .labelStyle(.drapeIcon)
                 }
             }
         }
@@ -252,6 +253,7 @@ struct ProfileView: View {
                 } label: {
                     HStack {
                         Label("Wardrobe Analytics", image: "drape.analytics")
+                            .labelStyle(.drapeIcon)
                         Spacer()
                         Text("Pro")
                             .font(Theme.mono(10, weight: .medium))

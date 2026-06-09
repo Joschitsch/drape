@@ -96,6 +96,23 @@ enum PreviewData {
         seed(into: context)
     }
 
+    /// Generates and stores a product image for any garment that has none, so the
+    /// demo wardrobe always shows a picture. Idempotent — runs over existing
+    /// installs too, so no wipe is needed. Real captured garments are untouched.
+    @MainActor
+    static func backfillImages(context: ModelContext, imageStore: any ImageStore) async {
+        guard let garments = try? context.fetch(FetchDescriptor<Garment>()) else { return }
+        var changed = false
+        for g in garments where g.imageAssetID.isEmpty {
+            guard let processed = GarmentImageFactory.makeImage(category: g.category, color: g.primaryColor),
+                  let ref = try? await imageStore.save(processed) else { continue }
+            g.imageAssetID = ref.imageAssetID
+            g.thumbnailAssetID = ref.thumbnailAssetID
+            changed = true
+        }
+        if changed { try? context.save() }
+    }
+
     /// Inserts a profile, the sample wardrobe (with wear history) and a few
     /// outfits. Used on first launch and by preview/test containers.
     @MainActor

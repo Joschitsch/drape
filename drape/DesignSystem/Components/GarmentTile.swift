@@ -15,10 +15,7 @@ struct GarmentTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             // ── Image / canvas ───────────────────────────────────────
-            NormalizedImageView(assetID: garment.thumbnailAssetID,
-                                category: garment.category,
-                                colorTag: garment.primaryColor,
-                                showColorName: true)
+            NormalizedImageView(assetID: garment.thumbnailAssetID)
                 .frame(maxWidth: .infinity)
                 .aspectRatio(0.806, contentMode: .fit)   // design canvas ≈124% tall
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))

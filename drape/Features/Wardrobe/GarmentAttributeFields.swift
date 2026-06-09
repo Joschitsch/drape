@@ -21,6 +21,7 @@ struct GarmentAttributeFields: View {
                     Label(category.displayName, image: category.iconName).tag(category)
                 }
             }
+            .labelStyle(.drapeIcon)
             colorRow
         }
 

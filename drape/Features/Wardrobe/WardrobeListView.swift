@@ -185,7 +185,7 @@ private struct HonestMirrorNudge: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            NormalizedImageView(assetID: garment.thumbnailAssetID, category: garment.category, colorTag: garment.primaryColor)
+            NormalizedImageView(assetID: garment.thumbnailAssetID)
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
 
