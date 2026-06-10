@@ -98,7 +98,7 @@ struct OutfitStackCard: View {
                         .overlay(alignment: .leading) {
                             Theme.line
                                 .frame(height: 0.5)
-                                .padding(.leading, 72) // inset past thumbnail
+                                .padding(.leading, 78) // inset past thumbnail
                         }
                 }
             }
@@ -123,8 +123,8 @@ struct GarmentStackRow: View {
     let garment: Garment
     var compact: Bool = true
 
-    private let thumbW: CGFloat = 42
-    private let thumbH: CGFloat = 52
+    private let thumbW: CGFloat = 48
+    private let thumbH: CGFloat = 48
 
     var body: some View {
         HStack(spacing: 14) {

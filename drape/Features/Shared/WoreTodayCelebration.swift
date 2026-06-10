@@ -31,13 +31,13 @@ struct WoreTodayCelebration: View {
                     // Expanding ring
                     RoundedRectangle(cornerRadius: 20)
                         .strokeBorder(Theme.ink.opacity(0.12), lineWidth: 1)
-                        .frame(width: 170, height: 192)
+                        .frame(width: 170, height: 170)
                         .scaleEffect(ringScale)
                         .opacity(ringOpacity)
 
                     // Garment image
                     NormalizedImageView(assetID: garment.thumbnailAssetID, useThumbnail: true)
-                    .frame(width: 150, height: 172)
+                    .frame(width: 150, height: 150)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .shadow(color: Theme.shadow, radius: 24, x: 0, y: 12)
                     .scaleEffect(canvasVisible ? 1 : 0.88)

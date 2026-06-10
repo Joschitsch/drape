@@ -101,7 +101,7 @@ struct GarmentDetailView: View {
             assetID: garment.imageAssetID,
             useThumbnail: false
         )
-        .aspectRatio(0.926, contentMode: .fit)   // design hero ≈108% tall
+        .aspectRatio(1, contentMode: .fit)   // square garment image
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .shadow(color: Theme.shadow, radius: 28, x: 0, y: 14)
     }

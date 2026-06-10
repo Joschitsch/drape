@@ -16,7 +16,7 @@ struct DetailGarmentRow: View {
     var body: some View {
         HStack(spacing: 14) {
             NormalizedImageView(assetID: garment.thumbnailAssetID)
-                .frame(width: 66, height: 80)
+                .frame(width: 66, height: 66)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(color: Theme.shadow, radius: 6, x: 0, y: 3)
 

@@ -17,7 +17,7 @@ struct GarmentTile: View {
             // ── Image / canvas ───────────────────────────────────────
             NormalizedImageView(assetID: garment.thumbnailAssetID)
                 .frame(maxWidth: .infinity)
-                .aspectRatio(0.806, contentMode: .fit)   // design canvas ≈124% tall
+                .aspectRatio(1, contentMode: .fit)   // square garment images
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
                 .shadow(color: Theme.shadow, radius: 11, x: 0, y: 8)
                 .overlay(alignment: .topTrailing) {

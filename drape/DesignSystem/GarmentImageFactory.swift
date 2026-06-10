@@ -15,16 +15,17 @@ enum GarmentImageFactory {
     /// A baked product image: the category symbol centered on a soft color wash.
     /// Returns a `ProcessedImage` ready to hand to the `ImageStore`.
     static func makeImage(category: GarmentCategory, color: ColorTag) -> ProcessedImage? {
-        let size = CGSize(width: 600, height: 750)
+        // Square, matching the 1:1 canvas real captured garments are normalized to.
+        let side: CGFloat = 1024
         let renderer = ImageRenderer(content:
             GarmentImageCard(category: category, color: color)
-                .frame(width: size.width, height: size.height)
+                .frame(width: side, height: side)
         )
-        renderer.scale = 2
+        renderer.scale = 1
         guard let full = renderer.uiImage,
               let fullData = full.pngData() else { return nil }
 
-        let thumb = downscale(full, to: CGSize(width: 240, height: 300))
+        let thumb = downscale(full, to: CGSize(width: 320, height: 320))
         let thumbData = thumb.pngData() ?? fullData
         return ProcessedImage(imageData: fullData, thumbnailData: thumbData, pixelSize: full.size)
     }
@@ -50,7 +51,7 @@ private struct GarmentImageCard: View {
             LinearGradient(colors: [washTop, washBottom],
                            startPoint: .top, endPoint: .bottom)
             Image(category.iconName)
-                .font(.system(size: 248))
+                .font(.system(size: 440))
                 .foregroundStyle(ink)
         }
     }

@@ -79,7 +79,7 @@ struct OutfitBuilderView: View {
             if let garment = model.selections[slot] {
                 // ── Filled slot ──────────────────────────────────────
                 NormalizedImageView(assetID: garment.thumbnailAssetID)
-                    .frame(width: 46, height: 56)
+                    .frame(width: 52, height: 52)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)
                 VStack(alignment: .leading, spacing: 3) {
