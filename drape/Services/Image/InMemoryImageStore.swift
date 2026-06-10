@@ -35,10 +35,15 @@ final class InMemoryImageStore: ImageStore {
         await storage.remove(reference.thumbnailAssetID)
     }
 
+    func allImageIDs() async throws -> [String] {
+        await storage.keys()
+    }
+
     private actor Storage {
         private var items: [String: Data] = [:]
         func set(_ key: String, _ value: Data) { items[key] = value }
         func get(_ key: String) -> Data? { items[key] }
         func remove(_ key: String) { items[key] = nil }
+        func keys() -> [String] { Array(items.keys) }
     }
 }

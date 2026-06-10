@@ -9,6 +9,7 @@
 
 import Foundation
 import SwiftData
+import ImageIO
 
 enum PreviewData {
 
@@ -103,14 +104,39 @@ enum PreviewData {
     static func backfillImages(context: ModelContext, imageStore: any ImageStore) async {
         guard let garments = try? context.fetch(FetchDescriptor<Garment>()) else { return }
         var changed = false
-        for g in garments where g.imageAssetID.isEmpty {
-            guard let processed = GarmentImageFactory.makeImage(category: g.category, color: g.primaryColor),
+        for g in garments {
+            // Regenerate when there's no image, or when the stored image is the
+            // old non-square placeholder. Captured photos are always square, so a
+            // confirmed non-square image is only ever a generated placeholder.
+            let needsImage: Bool
+            if g.imageAssetID.isEmpty {
+                needsImage = true
+            } else if let data = try? await imageStore.loadThumbnailData(id: g.thumbnailAssetID),
+                      let (w, h) = pixelSize(of: data) {
+                needsImage = (w != h)
+            } else {
+                needsImage = false   // can't read dims → leave it alone (never destroy a real photo)
+            }
+            guard needsImage,
+                  let processed = GarmentImageFactory.makeImage(category: g.category, color: g.primaryColor),
                   let ref = try? await imageStore.save(processed) else { continue }
+
+            let old = ImageAssetReference(imageAssetID: g.imageAssetID, thumbnailAssetID: g.thumbnailAssetID)
             g.imageAssetID = ref.imageAssetID
             g.thumbnailAssetID = ref.thumbnailAssetID
+            if !old.imageAssetID.isEmpty { try? await imageStore.delete(old) }
             changed = true
         }
         if changed { try? context.save() }
+    }
+
+    /// Cheap pixel-dimension read (no full decode) for the square check.
+    static func pixelSize(of data: Data) -> (Int, Int)? {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any],
+              let w = props[kCGImagePropertyPixelWidth] as? Int,
+              let h = props[kCGImagePropertyPixelHeight] as? Int else { return nil }
+        return (w, h)
     }
 
     /// Inserts a profile, the sample wardrobe (with wear history) and a few
