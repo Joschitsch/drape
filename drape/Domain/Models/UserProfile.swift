@@ -17,7 +17,9 @@ final class UserProfile {
     var id: UUID = UUID()
     var createdAt: Date = Date.now
 
-    var preferredStyles: [StyleTag] = []
+    var preferredStyles: [String] = []
+    /// Styles the user has added beyond the built-ins, reusable across the app.
+    var customStyles: [String] = []
 
     /// Per-occasion formality + style overrides set during onboarding or Profile editing.
     var occasionPreferences: [OccasionPreference] = []
@@ -31,13 +33,15 @@ final class UserProfile {
 
     init(
         id: UUID = UUID(),
-        preferredStyles: [StyleTag] = [],
+        preferredStyles: [String] = [],
+        customStyles: [String] = [],
         occasionPreferences: [OccasionPreference] = [],
         hasCompletedOnboarding: Bool = false
     ) {
         self.id = id
         self.createdAt = .now
         self.preferredStyles = preferredStyles
+        self.customStyles = customStyles
         self.occasionPreferences = occasionPreferences
         self.hasCompletedOnboarding = hasCompletedOnboarding
     }

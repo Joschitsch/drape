@@ -10,32 +10,27 @@ import SwiftUI
 struct OccasionPreferenceStep: View {
     let occasion: Occasion
     @Binding var formality: Formality
-    @Binding var styles: Set<StyleTag>
+    @Binding var styles: Set<String>
+    var customStyles: [String] = []
+    var onAddStyle: (String) -> Void = { _ in }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 32) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    Image(occasion.iconName)
-                        .font(.system(size: 20))
-                        .foregroundStyle(Theme.ink)
-                        .frame(width: 30, alignment: .leading)
-                    SerifText(occasion.displayName, size: 24)
-                }
-                Text("How do you like to dress for \(occasion.displayName.lowercased())?")
-                    .font(Theme.body(15))
-                    .foregroundStyle(Theme.inkSoft)
+        VStack(alignment: .leading, spacing: 28) {
+            HStack(spacing: 10) {
+                Image(occasion.iconName)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Theme.ink)
+                    .frame(width: 30, alignment: .leading)
+                SerifText(occasion.displayName, size: 24)
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                MonoLabel("Formality")
-                SingleChoiceChips(items: Formality.allCases, title: \.displayName, selection: $formality)
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                MonoLabel("Style vibes · pick any")
-                SelectableChipsRow(items: StyleTag.allCases, title: \.displayName, selection: $styles)
-            }
+            OccasionPreferenceEditor(
+                occasion: occasion,
+                formality: $formality,
+                styles: $styles,
+                customStyles: customStyles,
+                onAddStyle: onAddStyle
+            )
 
             Spacer()
         }

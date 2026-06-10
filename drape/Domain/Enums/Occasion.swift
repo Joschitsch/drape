@@ -30,6 +30,18 @@ enum Occasion: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Natural phrasing for conversational prompts ("How dressed up for {phrase}?").
+    var preferencePhrase: String {
+        switch self {
+        case .everyday: "everyday"
+        case .work: "work"
+        case .date: "a date"
+        case .sport: "the gym"
+        case .formal: "a formal occasion"
+        case .travel: "travel"
+        }
+    }
+
     var iconName: String {
         switch self {
         case .everyday: "drape.everyday"

@@ -52,16 +52,16 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
     var formality: Formality
     var warmth: WarmthLevel
     var seasons: [Season]
-    var styles: [StyleTag]
+    var styles: [String]
 }
 
 /// The subset of `UserProfile` the engine reads.
 struct ProfilePreferences: Sendable {
-    var preferredStyles: [StyleTag]
+    var preferredStyles: [String]
     var occasionPreferences: [OccasionPreference]
 
     init(
-        preferredStyles: [StyleTag] = [],
+        preferredStyles: [String] = [],
         occasionPreferences: [OccasionPreference] = []
     ) {
         self.preferredStyles = preferredStyles

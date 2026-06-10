@@ -21,7 +21,7 @@ enum PreviewData {
         let formality: Formality
         let warmth: WarmthLevel
         let seasons: [Season]
-        let styles: [StyleTag]
+        let styles: [String]
         let brand: String
         let lastWornDays: Int?
         let favorite: Bool
@@ -32,43 +32,43 @@ enum PreviewData {
     private static let specs: [Spec] = [
         Spec(name: "Ivory oversized shirt", category: .top, color: .ivory, sub: "Shirt",
              formality: .smartCasual, warmth: .light, seasons: [.spring, .summer, .autumn],
-             styles: [.minimal, .classic], brand: "COS", lastWornDays: 3, favorite: true,
+             styles: ["minimal", "classic"], brand: "COS", lastWornDays: 3, favorite: true,
              wearCount: 24, notes: "Goes with everything. The reliable one."),
         Spec(name: "Charcoal merino crew", category: .top, color: .charcoal, sub: "Knit",
              formality: .smartCasual, warmth: .warm, seasons: [.autumn, .winter],
-             styles: [.classic], brand: "Uniqlo", lastWornDays: 6, favorite: false,
+             styles: ["classic"], brand: "Uniqlo", lastWornDays: 6, favorite: false,
              wearCount: 31, notes: nil),
         Spec(name: "Oat fisherman knit", category: .top, color: .oat, sub: "Knit",
              formality: .smartCasual, warmth: .veryWarm, seasons: [.winter],
-             styles: [.classic], brand: "Jamieson's", lastWornDays: 88, favorite: true,
+             styles: ["classic"], brand: "Jamieson's", lastWornDays: 88, favorite: true,
              wearCount: 5, notes: "Smells like winter."),
         Spec(name: "Indigo selvedge denim", category: .bottom, color: .denim, sub: "Jeans",
              formality: .casual, warmth: .medium, seasons: [.spring, .autumn, .winter],
-             styles: [.streetwear], brand: "A.P.C.", lastWornDays: 2, favorite: true,
+             styles: ["streetwear"], brand: "A.P.C.", lastWornDays: 2, favorite: true,
              wearCount: 52, notes: "Breaking in nicely."),
         Spec(name: "Ecru pleated trousers", category: .bottom, color: .ecru, sub: "Trousers",
              formality: .business, warmth: .medium, seasons: [.spring, .summer, .autumn],
-             styles: [.classic, .elegant], brand: "COS", lastWornDays: 4, favorite: true,
+             styles: ["classic", "elegant"], brand: "COS", lastWornDays: 4, favorite: true,
              wearCount: 19, notes: nil),
         Spec(name: "White leather sneakers", category: .footwear, color: .ivory, sub: "Sneakers",
              formality: .smartCasual, warmth: .medium, seasons: Season.allCases,
-             styles: [.minimal, .sporty], brand: "Common Projects", lastWornDays: 1, favorite: true,
+             styles: ["minimal", "sporty"], brand: "Common Projects", lastWornDays: 1, favorite: true,
              wearCount: 64, notes: nil),
         Spec(name: "Brown suede loafers", category: .footwear, color: .tobacco, sub: "Loafers",
              formality: .business, warmth: .medium, seasons: [.spring, .autumn],
-             styles: [.classic], brand: "Loake", lastWornDays: 22, favorite: false,
+             styles: ["classic"], brand: "Loake", lastWornDays: 22, favorite: false,
              wearCount: 16, notes: nil),
         Spec(name: "Navy chore jacket", category: .outerwear, color: .navy, sub: "Jacket",
              formality: .smartCasual, warmth: .medium, seasons: [.spring, .autumn],
-             styles: [.classic], brand: "Vetra", lastWornDays: 11, favorite: false,
+             styles: ["classic"], brand: "Vetra", lastWornDays: 11, favorite: false,
              wearCount: 22, notes: nil),
         Spec(name: "Camel wool overcoat", category: .outerwear, color: .camel, sub: "Coat",
              formality: .formal, warmth: .veryWarm, seasons: [.winter],
-             styles: [.elegant], brand: "Sandro", lastWornDays: 132, favorite: true,
+             styles: ["elegant"], brand: "Sandro", lastWornDays: 132, favorite: true,
              wearCount: 7, notes: "The investment piece. Always feels like an event."),
         Spec(name: "Burgundy silk scarf", category: .accessory, color: .burgundy, sub: "Scarf",
              formality: .business, warmth: .light, seasons: [.autumn, .winter],
-             styles: [.classic], brand: "Drake's", lastWornDays: 64, favorite: false,
+             styles: ["classic"], brand: "Drake's", lastWornDays: 64, favorite: false,
              wearCount: 4, notes: nil),
     ]
 
@@ -118,7 +118,7 @@ enum PreviewData {
     @MainActor
     static func seed(into context: ModelContext) {
         let profile = UserProfile(
-            preferredStyles: [.minimal, .classic, .elegant],
+            preferredStyles: ["minimal", "classic", "elegant"],
             hasCompletedOnboarding: true
         )
         // Berlin — drives weather + the "{city} · now" weather strip.

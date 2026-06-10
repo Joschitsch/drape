@@ -16,11 +16,12 @@ struct GarmentDraft {
     var name: String = ""
     var category: GarmentCategory = .top
     var primaryColor: ColorTag = .ink
+    var customColorHex: String? = nil
     var secondaryColors: [ColorTag] = []
     var formality: Formality = .casual
     var warmth: WarmthLevel = .medium
     var seasons: Set<Season> = []
-    var styles: Set<StyleTag> = []
+    var styles: Set<String> = []
     var brand: String = ""
     var notes: String = ""
     var isFavorite: Bool = false
@@ -32,6 +33,7 @@ struct GarmentDraft {
         name = garment.name ?? ""
         category = garment.category
         primaryColor = garment.primaryColor
+        customColorHex = garment.customColorHex
         secondaryColors = garment.secondaryColors
         formality = garment.formality
         warmth = garment.warmth
@@ -47,11 +49,12 @@ struct GarmentDraft {
         garment.name = name.trimmed.isEmpty ? nil : name.trimmed
         garment.category = category
         garment.primaryColor = primaryColor
+        garment.customColorHex = customColorHex
         garment.secondaryColors = secondaryColors
         garment.formality = formality
         garment.warmth = warmth
         garment.seasons = Season.allCases.filter { seasons.contains($0) }
-        garment.styles = StyleTag.allCases.filter { styles.contains($0) }
+        garment.styles = styles.sorted()
         garment.brand = brand.trimmed.isEmpty ? nil : brand.trimmed
         garment.notes = notes.trimmed.isEmpty ? nil : notes.trimmed
         garment.isFavorite = isFavorite

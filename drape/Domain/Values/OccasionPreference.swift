@@ -10,5 +10,5 @@ import Foundation
 struct OccasionPreference: Codable, Sendable {
     var occasion: Occasion
     var targetFormality: Formality
-    var styles: [StyleTag]
+    var styles: [String]
 }

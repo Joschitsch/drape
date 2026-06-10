@@ -32,7 +32,7 @@ struct DetailGarmentRow: View {
 
             HStack(spacing: 10) {
                 Circle()
-                    .fill(garment.primaryColor.color)
+                    .fill(garment.displayColor)
                     .frame(width: 14, height: 14)
                     .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
                 Image(systemName: "chevron.right")

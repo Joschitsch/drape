@@ -134,7 +134,7 @@ struct GarmentDetailView: View {
             }
             Spacer()
             Circle()
-                .fill(garment.primaryColor.color)
+                .fill(garment.displayColor)
                 .frame(width: 28, height: 28)
                 .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
         }
@@ -151,7 +151,7 @@ struct GarmentDetailView: View {
             garment.formality.displayName,
             garment.warmth.displayName + " warmth",
         ] + garment.seasons.map(\.displayName)
-          + garment.styles.map(\.displayName)
+          + garment.styles.map(Style.displayName)
 
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {

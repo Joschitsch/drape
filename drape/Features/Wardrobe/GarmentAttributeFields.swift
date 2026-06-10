@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// The attribute editor used by both the add and edit screens. Renders as a set
 /// of `Section`s; the host view supplies the enclosing `Form`.
 struct GarmentAttributeFields: View {
     @Binding var draft: GarmentDraft
-    @State private var customColor: Color = .clear
+
+    @Query private var profiles: [UserProfile]
+    @Environment(\.modelContext) private var modelContext
+    private var profile: UserProfile? { profiles.first }
 
     var body: some View {
         Section("Basics") {
@@ -36,7 +40,9 @@ struct GarmentAttributeFields: View {
                 SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)
             }
             field("Styles") {
-                SelectableChipsRow(items: StyleTag.allCases, title: \.displayName, selection: $draft.styles)
+                StyleSelector(selection: $draft.styles,
+                              customStyles: profile?.customStyles ?? [],
+                              onAdd: addCustomStyle)
             }
         }
 
@@ -46,6 +52,13 @@ struct GarmentAttributeFields: View {
                 .lineLimit(1...4)
             Toggle("Favorite", isOn: $draft.isFavorite)
         }
+    }
+
+    /// Registers a brand-new style on the profile so it's reusable everywhere.
+    private func addCustomStyle(_ style: String) {
+        guard let profile, !profile.customStyles.contains(style) else { return }
+        profile.customStyles.append(style)
+        try? modelContext.save()
     }
 
     /// A labeled selector group — one consistent layout for every chip/swatch field.
@@ -62,15 +75,26 @@ struct GarmentAttributeFields: View {
             HStack {
                 MonoLabel("Color")
                 Spacer()
-                // Custom color → snapped to the nearest named tag.
-                ColorPicker("Custom", selection: $customColor, supportsOpacity: false)
+                // Picks an exact color: stored as-is for display; mapped to the
+                // nearest named color only so the engine has a color family.
+                ColorPicker("Custom", selection: customColorBinding, supportsOpacity: false)
                     .labelsHidden()
-                    .onChange(of: customColor) { _, newValue in snapToNearest(newValue) }
             }
             FlowLayout(spacing: 6) {
+                // The exact custom color shows as a leading, selected swatch.
+                if let hex = draft.customColorHex {
+                    Circle()
+                        .fill(Color(hex: hex))
+                        .frame(width: 28, height: 28)
+                        .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
+                        .overlay(Circle().strokeBorder(Theme.ink, lineWidth: 2).padding(-4))
+                        .frame(width: 44, height: 44)
+                }
                 ForEach(ColorTag.allCases) { tag in
-                    SwatchButton(colorTag: tag, isSelected: draft.primaryColor == tag) {
+                    SwatchButton(colorTag: tag,
+                                 isSelected: draft.customColorHex == nil && draft.primaryColor == tag) {
                         draft.primaryColor = tag
+                        draft.customColorHex = nil
                     }
                 }
             }
@@ -78,12 +102,22 @@ struct GarmentAttributeFields: View {
         .padding(.vertical, 4)
     }
 
-    /// Maps an arbitrary picked color to the closest entry in the named palette,
-    /// so the editorial color labels stay meaningful (reuses `ColorTag.nearest`).
-    private func snapToNearest(_ color: Color) {
-        guard color != .clear else { return }
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
-        draft.primaryColor = ColorTag.nearest(red: Double(r), green: Double(g), blue: Double(b))
+    /// Reads the current display color; writing stores the exact hex and maps it
+    /// to the nearest named color for the engine.
+    private var customColorBinding: Binding<Color> {
+        Binding(
+            get: {
+                draft.customColorHex.map { Color(hex: $0) } ?? draft.primaryColor.color
+            },
+            set: { newColor in
+                var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+                UIColor(newColor).getRed(&r, green: &g, blue: &b, alpha: &a)
+                draft.customColorHex = String(format: "%02X%02X%02X",
+                                              Int((r * 255).rounded()),
+                                              Int((g * 255).rounded()),
+                                              Int((b * 255).rounded()))
+                draft.primaryColor = ColorTag.nearest(red: Double(r), green: Double(g), blue: Double(b))
+            }
+        )
     }
 }

@@ -16,7 +16,7 @@ final class OnboardingViewModel {
     private(set) var drafts: [Occasion: OccasionPreference] = [:]
 
     /// Global style fallback (last step).
-    var globalStyles: Set<StyleTag> = []
+    var globalStyles: Set<String> = []
 
     var currentStep: Int = 0
 
@@ -32,7 +32,7 @@ final class OnboardingViewModel {
         )
     }
 
-    func update(occasion: Occasion, formality: Formality, styles: Set<StyleTag>) {
+    func update(occasion: Occasion, formality: Formality, styles: Set<String>) {
         drafts[occasion] = OccasionPreference(
             occasion: occasion,
             targetFormality: formality,

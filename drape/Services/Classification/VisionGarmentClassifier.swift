@@ -51,85 +51,53 @@ struct VisionGarmentClassifier: GarmentClassifier {
 
     // MARK: - Color extraction
 
-    /// Crops the image to the tight garment bounding box (derived from the mask)
-    /// before averaging, so background canvas pixels don't skew the result.
+    /// Averages **only the garment pixels** (background excluded) and maps the
+    /// result to the nearest `ColorTag`. Falls back to an inner-crop average when
+    /// no foreground mask is available.
     private func dominantColor(
         of image: CIImage,
         maskObs: VNInstanceMaskObservation?,
         handler: VNImageRequestHandler
     ) -> ColorTag? {
-        let cropRect: CGRect
-
-        if let maskObs,
-           let bounds = garmentBounds(maskObs: maskObs, handler: handler, imageSize: image.extent.size),
-           !bounds.isEmpty {
-            cropRect = bounds
-        } else {
-            // Fallback: inner 50 % — conservative enough to miss most of the
-            // neutral canvas for typical well-framed wardrobe shots.
-            let e = image.extent
-            cropRect = e.insetBy(dx: e.width * 0.25, dy: e.height * 0.25)
+        if let maskObs, let color = maskedAverageColor(maskObs: maskObs, handler: handler) {
+            return color
         }
-
-        return averageColor(of: image.cropped(to: cropRect))
+        // Fallback: inner 50 % — misses most of the canvas on well-framed shots.
+        let e = image.extent
+        return averageColor(of: image.cropped(to: e.insetBy(dx: e.width * 0.25, dy: e.height * 0.25)))
     }
 
-    /// Returns the tight bounding rect of the garment (non-zero mask pixels)
-    /// in CIImage coordinates (origin bottom-left), scaled to `imageSize`.
-    private func garmentBounds(
+    /// Alpha-weighted average over the masked subject: the foreground mask turns
+    /// the background transparent, so `CIAreaAverage` (premultiplied) divided by
+    /// the average alpha yields the true garment color with no canvas bleed.
+    private func maskedAverageColor(
         maskObs: VNInstanceMaskObservation,
-        handler: VNImageRequestHandler,
-        imageSize: CGSize
-    ) -> CGRect? {
-        guard let pixelBuffer = try? maskObs.generateScaledMaskForImage(
-            forInstances: maskObs.allInstances, from: handler) else { return nil }
+        handler: VNImageRequestHandler
+    ) -> ColorTag? {
+        guard let buffer = try? maskObs.generateMaskedImage(
+                  ofInstances: maskObs.allInstances,
+                  from: handler,
+                  croppedToInstancesExtent: true) else { return nil }
+        let masked = CIImage(cvPixelBuffer: buffer)
 
-        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+        guard let filter = CIFilter(name: "CIAreaAverage", parameters: [
+                  kCIInputImageKey:  masked,
+                  kCIInputExtentKey: CIVector(cgRect: masked.extent)]),
+              let output = filter.outputImage else { return nil }
 
-        let w            = CVPixelBufferGetWidth(pixelBuffer)
-        let h            = CVPixelBufferGetHeight(pixelBuffer)
-        let bytesPerRow  = CVPixelBufferGetBytesPerRow(pixelBuffer)
-        guard let base   = CVPixelBufferGetBaseAddress(pixelBuffer) else { return nil }
+        var px = [UInt8](repeating: 0, count: 4)
+        ciContext.render(output, toBitmap: &px, rowBytes: 4,
+                         bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                         format: .RGBA8,
+                         colorSpace: CGColorSpaceCreateDeviceRGB())
 
-        var minX = w, maxX = -1, minY = h, maxY = -1
-
-        // Handle both 8-bit (0–255) and 32-bit float (0.0–1.0) mask formats.
-        let format = CVPixelBufferGetPixelFormatType(pixelBuffer)
-        if format == kCVPixelFormatType_OneComponent8 {
-            let bytes = base.bindMemory(to: UInt8.self, capacity: h * bytesPerRow)
-            for y in 0..<h {
-                for x in 0..<w where bytes[y * bytesPerRow + x] > 127 {
-                    minX = min(minX, x); maxX = max(maxX, x)
-                    minY = min(minY, y); maxY = max(maxY, y)
-                }
-            }
-        } else {
-            let floatsPerRow = bytesPerRow / MemoryLayout<Float>.size
-            let floats = base.bindMemory(to: Float.self, capacity: h * floatsPerRow)
-            for y in 0..<h {
-                for x in 0..<w where floats[y * floatsPerRow + x] > 0.5 {
-                    minX = min(minX, x); maxX = max(maxX, x)
-                    minY = min(minY, y); maxY = max(maxY, y)
-                }
-            }
-        }
-
-        guard maxX >= minX, maxY >= minY else { return nil }
-
-        let scaleX = imageSize.width  / CGFloat(w)
-        let scaleY = imageSize.height / CGFloat(h)
-
-        // CVPixelBuffer origin is top-left; CIImage origin is bottom-left → flip Y.
-        let rect = CGRect(
-            x:      CGFloat(minX) * scaleX,
-            y:      CGFloat(h - maxY - 1) * scaleY,
-            width:  CGFloat(maxX - minX + 1) * scaleX,
-            height: CGFloat(maxY - minY + 1) * scaleY
-        )
-
-        // Inset 5 % to avoid canvas/shadow artefacts at the garment edge.
-        return rect.insetBy(dx: rect.width * 0.05, dy: rect.height * 0.05)
+        let a = Double(px[3]) / 255
+        guard a > 0.02 else { return nil }   // essentially no subject
+        // Un-premultiply to recover the straight garment color.
+        let r = min(1, Double(px[0]) / 255 / a)
+        let g = min(1, Double(px[1]) / 255 / a)
+        let b = min(1, Double(px[2]) / 255 / a)
+        return ColorTag.nearest(red: r, green: g, blue: b)
     }
 
     /// CIAreaAverage over the given region, mapped to the nearest `ColorTag`.

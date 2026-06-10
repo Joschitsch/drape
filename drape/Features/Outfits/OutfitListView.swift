@@ -141,7 +141,7 @@ struct GarmentStackRow: View {
             Spacer()
 
             Circle()
-                .fill(garment.primaryColor.color)
+                .fill(garment.displayColor)
                 .frame(width: 12, height: 12)
                 .overlay(Circle().strokeBorder(Theme.ink.opacity(0.18), lineWidth: 0.5))
         }

@@ -22,9 +22,27 @@ extension Schema {
 }
 
 extension ModelContainer {
-    /// The on-disk container used by the running app.
+    /// The on-disk container used by the running app. If the existing store is
+    /// incompatible with the current schema and SwiftData can't auto-migrate
+    /// (e.g. an attribute's type changed), recover by resetting the local store
+    /// instead of crashing — demo data reseeds on next launch. Appropriate for a
+    /// pre-release app; a production build would ship a `SchemaMigrationPlan`.
     static func drape() throws -> ModelContainer {
-        try ModelContainer(for: Schema.drape)
+        let config = ModelConfiguration(schema: .drape)
+        do {
+            return try ModelContainer(for: Schema.drape, configurations: config)
+        } catch {
+            deleteStore(at: config.url)
+            return try ModelContainer(for: Schema.drape, configurations: config)
+        }
+    }
+
+    /// Removes the SQLite store and its sidecar files.
+    private static func deleteStore(at url: URL) {
+        let fm = FileManager.default
+        for path in [url.path, url.path + "-wal", url.path + "-shm"] {
+            try? fm.removeItem(atPath: path)
+        }
     }
 
     /// An in-memory container for previews and tests, optionally seeded with

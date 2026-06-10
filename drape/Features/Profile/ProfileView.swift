@@ -81,8 +81,9 @@ struct ProfileView: View {
         Section {
             VStack(alignment: .leading, spacing: 10) {
                 MonoLabel("Styles you lean on")
-                SelectableChipsRow(items: StyleTag.allCases, title: \.displayName,
-                                   selection: stylesBinding(profile))
+                StyleSelector(selection: stylesBinding(profile),
+                              customStyles: profile.customStyles,
+                              onAdd: { addCustomStyle($0, profile) })
             }
             .padding(.vertical, 4)
         } header: {
@@ -98,19 +99,14 @@ struct ProfileView: View {
         Section("Occasion preferences") {
             ForEach(OnboardingViewModel.occasions) { occasion in
                 DisclosureGroup {
-                    VStack(alignment: .leading, spacing: 16) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            MonoLabel("Formality")
-                            SingleChoiceChips(items: Formality.allCases, title: \.displayName,
-                                              selection: occasionFormalityBinding(profile, occasion))
-                        }
-                        VStack(alignment: .leading, spacing: 10) {
-                            MonoLabel("Style vibes")
-                            SelectableChipsRow(items: StyleTag.allCases, title: \.displayName,
-                                               selection: occasionStylesBinding(profile, occasion))
-                        }
-                    }
-                    .padding(.vertical, 6)
+                    OccasionPreferenceEditor(
+                        occasion: occasion,
+                        formality: occasionFormalityBinding(profile, occasion),
+                        styles: occasionStylesBinding(profile, occasion),
+                        customStyles: profile.customStyles,
+                        onAddStyle: { addCustomStyle($0, profile) }
+                    )
+                    .padding(.vertical, 8)
                 } label: {
                     Label(occasion.displayName, image: occasion.iconName)
                         .labelStyle(.drapeIcon)
@@ -234,11 +230,18 @@ struct ProfileView: View {
 
     private func persist() { try? modelContext.save() }
 
-    private func stylesBinding(_ profile: UserProfile) -> Binding<Set<StyleTag>> {
+    private func stylesBinding(_ profile: UserProfile) -> Binding<Set<String>> {
         Binding(
             get: { Set(profile.preferredStyles) },
-            set: { profile.preferredStyles = StyleTag.allCases.filter($0.contains); persist() }
+            set: { profile.preferredStyles = $0.sorted(); persist() }
         )
+    }
+
+    /// Registers a brand-new style on the profile so it's reusable everywhere.
+    private func addCustomStyle(_ style: String, _ profile: UserProfile) {
+        guard !profile.customStyles.contains(style) else { return }
+        profile.customStyles.append(style)
+        persist()
     }
 
     private func occasionFormalityBinding(_ profile: UserProfile, _ occasion: Occasion) -> Binding<Formality> {
@@ -248,7 +251,7 @@ struct ProfileView: View {
         )
     }
 
-    private func occasionStylesBinding(_ profile: UserProfile, _ occasion: Occasion) -> Binding<Set<StyleTag>> {
+    private func occasionStylesBinding(_ profile: UserProfile, _ occasion: Occasion) -> Binding<Set<String>> {
         Binding(
             get: { Set(profile.preference(for: occasion)?.styles ?? []) },
             set: { setOccasion(profile, occasion, formality: nil, styles: $0) }
@@ -256,11 +259,10 @@ struct ProfileView: View {
     }
 
     private func setOccasion(_ profile: UserProfile, _ occasion: Occasion,
-                             formality: Formality?, styles: Set<StyleTag>?) {
+                             formality: Formality?, styles: Set<String>?) {
         let existing = profile.preference(for: occasion)
         let newFormality = formality ?? existing?.targetFormality ?? occasion.targetFormality
-        let newStyles = styles.map { set in StyleTag.allCases.filter(set.contains) }
-            ?? existing?.styles ?? []
+        let newStyles = styles.map { $0.sorted() } ?? existing?.styles ?? []
         var prefs = profile.occasionPreferences.filter { $0.occasion != occasion }
         prefs.append(OccasionPreference(occasion: occasion, targetFormality: newFormality, styles: newStyles))
         profile.occasionPreferences = prefs

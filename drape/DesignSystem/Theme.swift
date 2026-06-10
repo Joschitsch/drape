@@ -112,3 +112,12 @@ extension ColorTag {
     /// so the domain enum stays UI-free.
     var color: Color { Color(hex: hex) }
 }
+
+extension Garment {
+    /// The color shown in the UI — the exact custom-picked color if the user set
+    /// one, otherwise the named `primaryColor`.
+    var displayColor: Color {
+        if let hex = customColorHex, !hex.isEmpty { return Color(hex: hex) }
+        return primaryColor.color
+    }
+}

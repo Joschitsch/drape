@@ -30,11 +30,15 @@ final class Garment {
 
     var primaryColor: ColorTag = ColorTag.ink
     var secondaryColors: [ColorTag] = []
+    /// Exact user-picked color (hex) for display. When set, it overrides
+    /// `primaryColor` visually; `primaryColor` still holds the nearest named
+    /// color so the engine can read a color family.
+    var customColorHex: String? = nil
 
     var formality: Formality = Formality.casual
     var warmth: WarmthLevel = WarmthLevel.medium
     var seasons: [Season] = []
-    var styles: [StyleTag] = []
+    var styles: [String] = []
 
     /// User-visible label, e.g. "Blue Jeans". Auto-generated on add; editable.
     var name: String? = nil
@@ -63,7 +67,7 @@ final class Garment {
         formality: Formality = .casual,
         warmth: WarmthLevel = .medium,
         seasons: [Season] = [],
-        styles: [StyleTag] = [],
+        styles: [String] = [],
         brand: String? = nil,
         notes: String? = nil,
         imageAssetID: String = "",
