@@ -28,6 +28,15 @@ struct GarmentAttributeFields: View {
         }
 
         Section("Suitability") {
+            if draft.category == .footwear {
+                field("Type") {
+                    OptionalSingleChoiceChips(
+                        items: FootwearSubcategory.allCases,
+                        title: \.displayName,
+                        selection: $draft.footwearSubcategory
+                    )
+                }
+            }
             FormalityDial(formality: $draft.formality)
                 .padding(.vertical, 4)
             field("Warmth") {

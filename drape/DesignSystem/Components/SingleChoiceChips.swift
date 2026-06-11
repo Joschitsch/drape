@@ -25,3 +25,20 @@ struct SingleChoiceChips<Item: Hashable & Identifiable>: View {
         }
     }
 }
+
+/// Optional-selection variant: tapping the active chip deselects to nil.
+struct OptionalSingleChoiceChips<Item: Hashable & Identifiable>: View {
+    let items: [Item]
+    let title: (Item) -> String
+    @Binding var selection: Item?
+
+    var body: some View {
+        FlowLayout(spacing: 8) {
+            ForEach(items) { item in
+                DrapeChip(label: title(item), active: item == selection) {
+                    selection = (item == selection) ? nil : item
+                }
+            }
+        }
+    }
+}

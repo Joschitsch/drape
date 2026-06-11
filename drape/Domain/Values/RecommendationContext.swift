@@ -44,6 +44,9 @@ struct RecommendationContext: Sendable {
 struct GarmentSnapshot: Identifiable, Hashable, Sendable {
     var id: UUID
     var category: GarmentCategory
+    /// Populated for `.footwear`; nil for all other categories and for footwear
+    /// that has not yet been tagged.
+    var footwearSubcategory: FootwearSubcategory?
     var primaryColor: ColorTag
     var secondaryColors: [ColorTag]
     var formality: Formality
@@ -76,6 +79,7 @@ extension Garment {
         GarmentSnapshot(
             id: id,
             category: category,
+            footwearSubcategory: subcategory.flatMap { FootwearSubcategory(rawValue: $0) },
             primaryColor: primaryColor,
             secondaryColors: secondaryColors,
             formality: formality,

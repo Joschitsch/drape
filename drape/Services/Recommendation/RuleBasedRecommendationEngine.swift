@@ -54,6 +54,17 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             }
             if !allWithinBand { continue }
 
+            // Hard filter: Sport requires athletic footwear.
+            // Conservative: footwear with no subcategory (untagged) still passes.
+            if context.occasion == .sport {
+                let hasNonAthleticShoes = candidate.contains {
+                    $0.category == .footwear &&
+                    $0.footwearSubcategory != nil &&
+                    $0.footwearSubcategory != .athletic
+                }
+                if hasNonAthleticShoes { continue }
+            }
+
             var totalWeight = 0.0
             var weightedScore = 0.0
             var rationale: [String] = []

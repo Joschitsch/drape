@@ -41,6 +41,7 @@ final class AddGarmentViewModel {
             if let warmth   = suggestion.warmth      { draft.warmth = warmth }
             if let formality = suggestion.formality  { draft.formality = formality }
             if let seasons  = suggestion.seasons     { draft.seasons = seasons }
+            if let sub = suggestion.footwearSubcategory { draft.footwearSubcategory = sub }
             draft.name = Self.generateName(color: draft.primaryColor, category: draft.category)
             phase = .ready
         } catch {

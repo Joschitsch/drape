@@ -19,6 +19,7 @@ struct ClassificationSuggestion: Sendable {
     var warmth: WarmthLevel?
     var formality: Formality?
     var seasons: Set<Season>?
+    var footwearSubcategory: FootwearSubcategory?
 
     init(
         category: GarmentCategory? = nil,
@@ -27,7 +28,8 @@ struct ClassificationSuggestion: Sendable {
         categoryConfidence: Double = 0,
         warmth: WarmthLevel? = nil,
         formality: Formality? = nil,
-        seasons: Set<Season>? = nil
+        seasons: Set<Season>? = nil,
+        footwearSubcategory: FootwearSubcategory? = nil
     ) {
         self.category = category
         self.primaryColor = primaryColor
@@ -36,6 +38,7 @@ struct ClassificationSuggestion: Sendable {
         self.warmth = warmth
         self.formality = formality
         self.seasons = seasons
+        self.footwearSubcategory = footwearSubcategory
     }
 
     static let empty = ClassificationSuggestion()

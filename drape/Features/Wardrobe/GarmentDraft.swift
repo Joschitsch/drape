@@ -15,6 +15,7 @@ import Foundation
 struct GarmentDraft {
     var name: String = ""
     var category: GarmentCategory = .top
+    var footwearSubcategory: FootwearSubcategory? = nil
     var primaryColor: ColorTag = .ink
     var customColorHex: String? = nil
     var secondaryColors: [ColorTag] = []
@@ -32,6 +33,7 @@ struct GarmentDraft {
     init(from garment: Garment) {
         name = garment.name ?? ""
         category = garment.category
+        footwearSubcategory = garment.subcategory.flatMap { FootwearSubcategory(rawValue: $0) }
         primaryColor = garment.primaryColor
         customColorHex = garment.customColorHex
         secondaryColors = garment.secondaryColors
@@ -48,6 +50,7 @@ struct GarmentDraft {
     func apply(to garment: Garment) {
         garment.name = name.trimmed.isEmpty ? nil : name.trimmed
         garment.category = category
+        garment.subcategory = footwearSubcategory?.rawValue
         garment.primaryColor = primaryColor
         garment.customColorHex = customColorHex
         garment.secondaryColors = secondaryColors

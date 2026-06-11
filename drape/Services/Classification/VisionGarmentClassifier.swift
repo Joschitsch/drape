@@ -38,14 +38,18 @@ struct VisionGarmentClassifier: GarmentClassifier {
 
         let match = bestClothingMatch(from: observations)
         let color = dominantColor(of: ciImage, maskObs: maskObs, handler: handler)
+        let subcategory = match?.category == .footwear
+            ? bestFootwearSubcategory(from: observations)
+            : nil
 
         return ClassificationSuggestion(
-            category:           match?.category,
-            primaryColor:       color,
-            categoryConfidence: Double(match?.confidence ?? 0),
-            warmth:             match?.warmth,
-            formality:          match?.formality,
-            seasons:            match?.seasons
+            category:             match?.category,
+            primaryColor:         color,
+            categoryConfidence:   Double(match?.confidence ?? 0),
+            warmth:               match?.warmth,
+            formality:            match?.formality,
+            seasons:              match?.seasons,
+            footwearSubcategory:  subcategory
         )
     }
 
@@ -126,6 +130,22 @@ struct VisionGarmentClassifier: GarmentClassifier {
         let seasons:     Set<Season>
         let confidence:  Float
         let specificity: Int  // prefer "t-shirt" (5) over "shirt" (3) over "clothing" (1)
+    }
+
+    private func bestFootwearSubcategory(from observations: [VNClassificationObservation]) -> FootwearSubcategory? {
+        for obs in observations.sorted(by: { $0.confidence > $1.confidence }) where obs.confidence > 0.05 {
+            let label = obs.identifier.lowercased()
+            if label.contains("sneaker") || label.contains("trainer")
+                || label.contains("athletic shoe") || label.contains("running shoe") { return .athletic }
+            if label.contains("sandal") || label.contains("flip-flop")
+                || label.contains("flip flop") { return .sandal }
+            if label.contains("high heel") || label.contains("stiletto")
+                || label.contains("pump") { return .dress }
+            if label.contains("loafer") || label.contains("oxford") || label.contains("derby")
+                || label.contains("moccasin") { return .loafer }
+            if label.contains("boot") { return .boot }
+        }
+        return nil
     }
 
     private func bestClothingMatch(from observations: [VNClassificationObservation]) -> ClothingMatch? {
