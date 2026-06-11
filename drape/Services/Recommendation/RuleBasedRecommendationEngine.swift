@@ -18,7 +18,6 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         var color:     Double = 1.0
         var style:     Double = 1.0
         var recency:   Double = 0.8
-        var season:    Double = 0.8
         var rain:      Double = 0.6
     }
 
@@ -37,22 +36,23 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             // Hard filter: never recommend an outfit that is temperature-wrong.
             if context.weather != nil && warmthResult.score == 0 { continue }
 
-            // Hard filter: drop outfits whose formality is too far from the
-            // occasion's target. Uses user-defined per-occasion preferences when
-            // available, falling back to hardcoded occasion defaults.
+            // Hard filter: every core garment must individually sit within the
+            // occasion's formality tolerance of the target — no averaging, so a
+            // single too-casual piece can't hide behind dressier companions.
+            // A user per-occasion preference moves the target but never widens
+            // the occasion's tolerance.
             let userOccasionPref = context.profile.occasionPreference(for: context.occasion)
-            let formalityTarget = userOccasionPref.map { Double($0.targetFormality.rawValue) }
-                ?? Double(context.occasion.targetFormality.rawValue)
-            let formalityTolerance = userOccasionPref != nil ? 1.5 : context.occasion.formalityTolerance
+            let formalityTarget = Double(
+                (userOccasionPref?.targetFormality ?? context.occasion.targetFormality).rawValue
+            )
+            let formalityTolerance = context.occasion.formalityTolerance
             let core = candidate.filter {
                 $0.category.slot != .accessory && $0.category.slot != .outerwear
             }
-            if !core.isEmpty {
-                let avgFormality = Double(core.map { $0.formality.rawValue }.reduce(0, +))
-                    / Double(core.count)
-                let formalityDist = abs(avgFormality - formalityTarget)
-                if formalityDist > formalityTolerance { continue }
+            let allWithinBand = core.allSatisfy {
+                abs(Double($0.formality.rawValue) - formalityTarget) <= formalityTolerance
             }
+            if !allWithinBand { continue }
 
             var totalWeight = 0.0
             var weightedScore = 0.0
@@ -69,7 +69,6 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             add(weight: weights.color,     result: scoreColorHarmony(garments: candidate))
             add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile, occasion: context.occasion))
             add(weight: weights.recency,   result: scoreRecency(garments: candidate, recentWears: context.recentWears))
-            add(weight: weights.season,    result: scoreSeason(garments: candidate, season: context.season))
             add(weight: weights.rain,      result: scoreRainReadiness(garments: candidate, weather: context.weather))
 
             let normalized = totalWeight > 0 ? weightedScore / totalWeight : 0
