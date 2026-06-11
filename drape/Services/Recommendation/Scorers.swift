@@ -130,19 +130,6 @@ func scoreRecency(garments: [GarmentSnapshot], recentWears: [UUID: Date]) -> (sc
     return (score, nil)
 }
 
-// MARK: - Season scorer
-
-/// Rewards items tagged for the current season; neutral otherwise.
-func scoreSeason(garments: [GarmentSnapshot], season: Season) -> (score: Double, rationale: String?) {
-    let tagged = garments.filter { !$0.seasons.isEmpty }
-    guard !tagged.isEmpty else { return (0.5, nil) }
-
-    let inSeason = tagged.filter { $0.seasons.contains(season) }.count
-    let score = Double(inSeason) / Double(tagged.count)
-    let rationale: String? = score == 1.0 ? "In season" : nil
-    return (score, rationale)
-}
-
 // MARK: - Rain scorer
 
 /// Gives a small bonus to outfits with outerwear when it's wet outside.

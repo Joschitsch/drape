@@ -43,6 +43,7 @@ extension View {
         self
             .font(Theme.body(17, weight: .semibold))
             .foregroundStyle(Theme.paper)
+            .padding(.horizontal, 24)
             .frame(maxWidth: .infinity, minHeight: 52)
             .background(Theme.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }

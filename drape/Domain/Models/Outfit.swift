@@ -19,7 +19,6 @@ final class Outfit {
     /// The garments making up this outfit. Inverse declared on `Garment.outfits`.
     var garments: [Garment] = []
 
-    var tags: [String] = []
     var occasion: Occasion = Occasion.everyday
     var notes: String?
 
@@ -31,7 +30,6 @@ final class Outfit {
         name: String,
         garments: [Garment] = [],
         occasion: Occasion = .everyday,
-        tags: [String] = [],
         notes: String? = nil
     ) {
         self.id = id
@@ -39,7 +37,6 @@ final class Outfit {
         self.createdAt = .now
         self.garments = garments
         self.occasion = occasion
-        self.tags = tags
         self.notes = notes
     }
 

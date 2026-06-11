@@ -21,7 +21,6 @@ struct ProfileView: View {
 
     @State private var showingPaywall = false
     @State private var fetchingLocation = false
-    @State private var recoverablePhotos = 0
 
     @Query(filter: #Predicate<Garment> { !$0.isArchived }) private var garments: [Garment]
     @Query private var outfits: [Outfit]
@@ -32,7 +31,6 @@ struct ProfileView: View {
             Form {
                 if let profile {
                     statCardSection
-                    if recoverablePhotos > 0 { recoverySection }
                     if !entitlements.isEnabled(.wardrobeAnalytics) {
                         proUpsellSection
                     }
@@ -49,28 +47,6 @@ struct ProfileView: View {
             .sheet(isPresented: $showingPaywall) {
                 PaywallView().environment(entitlements)
             }
-            .task {
-                recoverablePhotos = await GarmentRecovery.orphanedPhotoIDs(
-                    context: modelContext, imageStore: container.imageStore).count
-            }
-        }
-    }
-
-    // MARK: - Photo recovery
-
-    private var recoverySection: some View {
-        Section {
-            Button {
-                Task {
-                    _ = await GarmentRecovery.recover(context: modelContext, imageStore: container.imageStore)
-                    recoverablePhotos = 0
-                }
-            } label: {
-                Label("Recover \(recoverablePhotos) lost photo\(recoverablePhotos == 1 ? "" : "s")",
-                      systemImage: "arrow.uturn.backward")
-            }
-        } footer: {
-            Text("Photos from garments removed in an update are still on this device. Recover them as items to re-tag.")
         }
     }
 
@@ -238,7 +214,7 @@ struct ProfileView: View {
             Text(entitlements.tier == .pro
                  ? "Pro features unlocked."
                  : "Free tier — up to \(SubscriptionTier.free.garmentLimit ?? 0) items.")
-                .font(.caption)
+                .font(Theme.body(12))
                 .foregroundStyle(Theme.inkSoft)
             if entitlements.tier == .free {
                 Button("Upgrade to Pro") { showingPaywall = true }

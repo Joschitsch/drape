@@ -25,15 +25,4 @@ enum Season: String, Codable, CaseIterable, Identifiable, Sendable {
         case .winter: "Winter"
         }
     }
-
-    /// The season for a given date in the northern hemisphere. Used to bias
-    /// suggestions toward seasonally appropriate items.
-    static func current(for date: Date = .now, calendar: Calendar = .current) -> Season {
-        switch calendar.component(.month, from: date) {
-        case 3...5: .spring
-        case 6...8: .summer
-        case 9...11: .autumn
-        default: .winter
-        }
-    }
 }

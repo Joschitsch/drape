@@ -39,10 +39,7 @@ struct OutfitListView: View {
         ScrollView {
             LazyVStack(spacing: 18) {
                 ForEach(outfits) { outfit in
-                    NavigationLink(value: outfit) {
-                        OutfitStackCard(outfit: outfit)
-                    }
-                    .buttonStyle(.plain)
+                    DeletableOutfitCard(outfit: outfit)
                 }
             }
             .padding(Theme.contentPadding)
@@ -55,7 +52,49 @@ struct OutfitListView: View {
         } description: {
             Text("Combine wardrobe items into outfits.")
         } actions: {
-            Button("New Outfit") { showingBuilder = true }.buttonStyle(.borderedProminent)
+            CTAButton(title: "New Outfit") { showingBuilder = true }
+                .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+}
+
+// MARK: - Deletable outfit card
+
+/// An outfit stack card with a long-press context menu (Delete). The
+/// confirmation dialog lives on this view so iOS 26 anchors it to the card
+/// being acted on, matching Photos.app behaviour.
+private struct DeletableOutfitCard: View {
+    let outfit: Outfit
+
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showingEdit = false
+    @State private var showingDelete = false
+
+    var body: some View {
+        NavigationLink(value: outfit) {
+            OutfitStackCard(outfit: outfit)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                Task { @MainActor in showingEdit = true }
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                Task { @MainActor in showingDelete = true }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .sheet(isPresented: $showingEdit) { OutfitBuilderView(editing: outfit) }
+        .drapeDeleteConfirmation(
+            title: "Delete \u{201C}\(outfit.name)\u{201D}?",
+            message: "The garments in it stay in your wardrobe.",
+            isPresented: $showingDelete
+        ) {
+            deleteOutfit(outfit, context: modelContext)
         }
     }
 }
@@ -105,11 +144,10 @@ struct OutfitStackCard: View {
 
             Divider().overlay(Theme.line)
 
-            // ── Footer: tags + wear count ────────────────────────────
+            // ── Footer: wear count ───────────────────────────────────
             HStack {
-                MonoLabel(outfit.tags.map { "#\($0)" }.joined(separator: "  "), size: 10)
-                Spacer()
                 MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn", size: 10)
+                Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 11)

@@ -36,13 +36,6 @@ struct OutfitDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         MonoLabel(kickerText)
                         SerifText(outfit.name, size: 28)
-                        if !outfit.tags.isEmpty {
-                            HStack(spacing: 8) {
-                                ForEach(outfit.tags, id: \.self) { tag in
-                                    TagChip("#\(tag)")
-                                }
-                            }
-                        }
                     }
 
                     // ── Garment stack (larger thumbnails) ────────────
@@ -92,18 +85,19 @@ struct OutfitDetailView: View {
                     Button { isEditing = true } label: {
                         Label("Edit", systemImage: "pencil")
                     }
-                    Button(role: .destructive) { showDeleteConfirm = true } label: {
+                    Button(role: .destructive) { Task { @MainActor in showDeleteConfirm = true } } label: {
                         Label("Delete", systemImage: "trash")
                     }
                     .tint(.red)
                 } label: { Image(systemName: "ellipsis.circle") }
+                .drapeDeleteConfirmation(
+                    title: "Delete \u{201C}\(outfit.name)\u{201D}?",
+                    message: "The garments in it stay in your wardrobe.",
+                    isPresented: $showDeleteConfirm
+                ) { delete() }
             }
         }
         .sheet(isPresented: $isEditing) { OutfitBuilderView(editing: outfit) }
-        .confirmationDialog("Delete this outfit?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { delete() }
-            Button("Cancel", role: .cancel) {}
-        }
     }
 
     // MARK: - Footer
@@ -128,8 +122,7 @@ struct OutfitDetailView: View {
     }
 
     private func delete() {
-        modelContext.delete(outfit)
-        try? modelContext.save()
+        deleteOutfit(outfit, context: modelContext)
         dismiss()
     }
 }

@@ -23,6 +23,8 @@ struct WardrobeListView: View {
     @State private var showingPaywall = false
     @State private var selectedCategory: GarmentCategory? = nil
     @State private var favoritesOnly = false
+    @State private var filter = GarmentFilter()
+    @State private var showingFilter = false
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: Theme.tileSpacing)]
 
@@ -35,7 +37,7 @@ struct WardrobeListView: View {
         var list = garments
         if let cat = selectedCategory { list = list.filter { $0.category == cat } }
         if favoritesOnly { list = list.filter(\.isFavorite) }
-        return list
+        return list.filter(filter.matches)
     }
 
     /// Most-neglected favorited garment (60+ days without a wear).
@@ -63,11 +65,23 @@ struct WardrobeListView: View {
             .navigationSubtitle("\(garments.count) of \(SubscriptionTier.free.garmentLimit ?? 30) pieces")
             .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button { showingFilter = true } label: {
+                        Image(systemName: filter.isActive
+                              ? "line.3.horizontal.decrease.circle.fill"
+                              : "line.3.horizontal.decrease.circle")
+                    }
+                    .accessibilityLabel(filter.isActive ? "Filter (active)" : "Filter")
                     Button { addTapped() } label: { Image(systemName: "plus") }
                 }
             }
             .sheet(isPresented: $showingAdd) { AddGarmentView() }
+            .sheet(isPresented: $showingFilter) {
+                GarmentFilterSheet(filter: $filter, garments: garments)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+            }
             .alert("Free limit reached", isPresented: $showLimitAlert) {
                 Button("Upgrade to Pro") { showingPaywall = true }
                 Button("Maybe Later", role: .cancel) {}
@@ -81,6 +95,9 @@ struct WardrobeListView: View {
                 if let sel = selectedCategory, !availableCategories.contains(sel) {
                     selectedCategory = nil
                 }
+            }
+            .onChange(of: GarmentFacets(garments)) { _, newFacets in
+                filter.prune(to: newFacets)
             }
         }
     }
@@ -103,24 +120,40 @@ struct WardrobeListView: View {
                     .padding(.bottom, 4)
                 }
 
-                // ── Filter chips ─────────────────────────────────────
+                // ── Category chips ───────────────────────────────────
                 if availableCategories.count > 1 {
                     filterPills
                         .padding(.horizontal, Theme.contentPadding)
                         .padding(.vertical, 12)
                 }
 
+                // ── Active secondary filter chips ────────────────────
+                activeFilterSummary
+                    .padding(.horizontal, Theme.contentPadding)
+
                 // ── Grid ─────────────────────────────────────────────
                 if filteredGarments.isEmpty {
-                    ContentUnavailableView {
-                        Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet",
-                              image: selectedCategory?.iconName ?? "drape.wardrobe")
-                    } description: {
-                        Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
-                    } actions: {
-                        Button("Add Item") { addTapped() }.buttonStyle(.borderedProminent)
+                    if filter.isActive {
+                        ContentUnavailableView {
+                            Label("No matches", image: "drape.wardrobe")
+                        } description: {
+                            Text("No items match these filters.")
+                        } actions: {
+                            CTAButton(title: "Clear filters") { filter.clear() }
+                                .padding(.horizontal, Theme.contentPadding)
+                        }
+                        .padding(.top, 32)
+                    } else {
+                        ContentUnavailableView {
+                            Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet",
+                                  image: selectedCategory?.iconName ?? "drape.wardrobe")
+                        } description: {
+                            Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
+                        } actions: {
+                            Button("Add Item") { addTapped() }.buttonStyle(.borderedProminent)
+                        }
+                        .padding(.top, 32)
                     }
-                    .padding(.top, 32)
                 } else {
                     LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
                         ForEach(filteredGarments) { garment in
@@ -157,6 +190,63 @@ struct WardrobeListView: View {
 
     private func chip(label: String, active: Bool, action: @escaping () -> Void) -> some View {
         DrapeChip(label: label, active: active, small: true, action: action)
+    }
+
+    // MARK: - Active secondary filter summary
+
+    @ViewBuilder
+    private var activeFilterSummary: some View {
+        let chiplets = summaryChiplets
+        if !chiplets.isEmpty {
+            FlowLayout(spacing: 8) {
+                ForEach(chiplets) { chiplet in
+                    Button(action: chiplet.remove) {
+                        HStack(spacing: 5) {
+                            Text(chiplet.label)
+                                .font(Theme.body(12, weight: .medium))
+                            Image(systemName: "xmark")
+                                .font(.system(size: 9, weight: .bold))
+                        }
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 5)
+                        .foregroundStyle(Theme.paper)
+                        .background(Theme.ink, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Remove \(chiplet.label) filter")
+                }
+                Button("Clear all") { filter.clear() }
+                    .font(Theme.body(12, weight: .medium))
+                    .foregroundStyle(Theme.inkSoft)
+                    .padding(.vertical, 5)
+                    .buttonStyle(.plain)
+            }
+            .padding(.bottom, 12)
+        }
+    }
+
+    private struct Chiplet: Identifiable {
+        let id: String; let label: String; let remove: () -> Void
+    }
+
+    private var summaryChiplets: [Chiplet] {
+        var out: [Chiplet] = []
+        for c in filter.colors.sorted(by: { $0.displayName < $1.displayName }) {
+            out.append(Chiplet(id: "color-\(c.id)", label: c.displayName) { filter.colors.remove(c) })
+        }
+        for f in filter.formalities.sorted(by: { $0.displayName < $1.displayName }) {
+            out.append(Chiplet(id: "form-\(f.id)", label: f.displayName) { filter.formalities.remove(f) })
+        }
+        for w in filter.warmths.sorted(by: { $0.displayName < $1.displayName }) {
+            out.append(Chiplet(id: "warm-\(w.id)", label: w.displayName) { filter.warmths.remove(w) })
+        }
+        for s in filter.seasons.sorted(by: { $0.displayName < $1.displayName }) {
+            out.append(Chiplet(id: "season-\(s.id)", label: s.displayName) { filter.seasons.remove(s) })
+        }
+        for st in filter.styles.sorted() {
+            out.append(Chiplet(id: "style-\(st)", label: st) { filter.styles.remove(st) })
+        }
+        return out
     }
 
     private var emptyState: some View {

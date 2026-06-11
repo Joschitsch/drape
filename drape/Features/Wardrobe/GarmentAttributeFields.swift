@@ -28,10 +28,8 @@ struct GarmentAttributeFields: View {
         }
 
         Section("Suitability") {
-            field("Formality") {
-                SingleChoiceChips(items: Formality.allCases, title: \.displayName,
-                                  selection: $draft.formality)
-            }
+            FormalityDial(formality: $draft.formality)
+                .padding(.vertical, 4)
             field("Warmth") {
                 SingleChoiceChips(items: WarmthLevel.allCases, title: \.displayName,
                                   selection: $draft.warmth)

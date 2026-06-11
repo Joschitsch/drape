@@ -106,7 +106,7 @@ struct AddGarmentView: View {
             }
 
             if let error {
-                Text(error).font(.footnote).foregroundStyle(.red)
+                Text(error).font(Theme.body(12)).foregroundStyle(.red)
             }
         }
         .padding(32)

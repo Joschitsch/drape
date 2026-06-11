@@ -18,123 +18,169 @@ struct RecommendationsView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var model = RecommendationsViewModel()
-    @State private var loadingPhase: LoadingPhase = .idle
+
+    /// The typewriter loading line is showing.
+    @State private var isLoading = false
+    /// A search has produced results at least once — flips the CTA to "Update".
+    @State private var hasSearched = false
+    /// The creative line chosen for the current load. Only shown while loading,
+    /// so it starts empty and is set in `search()`.
+    @State private var loadingLine = ""
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var profile: UserProfile? { profiles.first }
 
-    enum LoadingPhase { case idle, loading, results }
-
     var body: some View {
         NavigationStack {
-            ZStack {
-                switch loadingPhase {
-                case .idle:    idleView
-                case .loading: loadingView
-                case .results: resultsView
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    pickerHeader
+
+                    if isLoading {
+                        TypewriterText(text: loadingLine)
+                            .id(loadingLine)
+                            .frame(maxWidth: .infinity, minHeight: 80, alignment: .center)
+                            .padding(.top, 40)
+                            .transition(.opacity)
+                    } else if hasSearched {
+                        resultsList
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
                 }
+                .padding(Theme.contentPadding)
+                .animation(.snappy(duration: 0.35), value: isLoading)
+                .animation(.snappy(duration: 0.35), value: hasSearched)
+                .animation(.snappy(duration: 0.35), value: model.isLoadingWeather)
+                .animation(.snappy(duration: 0.35), value: model.lastWeather)
             }
             .background(Theme.paper.ignoresSafeArea())
             .task { await model.loadWeather(container: container) }
             .navigationTitle("Style")
-            .toolbar {
-                if case .results = loadingPhase {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            Task { await refresh() }
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                        }
-                    }
+        }
+    }
+
+    // MARK: - Occasion picker (always visible)
+
+    private var pickerHeader: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            MonoLabel("The morning ritual")
+
+            weatherSlot
+
+            SerifText("Where are you headed today?", size: 22)
+
+            SingleChoiceChips(items: Occasion.allCases, title: \.displayName,
+                              selection: Bindable(model).occasion)
+
+            VStack(spacing: 12) {
+                CTAButton(title: hasSearched ? "Update my picks" : "Find me something to wear") {
+                    Task { await search() }
                 }
+
+                MonoLabel("Reads your weather, your wardrobe, and your week", size: 10)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .multilineTextAlignment(.center)
             }
         }
     }
 
-    // MARK: - Idle: occasion picker
+    // MARK: - Weather slot (strip / skeleton / omitted)
 
-    private var idleView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                MonoLabel("The morning ritual")
-
-                // Weather strip (if available)
-                if let weather = model.lastWeather {
-                    WeatherStrip(weather: weather, city: model.locationName ?? profile?.homeCity)
-                }
-
-                // Headline
-                SerifText("Where are you headed today?", size: 22)
-
-                // Occasion chips
-                SingleChoiceChips(items: Occasion.allCases, title: \.displayName,
-                                  selection: Bindable(model).occasion)
-
-                // CTA
-                VStack(spacing: 12) {
-                    CTAButton(title: "Find me something to wear") {
-                        Task { await refresh() }
-                    }
-
-                    MonoLabel("Reads your weather, your wardrobe, and your week", size: 10)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .padding(Theme.contentPadding)
+    @ViewBuilder
+    private var weatherSlot: some View {
+        if let weather = model.lastWeather {
+            WeatherStrip(weather: weather, city: model.locationName ?? profile?.homeCity)
+                .transition(.opacity)
+        } else if model.isLoadingWeather {
+            WeatherStrip(
+                weather: WeatherSnapshot(
+                    temperatureCelsius: 18,
+                    apparentTemperatureCelsius: 17,
+                    precipitationChance: 0.2,
+                    condition: .clear
+                ),
+                city: "Loading"
+            )
+            .redacted(reason: .placeholder)
+            .shimmer()
+            .transition(.opacity)
+            .accessibilityLabel("Loading weather")
         }
-    }
-
-    // MARK: - Loading: animated ring + cycling text
-
-    private var loadingView: some View {
-        LoadingRitualView(occasionName: model.occasion.displayName,
-                          cityName: model.lastWeather != nil ? "your location" : nil)
+        // else: weather unavailable (fetch failed) — omit the strip entirely.
     }
 
     // MARK: - Results: 3 outfit suggestion cards
 
-    private var resultsView: some View {
-        ScrollView {
+    @ViewBuilder
+    private var resultsList: some View {
+        if model.suggestions.isEmpty {
+            if model.emptyReason == .nothingSuitsContext {
+                ContentUnavailableView(
+                    "Nothing fits the brief",
+                    image: "drape.style",
+                    description: Text(nothingSuitsDescription)
+                )
+            } else {
+                ContentUnavailableView(
+                    "Not enough items",
+                    image: "drape.style",
+                    description: Text("Add more wardrobe items — you need footwear and a top + bottom (or a dress) to get suggestions.")
+                )
+            }
+        } else {
+            let labels = ["First thought", "Second option", "Wild card"]
             VStack(alignment: .leading, spacing: 20) {
-                // ← Change occasion link
-                Button {
-                    loadingPhase = .idle
-                } label: {
-                    Label("Change occasion", systemImage: "chevron.left")
-                        .font(Theme.body(15))
-                        .foregroundStyle(Theme.inkSoft)
-                }
-                .buttonStyle(.plain)
-
-                // Suggestion cards
-                if model.suggestions.isEmpty {
-                    ContentUnavailableView(
-                        "Not enough items",
-                        image: "drape.style",
-                        description: Text("Add more wardrobe items — you need footwear and a top + bottom (or a dress) to get suggestions.")
+                ForEach(Array(model.suggestions.prefix(3).enumerated()), id: \.offset) { idx, item in
+                    OutfitSuggestionCard(
+                        label: idx < labels.count ? labels[idx] : "#\(idx + 1)",
+                        suggestion: item.suggestion,
+                        garments: item.garments,
+                        onSave: { save(item.suggestion, garments: item.garments) }
                     )
-                } else {
-                    let labels = ["First thought", "Second option", "Wild card"]
-                    ForEach(Array(model.suggestions.prefix(3).enumerated()), id: \.offset) { idx, item in
-                        OutfitSuggestionCard(
-                            label: idx < labels.count ? labels[idx] : "#\(idx + 1)",
-                            suggestion: item.suggestion,
-                            garments: item.garments,
-                            onSave: { save(item.suggestion, garments: item.garments) }
-                        )
-                    }
                 }
             }
-            .padding(Theme.contentPadding)
+        }
+    }
+
+    /// Copy for "slots covered, but every candidate was filtered". Occasions
+    /// with a formality band (work, date, formal) most likely filtered on
+    /// dress code; the relaxed occasions only hard-filter on warmth, so
+    /// there the weather is the honest explanation.
+    private var nothingSuitsDescription: String {
+        if model.occasion.formalityTolerance.isFinite {
+            "Your wardrobe has the pieces, but nothing fits \(model.occasion.preferencePhrase) — consider adding dressier options."
+        } else {
+            "Your wardrobe has the pieces, but nothing suits today's weather — consider adding something for this temperature."
         }
     }
 
     // MARK: - Helpers
 
-    private func refresh() async {
-        loadingPhase = .loading
+    /// Runs a search: pick a line tuned to occasion + location, then hold the
+    /// loading state until that line has fully typed (the engine is near-instant,
+    /// so the typing time sets the pace), then reveal results.
+    private func search() async {
+        let city = model.locationName ?? profile?.homeCity
+        loadingLine = StyleLoadingCopy.line(for: model.occasion, city: city)
+        let start = ContinuousClock.now
+        withAnimation(.snappy(duration: 0.35)) { isLoading = true }
+
         await model.refresh(wardrobe: wardrobe, profile: profile, container: container)
-        loadingPhase = .results
+
+        if reduceMotion {
+            try? await Task.sleep(for: .milliseconds(700))   // line shows at once; brief read
+        } else {
+            // Hold until the sentence finishes typing, plus a beat to read it.
+            let target = TypewriterText.typingDuration(for: loadingLine) + .milliseconds(450)
+            let elapsed = ContinuousClock.now - start
+            if elapsed < target { try? await Task.sleep(for: target - elapsed) }
+        }
+
+        withAnimation(.snappy(duration: 0.35)) {
+            isLoading = false
+            hasSearched = true
+        }
     }
 
     private func save(_ suggestion: OutfitSuggestion, garments: [Garment]) {
@@ -259,56 +305,6 @@ private struct SuggestionDetailView: View {
         .navigationTitle(label)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
-    }
-}
-
-// MARK: - Loading ritual
-
-private struct LoadingRitualView: View {
-    let occasionName: String
-    let cityName: String?
-
-    private var lines: [String] {
-        [
-            "Checking the sky\(cityName.map { " over \($0)" } ?? "")…",
-            "Pulling pieces that fit \(occasionName.lowercased())…",
-            "Noticing what you've been neglecting…",
-        ]
-    }
-
-    @State private var lineIndex = 0
-    @State private var rotation: Double = 0
-
-    var body: some View {
-        VStack(spacing: 28) {
-            // Spinner ring
-            Circle()
-                .trim(from: 0, to: 0.75)
-                .stroke(Theme.ink.opacity(0.55), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
-                .frame(width: 44, height: 44)
-                .rotationEffect(.degrees(rotation))
-                .onAppear {
-                    withAnimation(.linear(duration: 0.9).repeatForever(autoreverses: false)) {
-                        rotation = 360
-                    }
-                }
-
-            // Cycling italic text
-            SerifText(lines[lineIndex], size: 22, italic: true)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 280, minHeight: 60, alignment: .top)
-                .id(lineIndex)
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { t in
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    lineIndex = (lineIndex + 1) % lines.count
-                }
-                if lineIndex == lines.count - 1 { t.invalidate() }
-            }
-        }
     }
 }
 

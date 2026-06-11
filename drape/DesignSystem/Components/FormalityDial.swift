@@ -11,6 +11,7 @@ import SwiftUI
 
 struct FormalityDial: View {
     @Binding var formality: Formality
+    @State private var isDragging = false
 
     private var sliderValue: Binding<Double> {
         Binding(
@@ -24,11 +25,17 @@ struct FormalityDial: View {
             SerifText(formality.displayName, size: 18)
             Slider(value: sliderValue, in: 0...Double(Formality.allCases.count - 1), step: 1)
                 .tint(Theme.ink)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in isDragging = true }
+                        .onEnded   { _ in isDragging = false }
+                )
             HStack {
                 MonoLabel("Laid-back", size: 9)
                 Spacer()
                 MonoLabel("Black-tie", size: 9)
             }
         }
+        .scrollDisabled(isDragging)
     }
 }

@@ -170,10 +170,10 @@ enum PreviewData {
         }
 
         // A couple of saved outfits in head-to-toe order.
-        func outfit(_ name: String, _ names: [String], _ occasion: Occasion, _ tags: [String], wears: Int) {
+        func outfit(_ name: String, _ names: [String], _ occasion: Occasion, wears: Int) {
             let gs = names.compactMap { byName[$0] }
             guard gs.count >= 2 else { return }
-            let o = Outfit(name: name, garments: gs, occasion: occasion, tags: tags)
+            let o = Outfit(name: name, garments: gs, occasion: occasion)
             context.insert(o)
             for i in 0..<wears {
                 let date = Calendar.current.date(byAdding: .day, value: -(5 + i * 14), to: .now) ?? .now
@@ -181,11 +181,11 @@ enum PreviewData {
             }
         }
         outfit("Sunday slow morning", ["Ivory oversized shirt", "Indigo selvedge denim", "White leather sneakers"],
-               .everyday, ["easy", "weekend"], wears: 8)
+               .everyday, wears: 8)
         outfit("The good meeting", ["Camel wool overcoat", "Charcoal merino crew", "Brown suede loafers"],
-               .work, ["sharp", "cold"], wears: 3)
+               .work, wears: 3)
         outfit("Wine bar, late", ["Oat fisherman knit", "Ecru pleated trousers", "Burgundy silk scarf"],
-               .date, ["warm", "evening"], wears: 1)
+               .date, wears: 1)
 
         try? context.save()
     }

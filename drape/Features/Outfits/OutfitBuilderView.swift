@@ -31,11 +31,6 @@ struct OutfitBuilderView: View {
                                           selection: $model.occasion)
                     }
                     .padding(.vertical, 4)
-                    VStack(alignment: .leading, spacing: 10) {
-                        MonoLabel("Tags")
-                        TagEditor(tags: $model.tags)
-                    }
-                    .padding(.vertical, 4)
                 }
 
                 Section {
@@ -44,8 +39,6 @@ struct OutfitBuilderView: View {
                     }
                 } header: {
                     Text("Items")
-                } footer: {
-                    Text("Pick footwear and either a dress or a top and bottom.")
                 }
             }
             .scrollContentBackground(.hidden)

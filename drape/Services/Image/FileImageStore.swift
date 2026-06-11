@@ -51,11 +51,6 @@ actor FileImageStore: ImageStore {
         }
     }
 
-    func allImageIDs() async throws -> [String] {
-        let files = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
-        return files.filter { $0.hasSuffix(".png") }
-    }
-
     // MARK: - Helpers
 
     private func url(for id: String) -> URL {

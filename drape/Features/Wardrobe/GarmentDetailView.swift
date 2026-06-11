@@ -25,7 +25,6 @@ struct GarmentDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     heroImage
-                        .padding(.horizontal, Theme.contentPadding)
                         .padding(.top, 8)
                         .padding(.bottom, 18)
 
@@ -76,34 +75,41 @@ struct GarmentDetailView: View {
                     Button { isEditing = true } label: {
                         Label("Edit", systemImage: "pencil")
                     }
-                    Button(role: .destructive) { showDeleteConfirm = true } label: {
+                    Button(role: .destructive) { Task { @MainActor in showDeleteConfirm = true } } label: {
                         Label("Delete", systemImage: "trash")
                     }
                     .tint(.red)
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
+                .drapeDeleteConfirmation(
+                    title: "Delete \u{201C}\(garment.displayName)\u{201D}?",
+                    message: "This removes it from your wardrobe permanently.",
+                    isPresented: $showDeleteConfirm
+                ) { delete() }
             }
         }
         .sheet(isPresented: $isEditing) {
             EditGarmentView(garment: garment)
-        }
-        .confirmationDialog("Delete this item?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { delete() }
-            Button("Cancel", role: .cancel) {}
         }
     }
 
     // MARK: - Sections
 
     private var heroImage: some View {
-        NormalizedImageView(
-            assetID: garment.imageAssetID,
-            useThumbnail: false
-        )
-        .aspectRatio(1, contentMode: .fit)   // square garment image
-        .clipShape(RoundedRectangle(cornerRadius: 22))
-        .shadow(color: Theme.shadow, radius: 28, x: 0, y: 14)
+        ZStack {
+            Theme.surface
+            garment.displayColor.opacity(0.18)
+            NormalizedImageView(
+                assetID: garment.imageAssetID,
+                useThumbnail: false
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .aspectRatio(4/5, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Theme.shadow, radius: 20, x: 0, y: 10)
     }
 
     private var kicker: some View {
@@ -196,14 +202,7 @@ struct GarmentDetailView: View {
     }
 
     private func delete() {
-        let ref = ImageAssetReference(
-            imageAssetID: garment.imageAssetID,
-            thumbnailAssetID: garment.thumbnailAssetID
-        )
-        modelContext.delete(garment)
-        try? modelContext.save()
-        let store = container.imageStore
-        Task { try? await store.delete(ref) }
+        deleteGarment(garment, context: modelContext, imageStore: container.imageStore)
         dismiss()
     }
 }

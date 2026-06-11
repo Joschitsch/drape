@@ -27,14 +27,6 @@ protocol ImageStore: Sendable {
 
     /// Removes both assets; missing files are ignored.
     func delete(_ reference: ImageAssetReference) async throws
-
-    /// Identifiers of every stored image — used to recover photos orphaned from
-    /// their (deleted) garment records.
-    func allImageIDs() async throws -> [String]
-}
-
-extension ImageStore {
-    func allImageIDs() async throws -> [String] { [] }
 }
 
 enum ImageStoreError: Error {

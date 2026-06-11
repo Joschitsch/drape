@@ -15,7 +15,6 @@ struct RecommendationContext: Sendable {
     var wardrobe: [GarmentSnapshot]
     var occasion: Occasion
     var weather: WeatherSnapshot?
-    var season: Season
     var profile: ProfilePreferences
     /// Recently worn garment ids → most recent wear date, for recency penalties.
     var recentWears: [UUID: Date]
@@ -26,7 +25,6 @@ struct RecommendationContext: Sendable {
         wardrobe: [GarmentSnapshot],
         occasion: Occasion,
         weather: WeatherSnapshot? = nil,
-        season: Season = .current(),
         profile: ProfilePreferences = .init(),
         recentWears: [UUID: Date] = [:],
         desiredCount: Int = 5
@@ -34,7 +32,6 @@ struct RecommendationContext: Sendable {
         self.wardrobe = wardrobe
         self.occasion = occasion
         self.weather = weather
-        self.season = season
         self.profile = profile
         self.recentWears = recentWears
         self.desiredCount = desiredCount

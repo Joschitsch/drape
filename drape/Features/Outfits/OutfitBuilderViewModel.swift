@@ -14,7 +14,6 @@ import Observation
 final class OutfitBuilderViewModel {
     var name: String
     var occasion: Occasion
-    var tags: [String]
     /// The chosen garment per slot. A `.fullBody` (dress) is mutually exclusive
     /// with `.top`/`.bottom`.
     var selections: [OutfitSlot: Garment]
@@ -26,7 +25,6 @@ final class OutfitBuilderViewModel {
         editingOutfit = outfit
         name = outfit?.name ?? ""
         occasion = outfit?.occasion ?? .everyday
-        tags = outfit?.tags ?? []
         var selections: [OutfitSlot: Garment] = [:]
         for garment in outfit?.garments ?? [] {
             selections[garment.category.slot] = garment
@@ -36,13 +34,8 @@ final class OutfitBuilderViewModel {
 
     var isEditing: Bool { editingOutfit != nil }
 
-    /// Valid when named, with footwear and either a dress or both a top and a
-    /// bottom.
     var isValid: Bool {
-        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        let hasFootwear = selections[.footwear] != nil
-        let hasCore = selections[.fullBody] != nil || (selections[.top] != nil && selections[.bottom] != nil)
-        return hasFootwear && hasCore
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !selections.isEmpty
     }
 
     /// Garments in slot order, for persisting and previewing.
@@ -76,7 +69,6 @@ final class OutfitBuilderViewModel {
         let outfit = editingOutfit ?? Outfit(name: trimmedName)
         outfit.name = trimmedName
         outfit.occasion = occasion
-        outfit.tags = tags
         outfit.garments = selectedGarments
 
         if editingOutfit == nil {
