@@ -17,6 +17,7 @@ struct WardrobeListView: View {
     private var garments: [Garment]
 
     @Environment(AppContainer.self) private var container
+    @Environment(\.modelContext) private var modelContext
 
     @State private var showingAdd = false
     @State private var showLimitAlert = false
@@ -25,6 +26,8 @@ struct WardrobeListView: View {
     @State private var favoritesOnly = false
     @State private var filter = GarmentFilter()
     @State private var showingFilter = false
+    @State private var garmentToEdit: Garment? = nil
+    @State private var garmentToDelete: Garment? = nil
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: Theme.tileSpacing)]
 
@@ -76,6 +79,20 @@ struct WardrobeListView: View {
                 }
             }
             .sheet(isPresented: $showingAdd) { AddGarmentView() }
+            .sheet(item: $garmentToEdit) { EditGarmentView(garment: $0) }
+            .drapeDeleteConfirmation(
+                title: "Delete \u{201C}\(garmentToDelete?.displayName ?? "")\u{201D}?",
+                message: "This removes it from your wardrobe permanently.",
+                isPresented: Binding(
+                    get: { garmentToDelete != nil },
+                    set: { if !$0 { garmentToDelete = nil } }
+                )
+            ) {
+                if let g = garmentToDelete {
+                    deleteGarment(g, context: modelContext, imageStore: container.imageStore)
+                    garmentToDelete = nil
+                }
+            }
             .sheet(isPresented: $showingFilter) {
                 GarmentFilterSheet(filter: $filter, garments: garments)
                     .presentationDetents([.medium, .large])
@@ -161,6 +178,26 @@ struct WardrobeListView: View {
                                 GarmentTile(garment: garment)
                             }
                             .buttonStyle(.plain)
+                            .contextMenu {
+                                Button {
+                                    garment.isFavorite.toggle()
+                                    try? modelContext.save()
+                                } label: {
+                                    Label(
+                                        garment.isFavorite ? "Unfavorite" : "Favorite",
+                                        systemImage: garment.isFavorite ? "heart.slash" : "heart"
+                                    )
+                                }
+                                Button { garmentToEdit = garment } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                Divider()
+                                Button(role: .destructive) {
+                                    garmentToDelete = garment
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                     .padding(Theme.contentPadding)

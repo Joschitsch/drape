@@ -54,7 +54,7 @@ struct OutfitDetailView: View {
                     }
                     .drapeCard(radius: 18)
 
-                    Spacer(minLength: 80)
+                    Spacer(minLength: 120)
                 }
                 .padding(Theme.contentPadding)
             }

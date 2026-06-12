@@ -29,7 +29,7 @@ struct WoreTodayCelebration: View {
                 // ── Canvas + ring + checkmark ────────────────────────
                 ZStack(alignment: .bottomTrailing) {
                     // Expanding ring
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .strokeBorder(Theme.ink.opacity(0.12), lineWidth: 1)
                         .frame(width: 170, height: 170)
                         .scaleEffect(ringScale)
@@ -38,7 +38,7 @@ struct WoreTodayCelebration: View {
                     // Garment image
                     NormalizedImageView(assetID: garment.thumbnailAssetID, useThumbnail: true)
                     .frame(width: 150, height: 150)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .shadow(color: Theme.shadow, radius: 24, x: 0, y: 12)
                     .scaleEffect(canvasVisible ? 1 : 0.88)
                     .opacity(canvasVisible ? 1 : 0)
@@ -85,7 +85,7 @@ struct WoreTodayCelebration: View {
             ringOpacity = 0
         }
         // Checkmark pops in
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.55).delay(0.5)) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.65).delay(0.5)) {
             checkmarkScale = 1
         }
         // Auto-dismiss

@@ -231,7 +231,7 @@ private struct OutfitSuggestionCard: View {
                         if idx < sorted.count - 1 {
                             HStack { Color.clear.frame(height: 0) }
                                 .overlay(alignment: .leading) {
-                                    Theme.line.frame(height: 0.5).padding(.leading, 68)
+                                    Theme.line.frame(height: 0.5).padding(.leading, 78)
                                 }
                         }
                     }

@@ -16,11 +16,13 @@ func garment(
     warmth: WarmthLevel = .light,
     color: ColorTag = .ink,
     styles: [String] = [],
+    footwearSubcategory: FootwearSubcategory? = nil,
     id: UUID = UUID()
 ) -> GarmentSnapshot {
     GarmentSnapshot(
         id: id,
         category: category,
+        footwearSubcategory: footwearSubcategory,
         primaryColor: color,
         secondaryColors: [],
         formality: formality,

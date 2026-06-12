@@ -50,7 +50,7 @@ struct OutfitListView: View {
         ContentUnavailableView {
             Label("No outfits yet", image: "drape.outfits")
         } description: {
-            Text("Combine wardrobe items into outfits.")
+            Text("Save looks from your Style recommendations, or build your own.")
         } actions: {
             CTAButton(title: "New Outfit") { showingBuilder = true }
                 .padding(.horizontal, Theme.contentPadding)
@@ -168,7 +168,7 @@ struct GarmentStackRow: View {
         HStack(spacing: 14) {
             NormalizedImageView(assetID: garment.thumbnailAssetID)
                 .frame(width: thumbW, height: thumbH)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)
 
             VStack(alignment: .leading, spacing: 4) {
