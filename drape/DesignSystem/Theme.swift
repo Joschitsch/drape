@@ -88,6 +88,19 @@ enum Theme {
     }
 }
 
+// MARK: - Motion vocabulary
+
+extension Animation {
+    /// Content swaps — loading↔results, weather slot, visibility changes. A snappy
+    /// spring with barely-there bounce, the app's default transition.
+    static let drapeContent = Animation.snappy(duration: 0.35)
+    /// Press feedback — the scale-down on a pressed control.
+    static let drapePress = Animation.easeOut(duration: 0.12)
+    /// Entrances — elements arriving on screen. A strong ease-out so the motion
+    /// is felt immediately, then settles (never ease-in for things appearing).
+    static let drapeReveal = Animation.timingCurve(0.23, 1, 0.32, 1, duration: 0.32)
+}
+
 extension Color {
     /// Builds a color from a 6-digit RGB hex string (no `#`). Falls back to
     /// clear on malformed input.

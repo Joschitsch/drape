@@ -72,17 +72,27 @@ struct CTAButton: View {
     let action: () -> Void
 
     @State private var pressed = false
+    @State private var tapCount = 0
 
     var body: some View {
-        Button(action: action) {
-            Text(title).drapePrimaryFill()
+        Button {
+            tapCount += 1
+            action()
+        } label: {
+            Text(title)
+                .contentTransition(.opacity)
+                .drapePrimaryFill()
         }
         .buttonStyle(.plain)
         .opacity(enabled ? 1 : 0.4)
         .disabled(!enabled)
         .scaleEffect(pressed ? 0.97 : 1)
-        .animation(.easeOut(duration: 0.12), value: pressed)
+        .animation(.drapePress, value: pressed)
+        .animation(.drapeContent, value: title)
         ._onPressGesture { pressed = $0 }
+        // A light confirmation on every primary action — the ritual taps
+        // ("Find me something", "I wore this today", "Add to wardrobe").
+        .sensoryFeedback(.impact(weight: .light), trigger: tapCount)
     }
 }
 

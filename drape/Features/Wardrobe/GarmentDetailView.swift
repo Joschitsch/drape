@@ -15,101 +15,133 @@ struct GarmentDetailView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
     @State private var celebration: CelebrationEntry? = nil
 
+    /// How far the user has pulled past the top, 0…1 where 1 is the dismiss
+    /// threshold. Drives the live scale/fade so the gesture feels committed.
+    @State private var pullProgress: CGFloat = 0
+    /// Flips true the instant the threshold is crossed — fires the commit haptic.
+    @State private var willDismiss = false
+    /// Guards against the scroll callback firing `dismiss()` more than once.
+    @State private var didDismiss = false
+
     var body: some View {
-        ZStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    heroImage
-                        .padding(.top, 8)
-                        .padding(.bottom, 18)
+        GeometryReader { proxy in
+            ZStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        heroImage(topInset: proxy.safeAreaInsets.top)
+                            .padding(.bottom, 18)
 
-                    kicker
-                    nameAndBrand
-                    storyCard
-                    attributeTags
-                    if let notes = garment.notes, !notes.isEmpty {
-                        notesCard(notes)
+                        kicker
+                        nameAndBrand
+                        storyCard
+                        attributeTags
+                        if let notes = garment.notes, !notes.isEmpty {
+                            notesCard(notes)
+                        }
+
+                        Spacer(minLength: 100)
                     }
+                }
+                .scrollIndicators(.hidden)
+                .ignoresSafeArea(edges: .top)
+                .scrollBounceBehavior(.always)
+                // The pull tracks the finger 1:1 (no animation here, or it would
+                // lag behind the scroll); the spring-back comes from the scroll
+                // returning to rest on release.
+                .scaleEffect(reduceMotion ? 1 : 1 - pullProgress * 0.04)
+                .opacity(reduceMotion ? 1 : 1 - pullProgress * 0.12)
+                .onScrollGeometryChange(for: CGFloat.self) { geo in
+                    geo.contentOffset.y + geo.contentInsets.top
+                } action: { _, distanceFromTop in
+                    let progress = min(1, max(0, -distanceFromTop / 90))
+                    pullProgress = progress
+                    if progress >= 1 {
+                        if !willDismiss { willDismiss = true }
+                        if !didDismiss {
+                            didDismiss = true
+                            dismiss()
+                        }
+                    } else if willDismiss {
+                        willDismiss = false
+                    }
+                }
+                .sensoryFeedback(trigger: willDismiss) { _, crossed in
+                    crossed ? .impact(weight: .light) : nil
+                }
 
-                    Spacer(minLength: 100) // room for sticky footer
+                VStack { Spacer(); woreFooter }
+
+                if let entry = celebration {
+                    WoreTodayCelebration(
+                        garment: entry.garment,
+                        isFirstWear: entry.isFirstWear,
+                        onDismiss: { withAnimation { celebration = nil } }
+                    )
+                    .transition(.opacity)
+                    .zIndex(10)
+                }
+
+            }
+            .navigationTitle(garment.displayName)
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(role: .close) { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        garment.isFavorite.toggle()
+                        try? modelContext.save()
+                    } label: {
+                        Image(garment.isFavorite ? "drape.heart.fill" : "drape.heart")
+                            .foregroundStyle(Theme.ink)
+                            .contentTransition(.symbolEffect(.replace))
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: garment.isFavorite)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button { isEditing = true } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) { Task { @MainActor in showDeleteConfirm = true } } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        .tint(.red)
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    .drapeDeleteConfirmation(
+                        title: "Delete \u{201C}\(garment.displayName)\u{201D}?",
+                        message: "This removes it from your wardrobe permanently.",
+                        isPresented: $showDeleteConfirm
+                    ) { delete() }
                 }
             }
-            .scrollIndicators(.hidden)
-
-            // ── Sticky "Wore today" footer ───────────────────────────
-            VStack {
-                Spacer()
-                woreFooter
+            .sheet(isPresented: $isEditing) {
+                EditGarmentView(garment: garment)
             }
-
-            // ── Celebration overlay ──────────────────────────────────
-            if let entry = celebration {
-                WoreTodayCelebration(
-                    garment: entry.garment,
-                    isFirstWear: entry.isFirstWear,
-                    onDismiss: { withAnimation { celebration = nil } }
-                )
-                .transition(.opacity)
-                .zIndex(10)
-            }
-        }
-        .navigationTitle(garment.displayName)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    garment.isFavorite.toggle()
-                    try? modelContext.save()
-                } label: {
-                    Image(garment.isFavorite ? "drape.heart.fill" : "drape.heart")
-                        .foregroundStyle(Theme.ink)
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button { isEditing = true } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    Button(role: .destructive) { Task { @MainActor in showDeleteConfirm = true } } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                    .tint(.red)
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-                .drapeDeleteConfirmation(
-                    title: "Delete \u{201C}\(garment.displayName)\u{201D}?",
-                    message: "This removes it from your wardrobe permanently.",
-                    isPresented: $showDeleteConfirm
-                ) { delete() }
-            }
-        }
-        .sheet(isPresented: $isEditing) {
-            EditGarmentView(garment: garment)
         }
     }
 
     // MARK: - Sections
 
-    private var heroImage: some View {
+    private func heroImage(topInset: CGFloat) -> some View {
         ZStack {
-            Theme.surface
-            garment.displayColor.opacity(0.18)
-            NormalizedImageView(
-                assetID: garment.imageAssetID,
-                useThumbnail: false
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            Color(red: 0.95, green: 0.95, blue: 0.97)
+            NormalizedImageView(assetID: garment.imageAssetID, useThumbnail: false)
+                .padding(.top, topInset)
         }
-        .aspectRatio(4/5, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: Theme.shadow, radius: 20, x: 0, y: 10)
+        .frame(maxWidth: .infinity)
+        .aspectRatio(1, contentMode: .fit)
     }
 
     private var kicker: some View {

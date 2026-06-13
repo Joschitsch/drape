@@ -31,37 +31,59 @@ struct TypewriterText: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var visibleCount = 0
-    @State private var cursorOn = true
+    /// Cursor visibility. Held solid (1) while typing, then blinks once the line
+    /// finishes. The cursor glyph is always laid out, so toggling its opacity
+    /// never reflows the text.
+    @State private var cursorOpacity: Double = 1
 
-    /// Same-width cursor: a left-half block on, a figure space off, so the line
-    /// never reflows as the cursor blinks.
-    private var cursor: String { cursorOn ? "\u{258F}" : "\u{2007}" }
     private var prefix: String { String(text.prefix(visibleCount)) }
+
+    /// The typed prefix plus an always-present, opacity-toggled cursor. Built as a
+    /// `Text` concatenation (matching `SerifText`'s styling) so the cursor keeps a
+    /// constant width and the tail never jitters as it blinks.
+    private var typedLine: Text {
+        let typed = Text(prefix).font(Theme.serif(size, italic: true))
+        let cursor = Text("\u{258F}")
+            .font(Theme.serif(size, italic: true))
+            .foregroundColor(Theme.ink.opacity(cursorOpacity))
+        return Text("\(typed)\(cursor)")
+    }
 
     var body: some View {
         Group {
             if reduceMotion {
                 SerifText(text, size: size, italic: true)
             } else {
-                SerifText(prefix + cursor, size: size, italic: true)
+                typedLine
+                    .tracking(0.1)
+                    .foregroundStyle(Theme.ink)
+                    .lineSpacing(size >= 20 ? 3 : 2)
                     .task(id: text) {
+                        // Type the line out, cursor solid throughout…
+                        cursorOpacity = 1
                         visibleCount = 0
                         for _ in text {
                             try? await Task.sleep(for: charInterval)
                             if Task.isCancelled { return }
                             visibleCount += 1
                         }
-                    }
-                    .task {
+                        // …then settle into a calm, steady blink.
                         while !Task.isCancelled {
                             try? await Task.sleep(for: .milliseconds(500))
-                            cursorOn.toggle()
+                            cursorOpacity = cursorOpacity == 1 ? 0 : 1
                         }
                     }
             }
         }
         .multilineTextAlignment(.center)
         .accessibilityLabel(text)
+        // A soft keystroke tick as each visible glyph lands. Whitespace is silent
+        // so it reads as typing, not a buzz; no-op under Reduce Motion.
+        .sensoryFeedback(trigger: visibleCount) { _, newValue in
+            guard !reduceMotion, newValue > 0, newValue <= text.count else { return nil }
+            let idx = text.index(text.startIndex, offsetBy: newValue - 1)
+            return text[idx].isWhitespace ? nil : .impact(weight: .light, intensity: 0.35)
+        }
     }
 }
 

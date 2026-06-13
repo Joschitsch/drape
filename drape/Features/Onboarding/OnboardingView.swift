@@ -41,7 +41,7 @@ struct OnboardingView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(.easeInOut, value: model.currentStep)
+            .animation(.drapeReveal, value: model.currentStep)
 
             // Navigation buttons
             HStack {

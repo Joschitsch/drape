@@ -41,8 +41,13 @@ struct DrapeChip: View {
     var small: Bool = false
     var action: () -> Void
 
+    @State private var tapCount = 0
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            tapCount += 1
+            action()
+        } label: {
             Text(label)
                 .font(Theme.body(small ? 12 : 13, weight: .medium))
                 .padding(.horizontal, small ? 11 : 14)
@@ -52,6 +57,8 @@ struct DrapeChip: View {
                 .overlay(Capsule().strokeBorder(active ? Theme.ink : Theme.line, lineWidth: 1))
         }
         .buttonStyle(.plain)
+        .animation(.drapeContent, value: active)
+        .sensoryFeedback(.selection, trigger: tapCount)
     }
 }
 

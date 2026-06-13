@@ -34,8 +34,23 @@ final class OutfitBuilderViewModel {
 
     var isEditing: Bool { editingOutfit != nil }
 
-    var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !selections.isEmpty
+    /// Saving needs at least one garment; the name always resolves to a sensible
+    /// default, so it never blocks the save in the morning ritual.
+    var isValid: Bool { !selections.isEmpty }
+
+    /// A ready-made name so the user never has to type to save. Prefers the lead
+    /// garment ("Navy blazer look"), falling back to occasion + date.
+    var suggestedName: String {
+        if let lead = selectedGarments.first {
+            return "\(lead.displayName) look"
+        }
+        return "\(occasion.displayName) — \(Date.now.formatted(.dateTime.month().day()))"
+    }
+
+    /// The name to persist: the user's text if they typed one, else the suggestion.
+    var resolvedName: String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? suggestedName : trimmed
     }
 
     /// Garments in slot order, for persisting and previewing.
@@ -61,20 +76,21 @@ final class OutfitBuilderViewModel {
         selections[slot] = nil
     }
 
-    /// Creates or updates the outfit. Returns the saved outfit.
+    /// Creates or updates the outfit. Throws if the persistence write fails so
+    /// the caller can surface it instead of dismissing as if it succeeded.
     @discardableResult
-    func save(into context: ModelContext) -> Outfit {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    func save(into context: ModelContext) throws -> Outfit {
+        let finalName = resolvedName
 
-        let outfit = editingOutfit ?? Outfit(name: trimmedName)
-        outfit.name = trimmedName
+        let outfit = editingOutfit ?? Outfit(name: finalName)
+        outfit.name = finalName
         outfit.occasion = occasion
         outfit.garments = selectedGarments
 
         if editingOutfit == nil {
             context.insert(outfit)
         }
-        try? context.save()
+        try context.save()
         return outfit
     }
 }

@@ -28,6 +28,7 @@ struct WardrobeListView: View {
     @State private var showingFilter = false
     @State private var garmentToEdit: Garment? = nil
     @State private var garmentToDelete: Garment? = nil
+    @State private var selectedGarment: Garment? = nil
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: Theme.tileSpacing)]
 
@@ -66,7 +67,6 @@ struct WardrobeListView: View {
             .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Wardrobe")
             .navigationSubtitle("\(garments.count) of \(SubscriptionTier.free.garmentLimit ?? 30) pieces")
-            .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     Button { showingFilter = true } label: {
@@ -108,6 +108,11 @@ struct WardrobeListView: View {
             .sheet(isPresented: $showingPaywall) {
                 PaywallView().environment(container.entitlements)
             }
+            .fullScreenCover(item: $selectedGarment) { garment in
+                NavigationStack {
+                    GarmentDetailView(garment: garment)
+                }
+            }
             .onChange(of: availableCategories) {
                 if let sel = selectedCategory, !availableCategories.contains(sel) {
                     selectedCategory = nil
@@ -128,7 +133,7 @@ struct WardrobeListView: View {
                 if let g = neglectedFavorite,
                    selectedCategory == nil,
                    !favoritesOnly {
-                    NavigationLink(value: g) {
+                    Button { selectedGarment = g } label: {
                         HonestMirrorNudge(garment: g)
                     }
                     .buttonStyle(.plain)
@@ -174,7 +179,7 @@ struct WardrobeListView: View {
                 } else {
                     LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
                         ForEach(filteredGarments) { garment in
-                            NavigationLink(value: garment) {
+                            Button { selectedGarment = garment } label: {
                                 GarmentTile(garment: garment)
                             }
                             .buttonStyle(.plain)

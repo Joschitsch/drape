@@ -80,9 +80,7 @@ struct PaywallView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    CircleIconButton(systemName: "xmark", accessibilityLabel: "Close") {
-                        dismiss()
-                    }
+                    Button(role: .close) { dismiss() }
                 }
             }
         }

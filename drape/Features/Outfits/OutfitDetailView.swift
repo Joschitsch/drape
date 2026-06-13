@@ -21,11 +21,19 @@ struct OutfitDetailView: View {
 
     private var lastWorn: Date? { outfit.wearEvents.map(\.date).max() }
 
+    private func relativeDay(_ date: Date) -> String {
+        let days = Int(Date.now.timeIntervalSince(date) / 86_400)
+        if days <= 0 { return "today" }
+        if days == 1 { return "yesterday" }
+        return "\(days) days ago"
+    }
+
     private var kickerText: String {
-        let days = Int(Date.now.timeIntervalSince(outfit.createdAt) / 86_400)
-        let saved = days <= 0 ? "saved today" : "saved \(days) day\(days == 1 ? "" : "s") ago"
-        let worn = outfit.wearCount > 0 ? "worn \(outfit.wearCount)×" : "never worn"
-        return "\(outfit.occasion.displayName) · \(saved) · \(worn)"
+        // Once worn, the last-worn date is more useful than the saved date.
+        if outfit.wearCount > 0, let last = lastWorn {
+            return "\(outfit.occasion.displayName) · worn \(outfit.wearCount)× · last worn \(relativeDay(last))"
+        }
+        return "\(outfit.occasion.displayName) · saved \(relativeDay(outfit.createdAt)) · not worn yet"
     }
 
     var body: some View {

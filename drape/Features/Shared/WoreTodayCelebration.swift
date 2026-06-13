@@ -14,10 +14,18 @@ struct WoreTodayCelebration: View {
     let onDismiss: () -> Void
     var onUndo: (() -> Void)? = nil
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var canvasVisible = false
     @State private var ringScale: CGFloat = 0.7
     @State private var ringOpacity: Double = 1
     @State private var checkmarkScale: CGFloat = 0
+
+    private var headline: String {
+        isFirstWear
+            ? "The \(garment.displayName.lowercased()) is officially in your life."
+            : "Good choice. The \(garment.displayName.lowercased()) is back in rotation."
+    }
 
     var body: some View {
         ZStack {
@@ -61,10 +69,7 @@ struct WoreTodayCelebration: View {
                 VStack(spacing: 12) {
                     MonoLabel(isFirstWear ? "First wear logged" : "Noted for today")
 
-                    SerifText(isFirstWear
-                         ? "The \(garment.displayName.lowercased()) is officially in your life."
-                         : "Good choice. The \(garment.displayName.lowercased()) is back in rotation.",
-                         size: 27, italic: true)
+                    SerifText(headline, size: 27, italic: true)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
 
@@ -90,9 +95,25 @@ struct WoreTodayCelebration: View {
         .contentShape(Rectangle())
         .onTapGesture { onDismiss() }
         .onAppear { animate() }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isModal)
+        .accessibilityLabel("\(isFirstWear ? "First wear logged." : "Noted for today.") \(headline)")
     }
 
     private func animate() {
+        // Announce the logged wear for VoiceOver users.
+        UIAccessibility.post(notification: .announcement,
+                             argument: "\(isFirstWear ? "First wear logged." : "Wear logged.") \(headline)")
+
+        guard !reduceMotion else {
+            // No spring or ring under Reduce Motion: settle straight to the end state.
+            canvasVisible = true
+            checkmarkScale = 1
+            ringOpacity = 0
+            scheduleAutoDismiss()
+            return
+        }
+
         // Canvas rises in
         withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
             canvasVisible = true
@@ -106,9 +127,14 @@ struct WoreTodayCelebration: View {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.65).delay(0.5)) {
             checkmarkScale = 1
         }
-        // Auto-dismiss
+        scheduleAutoDismiss()
+    }
+
+    private func scheduleAutoDismiss() {
+        // Hold longer when VoiceOver is on so the announcement and Undo are reachable.
+        let seconds: Double = UIAccessibility.isVoiceOverRunning ? 8 : 3.2
         Task {
-            try? await Task.sleep(for: .seconds(3.2))
+            try? await Task.sleep(for: .seconds(seconds))
             onDismiss()
         }
     }

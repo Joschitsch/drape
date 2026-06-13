@@ -44,8 +44,10 @@ struct RecommendationsView: View {
                             .padding(.top, 40)
                             .transition(.opacity)
                     } else if hasSearched {
+                        // Parent fades in; each card handles its own staggered
+                        // rise (see OutfitSuggestionCard) so they cascade.
                         resultsList
-                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            .transition(.opacity)
                     }
                 }
                 .padding(Theme.contentPadding)
@@ -147,6 +149,7 @@ struct RecommendationsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(Array(model.suggestions.prefix(3).enumerated()), id: \.offset) { idx, item in
                     OutfitSuggestionCard(
+                        index: idx,
                         label: idx < labels.count ? labels[idx] : "#\(idx + 1)",
                         suggestion: item.suggestion,
                         garments: item.garments,
@@ -211,13 +214,16 @@ struct RecommendationsView: View {
 // MARK: - Suggestion card (consistent with OutfitStackCard)
 
 private struct OutfitSuggestionCard: View {
+    let index: Int
     let label: String
     let suggestion: OutfitSuggestion
     let garments: [Garment]
     let onSave: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var saved = false
     @State private var showDetail = false
+    @State private var appeared = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -259,16 +265,18 @@ private struct OutfitSuggestionCard: View {
             Button {
                 if !saved {
                     onSave()
-                    saved = true
+                    withAnimation(.drapeContent) { saved = true }
                 }
             } label: {
                 HStack {
                     MonoLabel(saved ? "Saved to outfits" : "Save this look",
                               size: 10, color: saved ? Theme.inkFaint : Theme.ink)
+                        .contentTransition(.opacity)
                     Spacer()
                     Image(systemName: saved ? "checkmark" : "plus")
                         .font(.caption)
                         .foregroundStyle(saved ? Theme.inkFaint : Theme.ink)
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
@@ -276,8 +284,19 @@ private struct OutfitSuggestionCard: View {
             }
             .buttonStyle(.plain)
             .disabled(saved)
+            .sensoryFeedback(.success, trigger: saved)
         }
         .drapeCard(radius: 18)
+        // Staggered rise: each card arrives a beat after the previous one. Opacity
+        // only under Reduce Motion (no offset), and no per-card delay.
+        .opacity(appeared ? 1 : 0)
+        .offset(y: reduceMotion ? 0 : (appeared ? 0 : 12))
+        .onAppear {
+            withAnimation(reduceMotion ? .easeOut(duration: 0.2)
+                                       : .drapeReveal.delay(Double(index) * 0.055)) {
+                appeared = true
+            }
+        }
         .navigationDestination(isPresented: $showDetail) {
             SuggestionDetailView(garments: garments, suggestion: suggestion, label: label)
         }

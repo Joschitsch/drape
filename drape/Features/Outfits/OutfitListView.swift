@@ -146,7 +146,7 @@ struct OutfitStackCard: View {
 
             // ── Footer: wear count ───────────────────────────────────
             HStack {
-                MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Never worn", size: 10)
+                MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Not worn yet", size: 10)
                 Spacer()
             }
             .padding(.horizontal, 16)
