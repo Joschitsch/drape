@@ -28,22 +28,28 @@ struct ProfileView: View {
     var body: some View {
         @Bindable var entitlements = entitlements
         return NavigationStack {
-            Form {
-                if let profile {
-                    statCardSection
-                    if !entitlements.isEnabled(.wardrobeAnalytics) {
-                        proUpsellSection
+            ScrollView {
+                VStack(spacing: 20) {
+                    if let profile {
+                        statCard
+                        if !entitlements.isEnabled(.wardrobeAnalytics) {
+                            proUpsellCard
+                        }
+                        registerCard(profile: profile)
+                        occasionCard(profile: profile)
+                        locationCard(profile: profile)
+                        analyticsCard
                     }
-                    registerSection(profile: profile)
-                    occasionSection(profile: profile)
-                    locationSection(profile: profile)
-                    analyticsSection
+                    #if DEBUG
+                    subscriptionCard(entitlements: entitlements)
+                    #endif
                 }
-                subscriptionSection(entitlements: entitlements)
+                .padding(.top, 20)
+                .padding(.bottom, 60)
             }
+            .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Profile")
-            .scrollContentBackground(.hidden)
-            .background(Theme.paper)
+            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showingPaywall) {
                 PaywallView().environment(entitlements)
             }
@@ -52,18 +58,17 @@ struct ProfileView: View {
 
     // MARK: - Stats
 
-    private var statCardSection: some View {
-        Section {
-            HStack(spacing: 0) {
-                statCell(value: "\(garments.count)", label: "Pieces")
-                Divider()
-                statCell(value: "\(outfits.count)", label: "Outfits")
-                Divider()
-                statCell(value: "\(garments.reduce(0) { $0 + $1.wearCount })", label: "Wears")
-            }
-            .frame(maxWidth: .infinity)
+    private var statCard: some View {
+        HStack(spacing: 0) {
+            statCell(value: "\(garments.count)", label: "Pieces")
+            Divider()
+            statCell(value: "\(outfits.count)", label: "Outfits")
+            Divider()
+            statCell(value: "\(garments.reduce(0) { $0 + $1.wearCount })", label: "Wears")
         }
-        .listRowInsets(.init())
+        .frame(maxWidth: .infinity)
+        .drapeCard(radius: 14)
+        .padding(.horizontal, Theme.contentPadding)
     }
 
     private func statCell(value: String, label: String) -> some View {
@@ -75,156 +80,268 @@ struct ProfileView: View {
         .padding(.vertical, 18)
     }
 
-    // MARK: - Register (styles + palette) — edited in place
+    // MARK: - Pro upsell
 
-    private func registerSection(profile: UserProfile) -> some View {
-        Section {
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("Styles you lean on")
-                StyleSelector(selection: stylesBinding(profile),
-                              customStyles: profile.customStyles,
-                              onAdd: { addCustomStyle($0, profile) })
+    private var proUpsellCard: some View {
+        Button { showingPaywall = true } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                MonoLabel("Drape Pro · 3.99 / month", color: Theme.paper.opacity(0.6))
+                SerifText("Become the version of yourself you already own the clothes for.",
+                          size: 20, color: Theme.paper)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 7) {
+                    MonoLabel("See what's inside", color: Theme.paper)
+                    Image(systemName: "arrow.right")
+                        .font(.caption)
+                        .foregroundStyle(Theme.paper)
+                }
             }
-            .padding(.vertical, 4)
-        } header: {
-            Text("Your register")
-        } footer: {
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+            .background(Theme.ink)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.contentPadding)
+    }
+
+    // MARK: - Register
+
+    private func registerCard(profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(spacing: 0) {
+                MonoLabel("Your register")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                VStack(alignment: .leading, spacing: 10) {
+                    MonoLabel("Styles you lean on", size: 9.5)
+                    StyleSelector(selection: stylesBinding(profile),
+                                  customStyles: profile.customStyles,
+                                  onAdd: { addCustomStyle($0, profile) })
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+            }
+            .drapeCard(radius: 14)
+            .padding(.horizontal, Theme.contentPadding)
             Text("Outfits featuring these styles are scored higher.")
-        }
-    }
-
-    // MARK: - Occasion preferences — inline disclosure editor
-
-    private func occasionSection(profile: UserProfile) -> some View {
-        Section("Occasion preferences") {
-            ForEach(OnboardingViewModel.occasions) { occasion in
-                DisclosureGroup {
-                    OccasionPreferenceEditor(
-                        occasion: occasion,
-                        formality: occasionFormalityBinding(profile, occasion),
-                        styles: occasionStylesBinding(profile, occasion),
-                        customStyles: profile.customStyles,
-                        onAddStyle: { addCustomStyle($0, profile) }
-                    )
-                    .padding(.vertical, 8)
-                } label: {
-                    Label(occasion.displayName, image: occasion.iconName)
-                        .labelStyle(.drapeIcon)
-                }
-            }
-        }
-    }
-
-    // MARK: - Location — inline
-
-    private func locationSection(profile: UserProfile) -> some View {
-        Section {
-            HStack {
-                Text("Home")
-                Spacer()
-                Text(locationLabel(profile)).foregroundStyle(Theme.inkSoft)
-            }
-            Button {
-                Task { await useCurrentLocation(profile) }
-            } label: {
-                HStack {
-                    Label("Use current location", systemImage: "location.fill")
-                    if fetchingLocation { Spacer(); ProgressView() }
-                }
-            }
-            .disabled(fetchingLocation)
-            if profile.homeLatitude != nil {
-                Button("Clear home location", role: .destructive) {
-                    profile.homeLatitude = nil
-                    profile.homeLongitude = nil
-                    profile.homeCity = nil
-                    persist()
-                }
-            }
-        } header: {
-            Text("Location")
-        } footer: {
-            Text("Used for weather when live location is unavailable.")
-        }
-    }
-
-    // MARK: - Analytics + Pro
-
-    private var proUpsellSection: some View {
-        Section {
-            Button { showingPaywall = true } label: {
-                VStack(alignment: .leading, spacing: 12) {
-                    MonoLabel("Drape Pro · 3.99 / month", color: Theme.paper.opacity(0.6))
-                    SerifText("Become the version of yourself you already own the clothes for.",
-                              size: 20, color: Theme.paper)
-                        .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 7) {
-                        MonoLabel("See what's inside", color: Theme.paper)
-                        Image(systemName: "arrow.right")
-                            .font(.caption)
-                            .foregroundStyle(Theme.paper)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
-                .background(Theme.ink)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-            }
-            .buttonStyle(.plain)
-        }
-        .listRowInsets(.init())
-        .listRowBackground(Color.clear)
-    }
-
-    private var analyticsSection: some View {
-        Section("Pro analytics") {
-            if entitlements.isEnabled(.wardrobeAnalytics) {
-                NavigationLink("Wardrobe Analytics") {
-                    WardrobeAnalyticsView()
-                }
-            } else {
-                Button {
-                    showingPaywall = true
-                } label: {
-                    HStack {
-                        Label("Wardrobe Analytics", image: "drape.analytics")
-                            .labelStyle(.drapeIcon)
-                        Spacer()
-                        Text("Pro")
-                            .font(Theme.mono(10, weight: .medium))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Theme.ink, in: Capsule())
-                            .foregroundStyle(Theme.paper)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func subscriptionSection(entitlements: MockEntitlementService) -> some View {
-        Section {
-            Picker("Tier", selection: Bindable(entitlements).tier) {
-                ForEach(SubscriptionTier.allCases) { tier in
-                    Text(tier.displayName).tag(tier)
-                }
-            }
-            .pickerStyle(.segmented)
-            Text(entitlements.tier == .pro
-                 ? "Pro features unlocked."
-                 : "Free tier — up to \(SubscriptionTier.free.garmentLimit ?? 0) items.")
                 .font(Theme.body(12))
                 .foregroundStyle(Theme.inkSoft)
-            if entitlements.tier == .free {
-                Button("Upgrade to Pro") { showingPaywall = true }
-            }
-        } header: {
-            Text("Subscription")
-        } footer: {
-            Text("Dev toggle — real purchasing is added in Step 6.")
+                .padding(.horizontal, Theme.contentPadding)
         }
     }
+
+    // MARK: - Occasion preferences
+
+    private func occasionCard(profile: UserProfile) -> some View {
+        let occasions = OnboardingViewModel.occasions
+        return VStack(alignment: .leading, spacing: 10) {
+            VStack(spacing: 0) {
+                MonoLabel("Occasion preferences")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                ForEach(Array(occasions.enumerated()), id: \.element.id) { idx, occasion in
+                    DisclosureGroup {
+                        OccasionPreferenceEditor(
+                            occasion: occasion,
+                            formality: occasionFormalityBinding(profile, occasion),
+                            styles: occasionStylesBinding(profile, occasion),
+                            customStyles: profile.customStyles,
+                            onAddStyle: { addCustomStyle($0, profile) }
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                    } label: {
+                        Label(occasion.displayName, image: occasion.iconName)
+                            .labelStyle(.drapeIcon)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 13)
+                    }
+                    .padding(.trailing, 16)
+                    if idx < occasions.count - 1 {
+                        Theme.line.frame(height: 0.5)
+                    }
+                }
+            }
+            .drapeCard(radius: 14)
+            .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+
+    // MARK: - Location
+
+    private func locationCard(profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(spacing: 0) {
+                MonoLabel("Location")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                HStack {
+                    Text("Home")
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text(locationLabel(profile))
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+
+                Theme.line.frame(height: 0.5)
+
+                Button {
+                    Task { await useCurrentLocation(profile) }
+                } label: {
+                    HStack {
+                        Label("Use current location", systemImage: "location.fill")
+                            .font(Theme.body(15))
+                            .foregroundStyle(Theme.ink)
+                        if fetchingLocation { Spacer(); ProgressView().controlSize(.small) }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+                .disabled(fetchingLocation)
+
+                if profile.homeLatitude != nil {
+                    Theme.line.frame(height: 0.5)
+                    Button("Clear home location") {
+                        profile.homeLatitude = nil
+                        profile.homeLongitude = nil
+                        profile.homeCity = nil
+                        persist()
+                    }
+                    .font(Theme.body(15))
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .frame(minHeight: 44)
+                    .buttonStyle(.plain)
+                }
+            }
+            .drapeCard(radius: 14)
+            .padding(.horizontal, Theme.contentPadding)
+            Text("Used for weather when live location is unavailable.")
+                .font(Theme.body(12))
+                .foregroundStyle(Theme.inkSoft)
+                .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+
+    // MARK: - Analytics
+
+    private var analyticsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(spacing: 0) {
+                MonoLabel("Pro analytics")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                if entitlements.isEnabled(.wardrobeAnalytics) {
+                    NavigationLink {
+                        WardrobeAnalyticsView()
+                    } label: {
+                        HStack {
+                            Label("Wardrobe Analytics", image: "drape.analytics")
+                                .labelStyle(.drapeIcon)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.inkFaint)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
+                        .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Button {
+                        showingPaywall = true
+                    } label: {
+                        HStack {
+                            Label("Wardrobe Analytics", image: "drape.analytics")
+                                .labelStyle(.drapeIcon)
+                            Spacer()
+                            Text("Pro")
+                                .font(Theme.mono(10, weight: .medium))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Theme.ink, in: Capsule())
+                                .foregroundStyle(Theme.paper)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
+                        .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .drapeCard(radius: 14)
+            .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+
+    // MARK: - Subscription (debug only)
+
+    #if DEBUG
+    @ViewBuilder
+    private func subscriptionCard(entitlements: MockEntitlementService) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 0) {
+                MonoLabel("Subscription")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                Picker("Tier", selection: Bindable(entitlements).tier) {
+                    ForEach(SubscriptionTier.allCases) { tier in
+                        Text(tier.displayName).tag(tier)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                Text(entitlements.tier == .pro
+                     ? "Pro features unlocked."
+                     : "Free tier — up to \(SubscriptionTier.free.garmentLimit ?? 0) items.")
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.inkSoft)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                if entitlements.tier == .free {
+                    Theme.line.frame(height: 0.5)
+                    Button("Upgrade to Pro") { showingPaywall = true }
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
+                        .frame(minHeight: 44)
+                        .buttonStyle(.plain)
+                }
+            }
+            .drapeCard(radius: 14)
+            .padding(.horizontal, Theme.contentPadding)
+            Text("Dev toggle — not visible in release builds.")
+                .font(Theme.body(12))
+                .foregroundStyle(Theme.inkSoft)
+                .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+    #endif
 
     // MARK: - Bindings (edit-in-place, auto-saving)
 
@@ -237,7 +354,6 @@ struct ProfileView: View {
         )
     }
 
-    /// Registers a brand-new style on the profile so it's reusable everywhere.
     private func addCustomStyle(_ style: String, _ profile: UserProfile) {
         guard !profile.customStyles.contains(style) else { return }
         profile.customStyles.append(style)
@@ -288,6 +404,7 @@ struct ProfileView: View {
             profile.homeLongitude = coord.longitude
             profile.homeCity = await container.location.placeName(for: coord)
             persist()
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
         } catch {
             // Leave the existing location in place on failure.
         }

@@ -35,56 +35,91 @@ struct WardrobeAnalyticsView: View {
     }
 
     var body: some View {
-        List {
+        ScrollView {
             if costPerWearItems.isEmpty && rarelyUsed.isEmpty {
                 ContentUnavailableView(
                     "No data yet",
                     image: "drape.analytics",
                     description: Text("Log some wears and add purchase prices to see analytics.")
                 )
+                .padding(.top, 60)
             } else {
-                if !costPerWearItems.isEmpty {
-                    Section("Cost per wear") {
-                        ForEach(costPerWearItems) { item in
-                            HStack {
-                                NormalizedImageView(assetID: item.garment.thumbnailAssetID)
-                                    .frame(width: 44, height: 44)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                VStack(alignment: .leading, spacing: 3) {
-                                    SerifText(item.garment.displayName, size: 16).lineLimit(1)
-                                    MonoLabel("\(item.garment.wearCount) wear\(item.garment.wearCount == 1 ? "" : "s")", size: 9)
+                VStack(spacing: 20) {
+                    if !costPerWearItems.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            MonoLabel("Cost per wear")
+                                .padding(.horizontal, Theme.contentPadding)
+                            VStack(spacing: 0) {
+                                ForEach(Array(costPerWearItems.enumerated()), id: \.element.id) { idx, item in
+                                    HStack {
+                                        NormalizedImageView(assetID: item.garment.thumbnailAssetID)
+                                            .frame(width: 44, height: 44)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            SerifText(item.garment.displayName, size: 16).lineLimit(1)
+                                            MonoLabel("\(item.garment.wearCount) wear\(item.garment.wearCount == 1 ? "" : "s")", size: 9)
+                                        }
+                                        Spacer()
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text(item.value, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                                .font(Theme.mono(14, weight: .medium))
+                                                .foregroundStyle(Theme.ink)
+                                            if item.value < 5 {
+                                                MonoLabel("GREAT BUY", size: 9)
+                                            } else if item.value >= 20 {
+                                                MonoLabel("COSTLY", size: 9)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    if idx < costPerWearItems.count - 1 {
+                                        Theme.line.frame(height: 0.5).padding(.leading, 76)
+                                    }
                                 }
-                                Spacer()
-                                Text(item.value, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                                    .font(Theme.mono(14, weight: .medium))
-                                    .foregroundStyle(item.value < 5 ? .green : item.value < 20 ? Theme.ink : .red)
                             }
+                            .drapeCard(radius: 14)
+                            .padding(.horizontal, Theme.contentPadding)
                         }
                     }
-                }
 
-                if !rarelyUsed.isEmpty {
-                    Section {
-                        ForEach(rarelyUsed) { garment in
-                            HStack {
-                                NormalizedImageView(assetID: garment.thumbnailAssetID)
-                                    .frame(width: 44, height: 44)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                VStack(alignment: .leading, spacing: 3) {
-                                    SerifText(garment.displayName, size: 16).lineLimit(1)
-                                    MonoLabel(garment.wearCount == 0 ? "Never worn" : "Last worn 90+ days ago", size: 9)
+                    if !rarelyUsed.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                MonoLabel("Rarely used")
+                                    .padding(.horizontal, Theme.contentPadding)
+                                Text("Added over 30 days ago with no recent wears.")
+                                    .font(Theme.body(12))
+                                    .foregroundStyle(Theme.inkSoft)
+                                    .padding(.horizontal, Theme.contentPadding)
+                            }
+                            VStack(spacing: 0) {
+                                ForEach(Array(rarelyUsed.enumerated()), id: \.element.id) { idx, garment in
+                                    HStack {
+                                        NormalizedImageView(assetID: garment.thumbnailAssetID)
+                                            .frame(width: 44, height: 44)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            SerifText(garment.displayName, size: 16).lineLimit(1)
+                                            MonoLabel(garment.wearCount == 0 ? "Never worn" : "Last worn 90+ days ago", size: 9)
+                                        }
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    if idx < rarelyUsed.count - 1 {
+                                        Theme.line.frame(height: 0.5).padding(.leading, 76)
+                                    }
                                 }
                             }
+                            .drapeCard(radius: 14)
+                            .padding(.horizontal, Theme.contentPadding)
                         }
-                    } header: {
-                        Text("Rarely used")
-                    } footer: {
-                        Text("Items added over 30 days ago with no recent wears.")
                     }
                 }
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Theme.paper.ignoresSafeArea())
         .navigationTitle("Analytics")
         .navigationBarTitleDisplayMode(.large)

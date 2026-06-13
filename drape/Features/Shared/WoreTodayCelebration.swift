@@ -12,6 +12,7 @@ struct WoreTodayCelebration: View {
     let garment: Garment
     let isFirstWear: Bool
     let onDismiss: () -> Void
+    var onUndo: (() -> Void)? = nil
 
     @State private var canvasVisible = false
     @State private var ringScale: CGFloat = 0.7
@@ -66,6 +67,23 @@ struct WoreTodayCelebration: View {
                          size: 27, italic: true)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
+
+                    if let onUndo {
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            onUndo()
+                        } label: {
+                            MonoLabel("Undo", size: 10, color: Theme.inkSoft)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 8)
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(Theme.ink.opacity(0.2), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
+                    }
                 }
             }
         }

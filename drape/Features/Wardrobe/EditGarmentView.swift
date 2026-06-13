@@ -23,9 +23,10 @@ struct EditGarmentView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                GarmentAttributeFields(draft: $draft)
+            ScrollView {
+                GarmentAttributeFields(draft: $draft, inForm: false)
             }
+            .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Edit Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -36,6 +37,7 @@ struct EditGarmentView: View {
                     Button("Save") {
                         draft.apply(to: garment)
                         try? modelContext.save()
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         dismiss()
                     }
                 }

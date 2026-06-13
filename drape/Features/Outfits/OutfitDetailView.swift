@@ -23,7 +23,7 @@ struct OutfitDetailView: View {
 
     private var kickerText: String {
         let days = Int(Date.now.timeIntervalSince(outfit.createdAt) / 86_400)
-        let saved = days <= 0 ? "saved today" : "saved \(days)d ago"
+        let saved = days <= 0 ? "saved today" : "saved \(days) day\(days == 1 ? "" : "s") ago"
         let worn = outfit.wearCount > 0 ? "worn \(outfit.wearCount)×" : "never worn"
         return "\(outfit.occasion.displayName) · \(saved) · \(worn)"
     }
@@ -71,7 +71,12 @@ struct OutfitDetailView: View {
                 WoreTodayCelebration(
                     garment: entry.leadGarment,
                     isFirstWear: entry.isFirstWear,
-                    onDismiss: { withAnimation { celebration = nil } }
+                    onDismiss: { withAnimation { celebration = nil } },
+                    onUndo: {
+                        modelContext.delete(entry.undoEvent)
+                        try? modelContext.save()
+                        withAnimation { celebration = nil }
+                    }
                 )
                 .transition(.opacity)
                 .zIndex(10)
@@ -117,7 +122,7 @@ struct OutfitDetailView: View {
         try? modelContext.save()
         let lead = sortedGarments(outfit.garments).first ?? outfit.garments[0]
         withAnimation {
-            celebration = OutfitCelebration(leadGarment: lead, isFirstWear: isFirst)
+            celebration = OutfitCelebration(leadGarment: lead, isFirstWear: isFirst, undoEvent: event)
         }
     }
 
@@ -133,4 +138,5 @@ private struct OutfitCelebration: Identifiable {
     let id = UUID()
     let leadGarment: Garment
     let isFirstWear: Bool
+    let undoEvent: WearEvent
 }

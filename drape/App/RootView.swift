@@ -18,14 +18,14 @@ struct RootView: View {
 
     var body: some View {
         TabView {
+            Tab("Style", image: "drape.style") {
+                RecommendationsView()
+            }
             Tab("Wardrobe", image: "drape.wardrobe") {
                 WardrobeListView()
             }
             Tab("Outfits", image: "drape.outfits") {
                 OutfitListView()
-            }
-            Tab("Style", image: "drape.style") {
-                RecommendationsView()
             }
             Tab("Profile", image: "drape.profile") {
                 ProfileView()

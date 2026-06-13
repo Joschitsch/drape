@@ -22,26 +22,44 @@ struct OutfitBuilderView: View {
     var body: some View {
         @Bindable var model = model
         return NavigationStack {
-            Form {
-                Section("Details") {
-                    TextField("Outfit name", text: $model.name)
-                    VStack(alignment: .leading, spacing: 10) {
-                        MonoLabel("Occasion")
-                        SingleChoiceChips(items: Occasion.allCases, title: \.displayName,
-                                          selection: $model.occasion)
+            ScrollView {
+                VStack(spacing: 14) {
+                    // ── Details card ─────────────────────────────────────
+                    VStack(alignment: .leading, spacing: 0) {
+                        TextField("Outfit name", text: $model.name)
+                            .font(Theme.body(15))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 13)
+                        Theme.line.frame(height: 0.5)
+                        VStack(alignment: .leading, spacing: 10) {
+                            MonoLabel("Occasion")
+                            SingleChoiceChips(items: Occasion.allCases, title: \.displayName,
+                                              selection: $model.occasion)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
                     }
-                    .padding(.vertical, 4)
-                }
+                    .drapeCard(radius: 14)
+                    .padding(.horizontal, Theme.contentPadding)
 
-                Section {
-                    ForEach(OutfitSlot.builderOrder) { slot in
-                        slotRow(slot, model: model)
+                    // ── Items card ────────────────────────────────────────
+                    let slots = OutfitSlot.builderOrder
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(slots.enumerated()), id: \.element.id) { idx, slot in
+                            slotRow(slot, model: model)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                            if idx < slots.count - 1 {
+                                Theme.line.frame(height: 0.5).padding(.leading, 80)
+                            }
+                        }
                     }
-                } header: {
-                    Text("Items")
+                    .drapeCard(radius: 14)
+                    .padding(.horizontal, Theme.contentPadding)
                 }
+                .padding(.top, 16)
+                .padding(.bottom, 100)
             }
-            .scrollContentBackground(.hidden)
             .background(Theme.paper.ignoresSafeArea())
             .presentationDragIndicator(.visible)
             .navigationTitle(model.isEditing ? "Edit Outfit" : "New Outfit")

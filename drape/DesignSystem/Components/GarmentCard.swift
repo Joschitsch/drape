@@ -52,7 +52,7 @@ struct GarmentCard: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .aspectRatio(3/4, contentMode: .fit)
+        .aspectRatio(1, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: Theme.shadow, radius: 20, x: 0, y: 12)
     }

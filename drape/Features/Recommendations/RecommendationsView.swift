@@ -106,8 +106,22 @@ struct RecommendationsView: View {
             .shimmer()
             .transition(.opacity)
             .accessibilityLabel("Loading weather")
+        } else {
+            HStack(spacing: 8) {
+                Image(systemName: "cloud.slash")
+                    .font(.caption)
+                    .foregroundStyle(Theme.inkSoft)
+                Text("Weather unavailable — recommendations use your wardrobe only.")
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .drapeCard(radius: 14)
+            .transition(.opacity)
         }
-        // else: weather unavailable (fetch failed) — omit the strip entirely.
     }
 
     // MARK: - Results: 3 outfit suggestion cards

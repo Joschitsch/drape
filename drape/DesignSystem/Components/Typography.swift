@@ -14,10 +14,10 @@ import SwiftUI
 struct MonoLabel: View {
     let text: String
     var size: CGFloat = 11
-    var color: Color = Theme.inkFaint
+    var color: Color = Theme.inkSoft
     var tracking: CGFloat = 0.6
 
-    init(_ text: String, size: CGFloat = 11, color: Color = Theme.inkFaint, tracking: CGFloat = 0.6) {
+    init(_ text: String, size: CGFloat = 11, color: Color = Theme.inkSoft, tracking: CGFloat = 0.6) {
         self.text = text
         self.size = size
         self.color = color

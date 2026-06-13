@@ -25,9 +25,20 @@ final class RecommendationsViewModel {
         case nothingSuitsContext
     }
 
-    var occasion: Occasion = .everyday
+    var occasion: Occasion = .everyday {
+        didSet {
+            UserDefaults.standard.set(occasion.rawValue, forKey: "drape.lastOccasion")
+        }
+    }
     /// Resolved suggestions, with their garment models for display.
     var suggestions: [(suggestion: OutfitSuggestion, garments: [Garment])] = []
+
+    init() {
+        if let raw = UserDefaults.standard.string(forKey: "drape.lastOccasion"),
+           let saved = Occasion(rawValue: raw) {
+            occasion = saved
+        }
+    }
     /// Set when the last `refresh` produced no suggestions; nil otherwise.
     var emptyReason: EmptyReason?
     var weatherSummary: String?

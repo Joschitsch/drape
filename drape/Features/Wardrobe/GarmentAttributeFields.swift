@@ -2,73 +2,163 @@
 //  GarmentAttributeFields.swift
 //  drape
 //
-//  Shared Form content for editing a GarmentDraft (add + edit flows).
+//  Shared attribute editor used by both the add and edit flows.
+//  - inForm: true (default) — renders as Section groups, host supplies a Form
+//  - inForm: false — renders as drapeCard groups, host supplies a ScrollView
 //
 
 import SwiftUI
 import SwiftData
 
-/// The attribute editor used by both the add and edit screens. Renders as a set
-/// of `Section`s; the host view supplies the enclosing `Form`.
 struct GarmentAttributeFields: View {
     @Binding var draft: GarmentDraft
+    var inForm: Bool = true
 
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
     private var profile: UserProfile? { profiles.first }
 
     var body: some View {
-        Section("Basics") {
+        if inForm {
+            Section("Basics") {
+                TextField("Name", text: $draft.name)
+                field("Category") {
+                    SingleChoiceChips(items: GarmentCategory.allCases, title: \.displayName,
+                                      selection: $draft.category)
+                }
+                colorRow
+            }
+
+            Section("Suitability") {
+                if draft.category == .footwear {
+                    field("Type") {
+                        OptionalSingleChoiceChips(
+                            items: FootwearSubcategory.allCases,
+                            title: \.displayName,
+                            selection: $draft.footwearSubcategory
+                        )
+                    }
+                }
+                FormalityDial(formality: $draft.formality)
+                    .padding(.vertical, 4)
+                field("Warmth") {
+                    SingleChoiceChips(items: WarmthLevel.allCases, title: \.displayName,
+                                      selection: $draft.warmth)
+                }
+                field("Seasons") {
+                    SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)
+                }
+                field("Styles") {
+                    StyleSelector(selection: $draft.styles,
+                                  customStyles: profile?.customStyles ?? [],
+                                  onAdd: addCustomStyle)
+                }
+            }
+
+            Section("Details") {
+                TextField("Brand (optional)", text: $draft.brand)
+                TextField("Notes (optional)", text: $draft.notes, axis: .vertical)
+                    .lineLimit(1...4)
+                Toggle("Favorite", isOn: $draft.isFavorite)
+            }
+        } else {
+            VStack(spacing: 14) {
+                basicsCard
+                suitabilityCard
+                detailsCard
+            }
+            .padding(.horizontal, Theme.contentPadding)
+            .padding(.top, 16)
+            .padding(.bottom, 100)
+        }
+    }
+
+    // MARK: - Card sections (inForm: false)
+
+    private var basicsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
             TextField("Name", text: $draft.name)
-            field("Category") {
+                .font(Theme.body(15))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+            Theme.line.frame(height: 0.5)
+            cardField("Category") {
                 SingleChoiceChips(items: GarmentCategory.allCases, title: \.displayName,
                                   selection: $draft.category)
             }
+            Theme.line.frame(height: 0.5)
             colorRow
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
         }
+        .drapeCard(radius: 14)
+    }
 
-        Section("Suitability") {
+    private var suitabilityCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
             if draft.category == .footwear {
-                field("Type") {
+                cardField("Type") {
                     OptionalSingleChoiceChips(
                         items: FootwearSubcategory.allCases,
                         title: \.displayName,
                         selection: $draft.footwearSubcategory
                     )
                 }
+                Theme.line.frame(height: 0.5)
             }
             FormalityDial(formality: $draft.formality)
-                .padding(.vertical, 4)
-            field("Warmth") {
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+            Theme.line.frame(height: 0.5)
+            cardField("Warmth") {
                 SingleChoiceChips(items: WarmthLevel.allCases, title: \.displayName,
                                   selection: $draft.warmth)
             }
-            field("Seasons") {
+            Theme.line.frame(height: 0.5)
+            cardField("Seasons") {
                 SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)
             }
-            field("Styles") {
+            Theme.line.frame(height: 0.5)
+            cardField("Styles") {
                 StyleSelector(selection: $draft.styles,
                               customStyles: profile?.customStyles ?? [],
                               onAdd: addCustomStyle)
             }
         }
-
-        Section("Details") {
-            TextField("Brand (optional)", text: $draft.brand)
-            TextField("Notes (optional)", text: $draft.notes, axis: .vertical)
-                .lineLimit(1...4)
-            Toggle("Favorite", isOn: $draft.isFavorite)
-        }
+        .drapeCard(radius: 14)
     }
 
-    /// Registers a brand-new style on the profile so it's reusable everywhere.
+    private var detailsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            TextField("Brand (optional)", text: $draft.brand)
+                .font(Theme.body(15))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+            Theme.line.frame(height: 0.5)
+            TextField("Notes (optional)", text: $draft.notes, axis: .vertical)
+                .font(Theme.body(15))
+                .lineLimit(1...4)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+            Theme.line.frame(height: 0.5)
+            Toggle("Favorite", isOn: $draft.isFavorite)
+                .font(Theme.body(15))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
+                .tint(Theme.ink)
+        }
+        .drapeCard(radius: 14)
+    }
+
+    // MARK: - Shared helpers
+
     private func addCustomStyle(_ style: String) {
         guard let profile, !profile.customStyles.contains(style) else { return }
         profile.customStyles.append(style)
         try? modelContext.save()
     }
 
-    /// A labeled selector group — one consistent layout for every chip/swatch field.
+    /// For Form context — labeled selector group.
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             MonoLabel(label)
@@ -77,18 +167,25 @@ struct GarmentAttributeFields: View {
         .padding(.vertical, 4)
     }
 
+    /// For card context — labeled row with standard card padding.
+    private func cardField<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel(label)
+            content()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+    }
+
     private var colorRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 MonoLabel("Color")
                 Spacer()
-                // Picks an exact color: stored as-is for display; mapped to the
-                // nearest named color only so the engine has a color family.
                 ColorPicker("Custom", selection: customColorBinding, supportsOpacity: false)
                     .labelsHidden()
             }
             FlowLayout(spacing: 6) {
-                // The exact custom color shows as a leading, selected swatch.
                 if let hex = draft.customColorHex {
                     Circle()
                         .fill(Color(hex: hex))
@@ -106,11 +203,8 @@ struct GarmentAttributeFields: View {
                 }
             }
         }
-        .padding(.vertical, 4)
     }
 
-    /// Reads the current display color; writing stores the exact hex and maps it
-    /// to the nearest named color for the engine.
     private var customColorBinding: Binding<Color> {
         Binding(
             get: {
