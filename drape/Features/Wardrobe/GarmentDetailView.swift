@@ -19,6 +19,7 @@ struct GarmentDetailView: View {
 
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
+    @State private var isStyling = false
     @State private var celebration: CelebrationEntry? = nil
 
     /// How far the user has pulled past the top, 0…1 where 1 is the dismiss
@@ -109,6 +110,9 @@ struct GarmentDetailView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button { isStyling = true } label: {
+                            Label("Style this piece", systemImage: "sparkles")
+                        }
                         Button { isEditing = true } label: {
                             Label("Edit", systemImage: "pencil")
                         }
@@ -128,6 +132,9 @@ struct GarmentDetailView: View {
             }
             .sheet(isPresented: $isEditing) {
                 EditGarmentView(garment: garment)
+            }
+            .sheet(isPresented: $isStyling) {
+                StyleThisPieceView(garment: garment)
             }
         }
     }
@@ -188,7 +195,8 @@ struct GarmentDetailView: View {
             garment.primaryColor.displayName,
             garment.formality.displayName,
             garment.warmth.displayName + " warmth",
-        ] + garment.seasons.map(\.displayName)
+        ] + [garment.archetype?.displayName, garment.fit?.displayName].compactMap { $0 }
+          + garment.seasons.map(\.displayName)
           + garment.styles.map(Style.displayName)
 
         return ScrollView(.horizontal, showsIndicators: false) {

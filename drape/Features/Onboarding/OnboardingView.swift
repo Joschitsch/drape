@@ -35,6 +35,8 @@ struct OnboardingView: View {
                     welcomeStep
                 } else if model.currentStep == model.totalSteps - 1 {
                     globalStyleStep
+                } else if model.currentStep == model.appetitesStep {
+                    appetitesStep
                 } else {
                     let occasion = OnboardingViewModel.occasions[model.currentStep - 1]
                     occasionStep(occasion)
@@ -113,6 +115,41 @@ struct OnboardingView: View {
                 model.update(occasion: occasion, formality: formality, styles: styles)
             }
         )
+    }
+
+    private var appetitesStep: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 8) {
+                    SerifText("A few style instincts", size: 24)
+                    Text("These set sensible defaults. Drape keeps learning from your thumbs as you go.")
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+
+                appetiteField("Color") {
+                    SingleChoiceChips(items: ColorAppetite.allCases, title: \.displayName,
+                                      selection: Bindable(model).tuning.colorAppetite)
+                }
+                appetiteField("Patterns") {
+                    SingleChoiceChips(items: PatternTolerance.allCases, title: \.displayName,
+                                      selection: Bindable(model).tuning.patternTolerance)
+                }
+                appetiteField("Silhouette") {
+                    SingleChoiceChips(items: SilhouettePreference.allCases, title: \.displayName,
+                                      selection: Bindable(model).tuning.silhouette)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 32)
+        }
+    }
+
+    private func appetiteField<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel(label)
+            content()
+        }
     }
 
     private var globalStyleStep: some View {

@@ -18,9 +18,16 @@ final class OnboardingViewModel {
     /// Global style fallback (last step).
     var globalStyles: Set<String> = []
 
+    /// Style appetites that seed the engine's personalisation.
+    var tuning = StyleTuning()
+
     var currentStep: Int = 0
 
-    var totalSteps: Int { Self.occasions.count + 2 } // welcome + occasions + global styles
+    // welcome + occasions + appetites + global styles
+    var totalSteps: Int { Self.occasions.count + 3 }
+
+    /// Index of the appetites step (right after the occasion steps).
+    var appetitesStep: Int { Self.occasions.count + 1 }
 
     var isOnLastStep: Bool { currentStep == totalSteps - 1 }
 
@@ -53,6 +60,10 @@ final class OnboardingViewModel {
         if !globalStyles.isEmpty {
             profile.preferredStyles = Array(globalStyles)
         }
+        // Seed personalisation appetites, preserving any prior feedback nudges.
+        profile.styleTuning.colorAppetite = tuning.colorAppetite
+        profile.styleTuning.patternTolerance = tuning.patternTolerance
+        profile.styleTuning.silhouette = tuning.silhouette
         profile.hasCompletedOnboarding = true
     }
 }

@@ -153,7 +153,13 @@ struct RecommendationsView: View {
                         label: idx < labels.count ? labels[idx] : "#\(idx + 1)",
                         suggestion: item.suggestion,
                         garments: item.garments,
-                        onSave: { save(item.suggestion, garments: item.garments) }
+                        onSave: { save(item.suggestion, garments: item.garments) },
+                        onFeedback: { positive, reasons in
+                            model.submitFeedback(
+                                positive: positive, reasons: reasons,
+                                suggestion: item.suggestion,
+                                profile: profile, context: modelContext)
+                        }
                     )
                 }
             }
@@ -219,11 +225,14 @@ private struct OutfitSuggestionCard: View {
     let suggestion: OutfitSuggestion
     let garments: [Garment]
     let onSave: () -> Void
+    let onFeedback: (Bool, [FeedbackReason]) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var saved = false
     @State private var showDetail = false
     @State private var appeared = false
+    @State private var feedbackGiven = false
+    @State private var showReasons = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -285,6 +294,11 @@ private struct OutfitSuggestionCard: View {
             .buttonStyle(.plain)
             .disabled(saved)
             .sensoryFeedback(.success, trigger: saved)
+
+            Divider().overlay(Theme.line)
+
+            // ── Feedback row → nudges personalisation ────────────────
+            feedbackRow
         }
         .drapeCard(radius: 18)
         // Staggered rise: each card arrives a beat after the previous one. Opacity
@@ -299,6 +313,57 @@ private struct OutfitSuggestionCard: View {
         }
         .navigationDestination(isPresented: $showDetail) {
             SuggestionDetailView(garments: garments, suggestion: suggestion, label: label)
+        }
+    }
+
+    @ViewBuilder
+    private var feedbackRow: some View {
+        if feedbackGiven {
+            HStack {
+                MonoLabel("Thanks — we'll factor that in", size: 10, color: Theme.inkFaint)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .frame(minHeight: 44)
+        } else {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 18) {
+                    MonoLabel(showReasons ? "What felt off?" : "How's this pick?", size: 10)
+                    Spacer()
+                    if !showReasons {
+                        Button {
+                            onFeedback(true, [])
+                            withAnimation(.drapeContent) { feedbackGiven = true }
+                        } label: {
+                            Image(systemName: "hand.thumbsup")
+                                .font(.caption).foregroundStyle(Theme.ink)
+                        }
+                        .buttonStyle(.plain)
+                        Button {
+                            withAnimation(.drapeContent) { showReasons = true }
+                        } label: {
+                            Image(systemName: "hand.thumbsdown")
+                                .font(.caption).foregroundStyle(Theme.ink)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                if showReasons {
+                    FlowLayout(spacing: 6) {
+                        ForEach(FeedbackReason.allCases) { reason in
+                            DrapeChip(label: reason.displayName, active: false) {
+                                onFeedback(false, [reason])
+                                withAnimation(.drapeContent) { feedbackGiven = true }
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .frame(minHeight: 44)
+            .sensoryFeedback(.selection, trigger: feedbackGiven)
         }
     }
 }

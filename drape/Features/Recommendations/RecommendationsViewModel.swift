@@ -128,6 +128,25 @@ final class RecommendationsViewModel {
         emptyReason = suggestions.isEmpty ? Self.emptyReason(for: context.wardrobe) : nil
     }
 
+    /// Records a thumbs rating: nudges the user's persistent style tuning and logs
+    /// an `OutfitFeedback` row. Future runs read the updated tuning automatically.
+    func submitFeedback(
+        positive: Bool,
+        reasons: [FeedbackReason],
+        suggestion: OutfitSuggestion,
+        profile: UserProfile?,
+        context: ModelContext
+    ) {
+        guard let profile else { return }
+        profile.applyFeedback(reasons: reasons, positive: positive)
+        context.insert(OutfitFeedback(
+            positive: positive,
+            reasons: reasons,
+            garmentIDs: suggestion.garmentIDs,
+            occasion: occasion))
+        try? context.save()
+    }
+
     /// Diagnoses why a run over `wardrobe` produced nothing. Mirrors the
     /// engine's candidate shapes (top + bottom + footwear, or dress + footwear):
     /// if neither shape can be assembled the wardrobe is the problem; otherwise
