@@ -40,6 +40,18 @@ final class Garment {
     var seasons: [Season] = []
     var styles: [String] = []
 
+    // Silhouette / fabric / pattern axes. Stored as raw strings (like
+    // `subcategory`) so adding cases never forces a SwiftData migration; decoded
+    // into enums via the computed accessors below and at the snapshot boundary.
+    // All optional: nil = "not yet inferred", which the engine reads as neutral.
+    var fitRaw: String?
+    var topLengthRaw: String?
+    var bottomVolumeRaw: String?
+    var structureRaw: String?
+    var fabricWeightRaw: String?
+    var patternTypeRaw: String?
+    var patternScaleRaw: String?
+
     /// User-visible label, e.g. "Blue Jeans". Auto-generated on add; editable.
     var name: String? = nil
     var brand: String?
@@ -92,4 +104,38 @@ final class Garment {
     /// Number of times this item has been worn — drives cost-per-wear and the
     /// "rarely used" analytics.
     var wearCount: Int { wearEvents.count }
+
+    // MARK: - Style-attribute accessors
+    //
+    // Typed views over the raw-string storage above. Not persisted themselves
+    // (SwiftData only tracks stored properties); they keep call sites readable.
+
+    var fit: Fit? {
+        get { fitRaw.flatMap(Fit.init(rawValue:)) }
+        set { fitRaw = newValue?.rawValue }
+    }
+    var topLength: TopLength? {
+        get { topLengthRaw.flatMap(TopLength.init(rawValue:)) }
+        set { topLengthRaw = newValue?.rawValue }
+    }
+    var bottomVolume: BottomVolume? {
+        get { bottomVolumeRaw.flatMap(BottomVolume.init(rawValue:)) }
+        set { bottomVolumeRaw = newValue?.rawValue }
+    }
+    var structure: Structure? {
+        get { structureRaw.flatMap(Structure.init(rawValue:)) }
+        set { structureRaw = newValue?.rawValue }
+    }
+    var fabricWeight: FabricWeight? {
+        get { fabricWeightRaw.flatMap(FabricWeight.init(rawValue:)) }
+        set { fabricWeightRaw = newValue?.rawValue }
+    }
+    var patternType: PatternType? {
+        get { patternTypeRaw.flatMap(PatternType.init(rawValue:)) }
+        set { patternTypeRaw = newValue?.rawValue }
+    }
+    var patternScale: PatternScale? {
+        get { patternScaleRaw.flatMap(PatternScale.init(rawValue:)) }
+        set { patternScaleRaw = newValue?.rawValue }
+    }
 }

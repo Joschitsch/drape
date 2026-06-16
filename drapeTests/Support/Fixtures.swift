@@ -17,6 +17,13 @@ func garment(
     color: ColorTag = .ink,
     styles: [String] = [],
     footwearSubcategory: FootwearSubcategory? = nil,
+    fit: Fit? = nil,
+    topLength: TopLength? = nil,
+    bottomVolume: BottomVolume? = nil,
+    structure: Structure? = nil,
+    fabricWeight: FabricWeight? = nil,
+    patternType: PatternType? = nil,
+    patternScale: PatternScale? = nil,
     id: UUID = UUID()
 ) -> GarmentSnapshot {
     GarmentSnapshot(
@@ -28,7 +35,14 @@ func garment(
         formality: formality,
         warmth: warmth,
         seasons: [],
-        styles: styles
+        styles: styles,
+        fit: fit,
+        topLength: topLength,
+        bottomVolume: bottomVolume,
+        structure: structure,
+        fabricWeight: fabricWeight,
+        patternType: patternType,
+        patternScale: patternScale
     )
 }
 

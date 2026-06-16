@@ -21,6 +21,17 @@ struct ClassificationSuggestion: Sendable {
     var seasons: Set<Season>?
     var footwearSubcategory: FootwearSubcategory?
 
+    // Silhouette / fabric / pattern guesses. Only populated when the heuristic
+    // clears a confidence threshold; low-confidence axes are left nil so the edit
+    // screen shows them unset rather than asserting a shaky default.
+    var fit: Fit?
+    var topLength: TopLength?
+    var bottomVolume: BottomVolume?
+    var structure: Structure?
+    var fabricWeight: FabricWeight?
+    var patternType: PatternType?
+    var patternScale: PatternScale?
+
     init(
         category: GarmentCategory? = nil,
         primaryColor: ColorTag? = nil,
@@ -29,7 +40,14 @@ struct ClassificationSuggestion: Sendable {
         warmth: WarmthLevel? = nil,
         formality: Formality? = nil,
         seasons: Set<Season>? = nil,
-        footwearSubcategory: FootwearSubcategory? = nil
+        footwearSubcategory: FootwearSubcategory? = nil,
+        fit: Fit? = nil,
+        topLength: TopLength? = nil,
+        bottomVolume: BottomVolume? = nil,
+        structure: Structure? = nil,
+        fabricWeight: FabricWeight? = nil,
+        patternType: PatternType? = nil,
+        patternScale: PatternScale? = nil
     ) {
         self.category = category
         self.primaryColor = primaryColor
@@ -39,6 +57,13 @@ struct ClassificationSuggestion: Sendable {
         self.formality = formality
         self.seasons = seasons
         self.footwearSubcategory = footwearSubcategory
+        self.fit = fit
+        self.topLength = topLength
+        self.bottomVolume = bottomVolume
+        self.structure = structure
+        self.fabricWeight = fabricWeight
+        self.patternType = patternType
+        self.patternScale = patternScale
     }
 
     static let empty = ClassificationSuggestion()

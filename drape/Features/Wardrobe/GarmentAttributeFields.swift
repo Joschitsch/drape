@@ -55,6 +55,19 @@ struct GarmentAttributeFields: View {
                 }
             }
 
+            Section("Shape & fabric") {
+                field("Fit") { fitSelector }
+                if draft.category == .top || draft.category == .dress {
+                    field("Length") { lengthSelector }
+                }
+                if draft.category == .bottom {
+                    field("Volume") { volumeSelector }
+                }
+                field("Structure") { structureSelector }
+                field("Fabric weight") { weightSelector }
+                field("Pattern") { patternSelector }
+            }
+
             Section("Details") {
                 TextField("Brand (optional)", text: $draft.brand)
                 TextField("Notes (optional)", text: $draft.notes, axis: .vertical)
@@ -65,6 +78,7 @@ struct GarmentAttributeFields: View {
             VStack(spacing: 14) {
                 basicsCard
                 suitabilityCard
+                shapeCard
                 detailsCard
             }
             .padding(.horizontal, Theme.contentPadding)
@@ -126,6 +140,48 @@ struct GarmentAttributeFields: View {
             }
         }
         .drapeCard(radius: 14)
+    }
+
+    private var shapeCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            cardField("Fit") { fitSelector }
+            Theme.line.frame(height: 0.5)
+            if draft.category == .top || draft.category == .dress {
+                cardField("Length") { lengthSelector }
+                Theme.line.frame(height: 0.5)
+            }
+            if draft.category == .bottom {
+                cardField("Volume") { volumeSelector }
+                Theme.line.frame(height: 0.5)
+            }
+            cardField("Structure") { structureSelector }
+            Theme.line.frame(height: 0.5)
+            cardField("Fabric weight") { weightSelector }
+            Theme.line.frame(height: 0.5)
+            cardField("Pattern") { patternSelector }
+        }
+        .drapeCard(radius: 14)
+    }
+
+    // MARK: - Silhouette / fabric / pattern selectors (shared by both layouts)
+
+    @ViewBuilder private var fitSelector: some View {
+        OptionalSingleChoiceChips(items: Fit.allCases, title: \.displayName, selection: $draft.fit)
+    }
+    @ViewBuilder private var lengthSelector: some View {
+        OptionalSingleChoiceChips(items: TopLength.allCases, title: \.displayName, selection: $draft.topLength)
+    }
+    @ViewBuilder private var volumeSelector: some View {
+        OptionalSingleChoiceChips(items: BottomVolume.allCases, title: \.displayName, selection: $draft.bottomVolume)
+    }
+    @ViewBuilder private var structureSelector: some View {
+        OptionalSingleChoiceChips(items: Structure.allCases, title: \.displayName, selection: $draft.structure)
+    }
+    @ViewBuilder private var weightSelector: some View {
+        OptionalSingleChoiceChips(items: FabricWeight.allCases, title: \.displayName, selection: $draft.fabricWeight)
+    }
+    @ViewBuilder private var patternSelector: some View {
+        OptionalSingleChoiceChips(items: PatternType.allCases, title: \.displayName, selection: $draft.patternType)
     }
 
     private var detailsCard: some View {

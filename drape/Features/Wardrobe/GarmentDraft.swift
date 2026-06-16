@@ -23,6 +23,15 @@ struct GarmentDraft {
     var warmth: WarmthLevel = .medium
     var seasons: Set<Season> = []
     var styles: Set<String> = []
+    // Silhouette / fabric / pattern — pre-filled by the classifier, all optional
+    // so an unset chip means "not specified" rather than a forced default.
+    var fit: Fit? = nil
+    var topLength: TopLength? = nil
+    var bottomVolume: BottomVolume? = nil
+    var structure: Structure? = nil
+    var fabricWeight: FabricWeight? = nil
+    var patternType: PatternType? = nil
+    var patternScale: PatternScale? = nil
     var brand: String = ""
     var notes: String = ""
     var isFavorite: Bool = false
@@ -41,6 +50,13 @@ struct GarmentDraft {
         warmth = garment.warmth
         seasons = Set(garment.seasons)
         styles = Set(garment.styles)
+        fit = garment.fit
+        topLength = garment.topLength
+        bottomVolume = garment.bottomVolume
+        structure = garment.structure
+        fabricWeight = garment.fabricWeight
+        patternType = garment.patternType
+        patternScale = garment.patternScale
         brand = garment.brand ?? ""
         notes = garment.notes ?? ""
         isFavorite = garment.isFavorite
@@ -58,6 +74,13 @@ struct GarmentDraft {
         garment.warmth = warmth
         garment.seasons = Season.allCases.filter { seasons.contains($0) }
         garment.styles = styles.sorted()
+        garment.fit = fit
+        garment.topLength = topLength
+        garment.bottomVolume = bottomVolume
+        garment.structure = structure
+        garment.fabricWeight = fabricWeight
+        garment.patternType = patternType
+        garment.patternScale = patternScale
         garment.brand = brand.trimmed.isEmpty ? nil : brand.trimmed
         garment.notes = notes.trimmed.isEmpty ? nil : notes.trimmed
         garment.isFavorite = isFavorite

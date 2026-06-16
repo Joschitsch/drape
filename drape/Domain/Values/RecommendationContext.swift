@@ -53,6 +53,60 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
     var warmth: WarmthLevel
     var seasons: [Season]
     var styles: [String]
+
+    // Silhouette / fabric / pattern axes. Optional: nil means the attribute is
+    // unknown and scorers should treat it as neutral, never as a penalty.
+    var fit: Fit?
+    var topLength: TopLength?
+    var bottomVolume: BottomVolume?
+    var structure: Structure?
+    var fabricWeight: FabricWeight?
+    var patternType: PatternType?
+    var patternScale: PatternScale?
+
+    init(
+        id: UUID,
+        category: GarmentCategory,
+        footwearSubcategory: FootwearSubcategory? = nil,
+        primaryColor: ColorTag,
+        secondaryColors: [ColorTag] = [],
+        formality: Formality,
+        warmth: WarmthLevel,
+        seasons: [Season] = [],
+        styles: [String] = [],
+        fit: Fit? = nil,
+        topLength: TopLength? = nil,
+        bottomVolume: BottomVolume? = nil,
+        structure: Structure? = nil,
+        fabricWeight: FabricWeight? = nil,
+        patternType: PatternType? = nil,
+        patternScale: PatternScale? = nil
+    ) {
+        self.id = id
+        self.category = category
+        self.footwearSubcategory = footwearSubcategory
+        self.primaryColor = primaryColor
+        self.secondaryColors = secondaryColors
+        self.formality = formality
+        self.warmth = warmth
+        self.seasons = seasons
+        self.styles = styles
+        self.fit = fit
+        self.topLength = topLength
+        self.bottomVolume = bottomVolume
+        self.structure = structure
+        self.fabricWeight = fabricWeight
+        self.patternType = patternType
+        self.patternScale = patternScale
+    }
+
+    /// Whether the surface reads as patterned. `nil` when neither pattern field is
+    /// known, so callers can keep "unknown" distinct from "solid".
+    var isPatterned: Bool? {
+        if let patternType { return patternType != .solid }
+        if let patternScale { return patternScale != .none }
+        return nil
+    }
 }
 
 /// The subset of `UserProfile` the engine reads.
@@ -85,7 +139,14 @@ extension Garment {
             formality: formality,
             warmth: warmth,
             seasons: seasons,
-            styles: styles
+            styles: styles,
+            fit: fit,
+            topLength: topLength,
+            bottomVolume: bottomVolume,
+            structure: structure,
+            fabricWeight: fabricWeight,
+            patternType: patternType,
+            patternScale: patternScale
         )
     }
 }

@@ -144,3 +144,68 @@ func scoreRainReadiness(garments: [GarmentSnapshot], weather: WeatherSnapshot?) 
     }
     return (0.7, nil) // outerwear is neutral when dry
 }
+
+// MARK: - Volume balance scorer
+
+/// Rewards proportion: at most one voluminous piece reads as intentional, several
+/// at once read as shapeless. A garment is "voluminous" if it's oversized, a long
+/// top, or a wide-leg bottom. Neutral (0.5) when no silhouette data is known.
+func scoreVolumeBalance(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
+    func isVoluminous(_ g: GarmentSnapshot) -> Bool {
+        if g.fit == .oversized { return true }
+        if g.category == .top, g.topLength == .long { return true }
+        if g.category == .bottom, g.bottomVolume == .wide { return true }
+        return false
+    }
+    // Only assess when at least one piece carries silhouette signal.
+    let hasSignal = garments.contains {
+        $0.fit != nil || $0.topLength != nil || $0.bottomVolume != nil
+    }
+    guard hasSignal else { return (0.5, nil) }
+
+    let voluminous = garments.filter(isVoluminous).count
+    switch voluminous {
+    case 0:  return (0.85, nil)                       // clean lines, perfectly fine
+    case 1:  return (1.0, "Balanced proportions")     // one statement volume
+    case 2:  return (0.5, nil)
+    default: return (0.25, nil)                        // shapeless pile-up
+    }
+}
+
+// MARK: - Structure presence scorer
+
+/// Outside sport, rewards at least one element with some tailoring and gently
+/// penalises a head-to-toe slouchy look. Neutral when structure is unknown or
+/// the occasion is sport (where soft, easy pieces are the point).
+func scoreStructurePresence(garments: [GarmentSnapshot], occasion: Occasion) -> (score: Double, rationale: String?) {
+    guard occasion != .sport else { return (0.5, nil) }
+    // Only shaped garments (not footwear/accessories) carry the signal.
+    let shaped = garments.filter {
+        $0.category.slot != .footwear && $0.category.slot != .accessory
+    }
+    let known = shaped.compactMap(\.structure)
+    guard !known.isEmpty else { return (0.5, nil) }
+
+    if known.contains(where: { $0.isStructured }) {
+        return (1.0, nil)                 // a tailored anchor present
+    }
+    return (0.4, nil)                     // everything soft — a touch shapeless
+}
+
+// MARK: - Pattern harmony scorer
+
+/// Prefers one hero pattern carried by solids. Solid-only is safe; two patterns
+/// is risky; three or more reads chaotic. Neutral when no pattern data is known.
+func scorePatternHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
+    // Count only pieces we actually know the pattern of.
+    let known = garments.compactMap(\.isPatterned)
+    guard !known.isEmpty else { return (0.5, nil) }
+
+    let patterned = known.filter { $0 }.count
+    switch patterned {
+    case 0:  return (0.8, nil)                          // all solids — clean
+    case 1:  return (1.0, "One pattern, kept simple")   // hero + solids
+    case 2:  return (0.45, nil)
+    default: return (0.2, nil)                           // pattern clash
+    }
+}

@@ -19,6 +19,12 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         var style:     Double = 1.0
         var recency:   Double = 0.8
         var rain:      Double = 0.6
+        // Silhouette / fabric / pattern axes. Kept below the warmth/formality
+        // floors so they refine ties between otherwise-appropriate outfits
+        // rather than override appropriateness.
+        var volume:    Double = 0.7
+        var structure: Double = 0.5
+        var pattern:   Double = 0.7
     }
 
     init(weights: Weights = Weights()) {
@@ -81,6 +87,9 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile, occasion: context.occasion))
             add(weight: weights.recency,   result: scoreRecency(garments: candidate, recentWears: context.recentWears))
             add(weight: weights.rain,      result: scoreRainReadiness(garments: candidate, weather: context.weather))
+            add(weight: weights.volume,    result: scoreVolumeBalance(garments: candidate))
+            add(weight: weights.structure, result: scoreStructurePresence(garments: candidate, occasion: context.occasion))
+            add(weight: weights.pattern,   result: scorePatternHarmony(garments: candidate))
 
             let normalized = totalWeight > 0 ? weightedScore / totalWeight : 0
             scored.append((candidate, normalized, rationale))
