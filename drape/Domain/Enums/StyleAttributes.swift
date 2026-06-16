@@ -121,6 +121,70 @@ enum PatternType: String, CaseIterable, Codable, Identifiable, Sendable {
     }
 }
 
+/// Surface texture — how busy the weave/knit reads. Inferred from masked-pixel
+/// brightness spread, independent of warmth or weight.
+enum Texture: String, CaseIterable, Codable, Identifiable, Sendable {
+    var id: String { rawValue }
+    case smooth
+    case subtleTexture
+    case textured
+
+    var displayName: String {
+        switch self {
+        case .smooth:        "Smooth"
+        case .subtleTexture: "Subtle texture"
+        case .textured:      "Textured"
+        }
+    }
+
+    /// True for the visually busy surfaces the texture-mix scorer treats as "loud".
+    var isHeavyTexture: Bool { self == .textured }
+}
+
+/// A small, fixed vocabulary of style archetypes. Fixed on purpose: a closed set
+/// is what lets the engine compute an outfit-level "style vector" and reason about
+/// cohesion. Free-form user styles are mapped onto it via `from(style:)`.
+enum Archetype: String, CaseIterable, Codable, Identifiable, Sendable {
+    var id: String { rawValue }
+    case classic
+    case minimalist
+    case sporty
+    case streetwear
+    case boho
+    case romantic
+    case edgy
+    case preppy
+
+    var displayName: String {
+        switch self {
+        case .classic:    "Classic"
+        case .minimalist: "Minimalist"
+        case .sporty:     "Sporty"
+        case .streetwear: "Streetwear"
+        case .boho:       "Boho"
+        case .romantic:   "Romantic"
+        case .edgy:       "Edgy"
+        case .preppy:     "Preppy"
+        }
+    }
+
+    /// Collapses a free-form style label (built-in or user-defined) onto the fixed
+    /// archetype set, so legacy `styles` and the new axis share one comparable space.
+    nonisolated static func from(style raw: String) -> Archetype? {
+        switch raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "minimal", "minimalist", "clean":            return .minimalist
+        case "classic", "elegant", "timeless", "refined": return .classic
+        case "streetwear", "street", "urban":             return .streetwear
+        case "sporty", "sport", "athletic", "athleisure": return .sporty
+        case "bohemian", "boho", "festival":              return .boho
+        case "romantic", "feminine", "soft":              return .romantic
+        case "edgy", "grunge", "punk", "rock":            return .edgy
+        case "preppy", "prep", "old money", "ivy":        return .preppy
+        default:                                          return nil
+        }
+    }
+}
+
 /// Coarse scale of any pattern. `none` means a solid surface.
 enum PatternScale: String, CaseIterable, Codable, Identifiable, Sendable {
     var id: String { rawValue }

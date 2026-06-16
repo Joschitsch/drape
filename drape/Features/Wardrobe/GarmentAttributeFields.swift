@@ -65,7 +65,9 @@ struct GarmentAttributeFields: View {
                 }
                 field("Structure") { structureSelector }
                 field("Fabric weight") { weightSelector }
+                field("Texture") { textureSelector }
                 field("Pattern") { patternSelector }
+                field("Style archetype") { archetypeSelector }
             }
 
             Section("Details") {
@@ -158,7 +160,11 @@ struct GarmentAttributeFields: View {
             Theme.line.frame(height: 0.5)
             cardField("Fabric weight") { weightSelector }
             Theme.line.frame(height: 0.5)
+            cardField("Texture") { textureSelector }
+            Theme.line.frame(height: 0.5)
             cardField("Pattern") { patternSelector }
+            Theme.line.frame(height: 0.5)
+            cardField("Style archetype") { archetypeSelector }
         }
         .drapeCard(radius: 14)
     }
@@ -182,6 +188,12 @@ struct GarmentAttributeFields: View {
     }
     @ViewBuilder private var patternSelector: some View {
         OptionalSingleChoiceChips(items: PatternType.allCases, title: \.displayName, selection: $draft.patternType)
+    }
+    @ViewBuilder private var textureSelector: some View {
+        OptionalSingleChoiceChips(items: Texture.allCases, title: \.displayName, selection: $draft.texture)
+    }
+    @ViewBuilder private var archetypeSelector: some View {
+        OptionalSingleChoiceChips(items: Archetype.allCases, title: \.displayName, selection: $draft.archetype)
     }
 
     private var detailsCard: some View {

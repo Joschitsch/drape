@@ -31,6 +31,11 @@ struct ClassificationSuggestion: Sendable {
     var fabricWeight: FabricWeight?
     var patternType: PatternType?
     var patternScale: PatternScale?
+    var texture: Texture?
+    var archetype: Archetype?
+    /// The winning classifier label (e.g. "denim jacket"), passed to the archetype
+    /// model as text signal. Not shown to the user.
+    var descriptor: String?
 
     init(
         category: GarmentCategory? = nil,
@@ -47,7 +52,10 @@ struct ClassificationSuggestion: Sendable {
         structure: Structure? = nil,
         fabricWeight: FabricWeight? = nil,
         patternType: PatternType? = nil,
-        patternScale: PatternScale? = nil
+        patternScale: PatternScale? = nil,
+        texture: Texture? = nil,
+        archetype: Archetype? = nil,
+        descriptor: String? = nil
     ) {
         self.category = category
         self.primaryColor = primaryColor
@@ -64,6 +72,9 @@ struct ClassificationSuggestion: Sendable {
         self.fabricWeight = fabricWeight
         self.patternType = patternType
         self.patternScale = patternScale
+        self.texture = texture
+        self.archetype = archetype
+        self.descriptor = descriptor
     }
 
     static let empty = ClassificationSuggestion()

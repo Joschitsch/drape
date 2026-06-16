@@ -32,6 +32,8 @@ struct GarmentDraft {
     var fabricWeight: FabricWeight? = nil
     var patternType: PatternType? = nil
     var patternScale: PatternScale? = nil
+    var texture: Texture? = nil
+    var archetype: Archetype? = nil
     var brand: String = ""
     var notes: String = ""
     var isFavorite: Bool = false
@@ -57,6 +59,8 @@ struct GarmentDraft {
         fabricWeight = garment.fabricWeight
         patternType = garment.patternType
         patternScale = garment.patternScale
+        texture = garment.texture
+        archetype = garment.archetype
         brand = garment.brand ?? ""
         notes = garment.notes ?? ""
         isFavorite = garment.isFavorite
@@ -81,6 +85,8 @@ struct GarmentDraft {
         garment.fabricWeight = fabricWeight
         garment.patternType = patternType
         garment.patternScale = patternScale
+        garment.texture = texture
+        garment.archetype = archetype
         garment.brand = brand.trimmed.isEmpty ? nil : brand.trimmed
         garment.notes = notes.trimmed.isEmpty ? nil : notes.trimmed
         garment.isFavorite = isFavorite

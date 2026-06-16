@@ -22,6 +22,10 @@ final class AppContainer {
     let imageProcessor: any ImageProcessingService
     let imageStore: any ImageStore
     let classifier: any GarmentClassifier
+    /// Infers a garment's style archetype at add-time (Foundation Models, with a
+    /// heuristic fallback). Separate from `classifier` because it's semantic, not
+    /// pixel-based, and may hop off-device to Apple Intelligence.
+    let styleArchetype: any StyleArchetypeInferring
     let weather: any WeatherService
     let location: any LocationProvider
     let recommendationEngine: any RecommendationEngine
@@ -36,6 +40,7 @@ final class AppContainer {
         imageProcessor: any ImageProcessingService,
         imageStore: any ImageStore,
         classifier: any GarmentClassifier,
+        styleArchetype: any StyleArchetypeInferring,
         weather: any WeatherService,
         location: any LocationProvider,
         recommendationEngine: any RecommendationEngine,
@@ -44,6 +49,7 @@ final class AppContainer {
         self.imageProcessor = imageProcessor
         self.imageStore = imageStore
         self.classifier = classifier
+        self.styleArchetype = styleArchetype
         self.weather = weather
         self.location = location
         self.recommendationEngine = recommendationEngine
@@ -57,6 +63,7 @@ final class AppContainer {
             imageProcessor: VisionImageProcessingService(),
             imageStore: FileImageStore(),
             classifier: VisionGarmentClassifier(),
+            styleArchetype: FoundationModelsStyleArchetypeModel(),
             weather: OpenMeteoWeatherService(),          // free, no key (Step 4)
             location: CoreLocationProvider(),            // Step 4
             recommendationEngine: RuleBasedRecommendationEngine(), // Step 4
@@ -70,6 +77,7 @@ final class AppContainer {
             imageProcessor: PassthroughImageProcessingService(),
             imageStore: InMemoryImageStore(),
             classifier: StubGarmentClassifier(),
+            styleArchetype: HeuristicStyleArchetypeModel(),
             weather: MockWeatherService(),
             location: StubLocationProvider(),
             recommendationEngine: StubRecommendationEngine(),

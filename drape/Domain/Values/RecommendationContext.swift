@@ -63,6 +63,8 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
     var fabricWeight: FabricWeight?
     var patternType: PatternType?
     var patternScale: PatternScale?
+    var texture: Texture?
+    var archetype: Archetype?
 
     init(
         id: UUID,
@@ -80,7 +82,9 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
         structure: Structure? = nil,
         fabricWeight: FabricWeight? = nil,
         patternType: PatternType? = nil,
-        patternScale: PatternScale? = nil
+        patternScale: PatternScale? = nil,
+        texture: Texture? = nil,
+        archetype: Archetype? = nil
     ) {
         self.id = id
         self.category = category
@@ -98,6 +102,16 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
         self.fabricWeight = fabricWeight
         self.patternType = patternType
         self.patternScale = patternScale
+        self.texture = texture
+        self.archetype = archetype
+    }
+
+    /// The garment's archetype signal: the explicit archetype when set, otherwise
+    /// whatever its free-form `styles` map onto. Empty when nothing is known — so
+    /// the coherence scorer can stay neutral rather than guess.
+    var archetypeVotes: Set<Archetype> {
+        if let archetype { return [archetype] }
+        return Set(styles.compactMap(Archetype.from(style:)))
     }
 
     /// Whether the surface reads as patterned. `nil` when neither pattern field is
@@ -146,7 +160,9 @@ extension Garment {
             structure: structure,
             fabricWeight: fabricWeight,
             patternType: patternType,
-            patternScale: patternScale
+            patternScale: patternScale,
+            texture: texture,
+            archetype: archetype
         )
     }
 }

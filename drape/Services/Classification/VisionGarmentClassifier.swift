@@ -72,7 +72,9 @@ struct VisionGarmentClassifier: GarmentClassifier {
             structure:            style.structure,
             fabricWeight:         style.fabricWeight,
             patternType:          style.patternType,
-            patternScale:         style.patternScale
+            patternScale:         style.patternScale,
+            texture:              style.texture,
+            descriptor:           match?.label
         )
     }
 
@@ -87,6 +89,7 @@ struct VisionGarmentClassifier: GarmentClassifier {
         var fabricWeight: FabricWeight?
         var patternType: PatternType?
         var patternScale: PatternScale?
+        var texture: Texture?
     }
 
     /// Coarse surface statistics over the masked garment pixels.
@@ -125,6 +128,12 @@ struct VisionGarmentClassifier: GarmentClassifier {
             estimate.patternType = .solid
             estimate.patternScale = PatternScale.none
         }
+
+        // Texture from brightness spread — independent of whether it's "patterned".
+        // A smooth solid and a textured knit can both be solid-colored.
+        if stats.luminanceStdDev < 0.05 { estimate.texture = .smooth }
+        else if stats.luminanceStdDev < 0.11 { estimate.texture = .subtleTexture }
+        else { estimate.texture = .textured }
 
         // Silhouette from bounding-box geometry — applied per category.
         switch category {

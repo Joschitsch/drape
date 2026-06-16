@@ -24,6 +24,8 @@ func garment(
     fabricWeight: FabricWeight? = nil,
     patternType: PatternType? = nil,
     patternScale: PatternScale? = nil,
+    texture: Texture? = nil,
+    archetype: Archetype? = nil,
     id: UUID = UUID()
 ) -> GarmentSnapshot {
     GarmentSnapshot(
@@ -42,7 +44,9 @@ func garment(
         structure: structure,
         fabricWeight: fabricWeight,
         patternType: patternType,
-        patternScale: patternScale
+        patternScale: patternScale,
+        texture: texture,
+        archetype: archetype
     )
 }
 

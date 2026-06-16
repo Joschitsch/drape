@@ -51,6 +51,10 @@ final class Garment {
     var fabricWeightRaw: String?
     var patternTypeRaw: String?
     var patternScaleRaw: String?
+    // Phase 2 — surface texture (heuristic) and style archetype (Foundation
+    // Models with a heuristic fallback). Same raw-string, optional convention.
+    var textureRaw: String?
+    var archetypeRaw: String?
 
     /// User-visible label, e.g. "Blue Jeans". Auto-generated on add; editable.
     var name: String? = nil
@@ -137,5 +141,13 @@ final class Garment {
     var patternScale: PatternScale? {
         get { patternScaleRaw.flatMap(PatternScale.init(rawValue:)) }
         set { patternScaleRaw = newValue?.rawValue }
+    }
+    var texture: Texture? {
+        get { textureRaw.flatMap(Texture.init(rawValue:)) }
+        set { textureRaw = newValue?.rawValue }
+    }
+    var archetype: Archetype? {
+        get { archetypeRaw.flatMap(Archetype.init(rawValue:)) }
+        set { archetypeRaw = newValue?.rawValue }
     }
 }

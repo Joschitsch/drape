@@ -51,8 +51,18 @@ final class AddGarmentViewModel {
             if let fabricWeight = suggestion.fabricWeight { draft.fabricWeight = fabricWeight }
             if let patternType = suggestion.patternType   { draft.patternType = patternType }
             if let patternScale = suggestion.patternScale { draft.patternScale = patternScale }
+            if let texture = suggestion.texture           { draft.texture = texture }
             draft.name = Self.generateName(color: draft.primaryColor, category: draft.category)
             phase = .ready
+
+            // Archetype is semantic — infer it after the pixel pass, off the
+            // critical path, so the form is interactive while Apple Intelligence
+            // (or the heuristic fallback) resolves it.
+            let archetype = await container.styleArchetype.inferArchetype(
+                descriptor: suggestion.descriptor,
+                category: draft.category,
+                styles: Array(draft.styles))
+            if let archetype { draft.archetype = archetype }
         } catch {
             errorMessage = "Couldn't process that photo. Please try another."
             phase = .empty

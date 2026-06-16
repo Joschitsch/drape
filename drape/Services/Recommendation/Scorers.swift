@@ -209,3 +209,47 @@ func scorePatternHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationa
     default: return (0.2, nil)                           // pattern clash
     }
 }
+
+// MARK: - Texture mix scorer
+
+/// Rewards one rich texture carried by smoother pieces; penalises a pile of heavy
+/// textures — except in real cold, where chunky knits and heavy weaves are the
+/// point. Neutral when texture is unknown.
+func scoreTextureMix(garments: [GarmentSnapshot], weather: WeatherSnapshot?) -> (score: Double, rationale: String?) {
+    let shaped = garments.filter {
+        $0.category.slot != .footwear && $0.category.slot != .accessory
+    }
+    let known = shaped.compactMap(\.texture)
+    guard !known.isEmpty else { return (0.5, nil) }
+
+    let heavy = known.filter(\.isHeavyTexture).count
+    let veryCold = (weather?.apparentTemperatureCelsius ?? 99) < 6
+
+    switch heavy {
+    case 0:  return (0.8, nil)                        // all smooth/subtle — clean
+    case 1:  return (1.0, "One rich texture")         // hero texture + support
+    default: return veryCold ? (0.8, nil) : (0.4, nil) // texture overload (unless cold)
+    }
+}
+
+// MARK: - Archetype coherence scorer
+
+/// Computes a simple outfit-level style vector and rewards cohesion. Soft by
+/// design: it lifts consistent looks toward 1.0 but never pushes a mixed look
+/// below neutral, so intentional contrast isn't punished. Phase 4 makes the
+/// cohesion-vs-contrast preference user-tunable.
+func scoreArchetypeCoherence(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
+    let voteSets = garments.map(\.archetypeVotes).filter { !$0.isEmpty }
+    guard voteSets.count >= 2 else { return (0.5, nil) }
+
+    var tally: [Archetype: Int] = [:]
+    for set in voteSets { for archetype in set { tally[archetype, default: 0] += 1 } }
+    guard let dominant = tally.max(by: { $0.value < $1.value })?.key else { return (0.5, nil) }
+
+    let agreeing = voteSets.filter { $0.contains(dominant) }.count
+    let cohesion = Double(agreeing) / Double(voteSets.count)
+    let score = 0.5 + 0.5 * cohesion   // 0.5 (split) … 1.0 (fully aligned)
+
+    let rationale: String? = cohesion >= 0.8 ? "A clear \(dominant.displayName.lowercased()) look" : nil
+    return (score, rationale)
+}
