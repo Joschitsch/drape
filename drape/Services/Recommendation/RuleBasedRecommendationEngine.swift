@@ -35,8 +35,12 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
     }
 
     func recommend(_ context: RecommendationContext) async -> [OutfitSuggestion] {
-        let candidates = buildCandidates(from: context.wardrobe)
+        let candidates = buildCandidates(from: context.wardrobe,
+                                         lockedGarmentID: context.lockedGarmentID)
         guard !candidates.isEmpty else { return [] }
+
+        // Per-user personalisation: appetites + clamped feedback nudges.
+        let tuning = context.profile.tuning
 
         var scored: [(garments: [GarmentSnapshot], score: Double, rationale: [String])] = []
 
@@ -51,9 +55,11 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             // A user per-occasion preference moves the target but never widens
             // the occasion's tolerance.
             let userOccasionPref = context.profile.occasionPreference(for: context.occasion)
+            // The user's repeated "too dressy"/"too casual" feedback shifts the
+            // target within ±1 level; the occasion's tolerance band is unchanged.
             let formalityTarget = Double(
                 (userOccasionPref?.targetFormality ?? context.occasion.targetFormality).rawValue
-            )
+            ) + tuning.formalityBias
             let formalityTolerance = context.occasion.formalityTolerance
             let core = candidate.filter {
                 $0.category.slot != .accessory && $0.category.slot != .outerwear
@@ -84,18 +90,25 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
                 if let r = result.rationale { rationale.append(r) }
             }
 
+            // Style-axis weights scale by the user's tuning; the appropriateness
+            // floors (warmth, formality, recency, rain) are not personalised.
+            func styled(_ base: Double, _ axis: StyleAxis) -> Double {
+                base * tuning.multiplier(for: axis)
+            }
+            let relaxed = tuning.prefersRelaxedSilhouette
+
             add(weight: weights.warmth,    result: warmthResult)
             add(weight: weights.formality, result: scoreFormality(garments: candidate, occasion: context.occasion, profile: context.profile))
-            add(weight: weights.color,     result: scoreColorHarmony(garments: candidate))
+            add(weight: styled(weights.color, .color), result: scoreColorHarmony(garments: candidate))
             add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile, occasion: context.occasion))
             add(weight: weights.recency,   result: scoreRecency(garments: candidate, recentWears: context.recentWears))
             add(weight: weights.rain,      result: scoreRainReadiness(garments: candidate, weather: context.weather))
-            add(weight: weights.volume,    result: scoreVolumeBalance(garments: candidate))
-            add(weight: weights.structure, result: scoreStructurePresence(garments: candidate, occasion: context.occasion))
-            add(weight: weights.pattern,   result: scorePatternHarmony(garments: candidate))
-            add(weight: weights.texture,   result: scoreTextureMix(garments: candidate, weather: context.weather))
-            add(weight: weights.archetype, result: scoreArchetypeCoherence(garments: candidate))
-            add(weight: weights.focal,     result: scoreFocalPoint(garments: candidate))
+            add(weight: styled(weights.volume, .volume),       result: scoreVolumeBalance(garments: candidate, prefersRelaxed: relaxed))
+            add(weight: styled(weights.structure, .structure), result: scoreStructurePresence(garments: candidate, occasion: context.occasion, prefersRelaxed: relaxed))
+            add(weight: styled(weights.pattern, .pattern),     result: scorePatternHarmony(garments: candidate, tolerance: tuning.patternTolerance))
+            add(weight: styled(weights.texture, .texture),     result: scoreTextureMix(garments: candidate, weather: context.weather))
+            add(weight: styled(weights.archetype, .archetype), result: scoreArchetypeCoherence(garments: candidate))
+            add(weight: styled(weights.focal, .focal),         result: scoreFocalPoint(garments: candidate))
 
             let normalized = totalWeight > 0 ? weightedScore / totalWeight : 0
             scored.append((candidate, normalized, rationale))
@@ -113,7 +126,10 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
     ///   - (top, bottom, footwear) with optional outerwear
     ///   - (dress, footwear) with optional outerwear
     /// Combinations are sampled to keep them tractable at large wardrobe sizes.
-    private func buildCandidates(from wardrobe: [GarmentSnapshot]) -> [[GarmentSnapshot]] {
+    /// When `lockedGarmentID` is set, only combinations containing that garment
+    /// survive — the "Style this piece" flow, filtered *before* the sampling cap
+    /// so the locked item's outfits are never shuffled away.
+    private func buildCandidates(from wardrobe: [GarmentSnapshot], lockedGarmentID: UUID? = nil) -> [[GarmentSnapshot]] {
         let tops      = wardrobe.filter { $0.category == .top }
         let bottoms   = wardrobe.filter { $0.category == .bottom }
         let dresses   = wardrobe.filter { $0.category == .dress }
@@ -147,6 +163,11 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
                     candidates.append(combo)
                 }
             }
+        }
+
+        // "Style this piece": keep only outfits that include the locked garment.
+        if let lockedGarmentID {
+            candidates = candidates.filter { combo in combo.contains { $0.id == lockedGarmentID } }
         }
 
         // Cap at 200 candidates (shuffle so we don't always pick the same items

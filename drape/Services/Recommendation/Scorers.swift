@@ -166,7 +166,7 @@ func scoreRainReadiness(garments: [GarmentSnapshot], weather: WeatherSnapshot?) 
 /// Rewards proportion: at most one voluminous piece reads as intentional, several
 /// at once read as shapeless. A garment is "voluminous" if it's oversized, a long
 /// top, or a wide-leg bottom. Neutral (0.5) when no silhouette data is known.
-func scoreVolumeBalance(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
+func scoreVolumeBalance(garments: [GarmentSnapshot], prefersRelaxed: Bool = false) -> (score: Double, rationale: String?) {
     func isVoluminous(_ g: GarmentSnapshot) -> Bool {
         if g.fit == .oversized { return true }
         if g.category == .top, g.topLength == .long { return true }
@@ -180,6 +180,16 @@ func scoreVolumeBalance(garments: [GarmentSnapshot]) -> (score: Double, rational
     guard hasSignal else { return (0.5, nil) }
 
     let voluminous = garments.filter(isVoluminous).count
+
+    // Users who like a relaxed silhouette opted into volume — don't penalise it.
+    if prefersRelaxed {
+        switch voluminous {
+        case 0:  return (0.7, nil)
+        case 1, 2: return (1.0, "Relaxed, the way you like it")
+        default: return (0.7, nil)
+        }
+    }
+
     switch voluminous {
     case 0:  return (0.85, nil)                       // clean lines, perfectly fine
     case 1:  return (1.0, "Balanced proportions")     // one statement volume
@@ -193,7 +203,7 @@ func scoreVolumeBalance(garments: [GarmentSnapshot]) -> (score: Double, rational
 /// Outside sport, rewards at least one element with some tailoring and gently
 /// penalises a head-to-toe slouchy look. Neutral when structure is unknown or
 /// the occasion is sport (where soft, easy pieces are the point).
-func scoreStructurePresence(garments: [GarmentSnapshot], occasion: Occasion) -> (score: Double, rationale: String?) {
+func scoreStructurePresence(garments: [GarmentSnapshot], occasion: Occasion, prefersRelaxed: Bool = false) -> (score: Double, rationale: String?) {
     guard occasion != .sport else { return (0.5, nil) }
     // Only shaped garments (not footwear/accessories) carry the signal.
     let shaped = garments.filter {
@@ -205,37 +215,58 @@ func scoreStructurePresence(garments: [GarmentSnapshot], occasion: Occasion) -> 
     if known.contains(where: { $0.isStructured }) {
         return (1.0, nil)                 // a tailored anchor present
     }
-    return (0.4, nil)                     // everything soft — a touch shapeless
+    // Everything soft. A relaxed-silhouette user opted into this; others lose a bit.
+    return prefersRelaxed ? (0.75, nil) : (0.4, nil)
 }
 
 // MARK: - Pattern harmony scorer
 
 /// Prefers one hero pattern carried by solids. Solid-only is safe; two patterns
 /// is risky; three or more reads chaotic. Neutral when no pattern data is known.
-func scorePatternHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
+func scorePatternHarmony(garments: [GarmentSnapshot], tolerance: PatternTolerance = .sometimes) -> (score: Double, rationale: String?) {
     // Count only pieces we actually know the pattern of.
     let known = garments.compactMap(\.isPatterned)
     guard !known.isEmpty else { return (0.5, nil) }
 
     let patterned = known.filter { $0 }.count
-    switch patterned {
-    case 0:
-        return (0.8, nil)                               // all solids — clean
-    case 1:
-        return (1.0, "One pattern, kept simple")        // hero + solids
-    case 2:
-        // A deliberate two-pattern mix can work when the scales differ and the
-        // palettes are compatible (shared family, or anchored by neutrals).
-        let patternedPieces = garments.filter { $0.isPatterned == true }
-        let scales = Set(patternedPieces.compactMap(\.patternScale))
-        let families = Set(patternedPieces.map { $0.primaryColor.family })
-        let compatiblePalette = families.count == 1 || families.contains(.neutral)
-        if scales.count >= 2 && compatiblePalette {
-            return (0.7, "Patterns mixed with intent")
+
+    switch tolerance {
+    case .avoid:
+        // The user wants solids — every added pattern costs.
+        switch patterned {
+        case 0:  return (1.0, "Clean, solid palette")
+        case 1:  return (0.55, nil)
+        case 2:  return (0.3, nil)
+        default: return (0.1, nil)
         }
-        return (0.4, nil)
-    default:
-        return (0.2, nil)                               // pattern clash
+    case .love:
+        // Pattern mixing is welcome; only true overload pulls back.
+        switch patterned {
+        case 0:  return (0.7, nil)
+        case 1:  return (1.0, "One pattern, kept simple")
+        case 2:  return (0.9, "Patterns mixed with intent")
+        default: return (0.6, nil)
+        }
+    case .sometimes:
+        switch patterned {
+        case 0:
+            return (0.8, nil)                           // all solids — clean
+        case 1:
+            return (1.0, "One pattern, kept simple")    // hero + solids
+        case 2:
+            // A deliberate two-pattern mix can work when the scales differ and the
+            // palettes are compatible (shared family, or anchored by neutrals).
+            let patternedPieces = garments.filter { $0.isPatterned == true }
+            let scales = Set(patternedPieces.compactMap(\.patternScale))
+            let families = Set(patternedPieces.map { $0.primaryColor.family })
+            let compatiblePalette = families.count == 1 || families.contains(.neutral)
+            if scales.count >= 2 && compatiblePalette {
+                return (0.7, "Patterns mixed with intent")
+            }
+            return (0.4, nil)
+        default:
+            return (0.2, nil)                           // pattern clash
+        }
     }
 }
 

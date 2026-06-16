@@ -17,6 +17,7 @@ extension Schema {
             Outfit.self,
             WearEvent.self,
             UserProfile.self,
+            OutfitFeedback.self,
         ])
     }
 }

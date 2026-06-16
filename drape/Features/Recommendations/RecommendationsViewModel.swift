@@ -104,7 +104,8 @@ final class RecommendationsViewModel {
 
         let prefs = ProfilePreferences(
             preferredStyles: profile?.preferredStyles ?? [],
-            occasionPreferences: profile?.occasionPreferences ?? []
+            occasionPreferences: profile?.occasionPreferences ?? [],
+            tuning: profile?.styleTuning ?? StyleTuning()
         )
         let context = RecommendationContext(
             wardrobe: wardrobe.filter { !$0.isArchived }.map(\.snapshot),

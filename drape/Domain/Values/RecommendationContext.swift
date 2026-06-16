@@ -20,6 +20,9 @@ struct RecommendationContext: Sendable {
     var recentWears: [UUID: Date]
     /// How many outfit suggestions to return.
     var desiredCount: Int
+    /// When set, only outfits *containing* this garment are considered — the
+    /// "Style this piece" flow. Nil for ordinary recommendations.
+    var lockedGarmentID: UUID?
 
     init(
         wardrobe: [GarmentSnapshot],
@@ -27,7 +30,8 @@ struct RecommendationContext: Sendable {
         weather: WeatherSnapshot? = nil,
         profile: ProfilePreferences = .init(),
         recentWears: [UUID: Date] = [:],
-        desiredCount: Int = 5
+        desiredCount: Int = 5,
+        lockedGarmentID: UUID? = nil
     ) {
         self.wardrobe = wardrobe
         self.occasion = occasion
@@ -35,6 +39,7 @@ struct RecommendationContext: Sendable {
         self.profile = profile
         self.recentWears = recentWears
         self.desiredCount = desiredCount
+        self.lockedGarmentID = lockedGarmentID
     }
 }
 
@@ -145,13 +150,17 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
 struct ProfilePreferences: Sendable {
     var preferredStyles: [String]
     var occasionPreferences: [OccasionPreference]
+    /// Personalisation knobs (onboarding appetites + feedback nudges).
+    var tuning: StyleTuning
 
     init(
         preferredStyles: [String] = [],
-        occasionPreferences: [OccasionPreference] = []
+        occasionPreferences: [OccasionPreference] = [],
+        tuning: StyleTuning = StyleTuning()
     ) {
         self.preferredStyles = preferredStyles
         self.occasionPreferences = occasionPreferences
+        self.tuning = tuning
     }
 
     func occasionPreference(for occasion: Occasion) -> OccasionPreference? {

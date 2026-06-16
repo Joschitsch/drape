@@ -25,6 +25,10 @@ final class UserProfile {
     var occasionPreferences: [OccasionPreference] = []
     var hasCompletedOnboarding: Bool = false
 
+    /// Style-engine personalisation: onboarding appetites + clamped, feedback-driven
+    /// weight nudges. Codable value, persisted inline by SwiftData.
+    var styleTuning: StyleTuning = StyleTuning()
+
     /// Home coordinates for weather lookups when live location is unavailable.
     var homeLatitude: Double?
     var homeLongitude: Double?
@@ -48,5 +52,11 @@ final class UserProfile {
 
     func preference(for occasion: Occasion) -> OccasionPreference? {
         occasionPreferences.first { $0.occasion == occasion }
+    }
+
+    /// Records a thumbs rating against the engine's tuning so future runs lean the
+    /// user's way. Mutates `styleTuning` in place; the caller saves the context.
+    func applyFeedback(reasons: [FeedbackReason], positive: Bool) {
+        styleTuning.apply(reasons: reasons, positive: positive)
     }
 }
