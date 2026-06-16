@@ -27,6 +27,7 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         var pattern:   Double = 0.7
         var texture:   Double = 0.5
         var archetype: Double = 0.6
+        var focal:     Double = 0.8
     }
 
     init(weights: Weights = Weights()) {
@@ -94,6 +95,7 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             add(weight: weights.pattern,   result: scorePatternHarmony(garments: candidate))
             add(weight: weights.texture,   result: scoreTextureMix(garments: candidate, weather: context.weather))
             add(weight: weights.archetype, result: scoreArchetypeCoherence(garments: candidate))
+            add(weight: weights.focal,     result: scoreFocalPoint(garments: candidate))
 
             let normalized = totalWeight > 0 ? weightedScore / totalWeight : 0
             scored.append((candidate, normalized, rationale))

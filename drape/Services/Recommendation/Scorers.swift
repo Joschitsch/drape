@@ -67,32 +67,48 @@ func scoreFormality(garments: [GarmentSnapshot], occasion: Occasion, profile: Pr
 
 // MARK: - Color harmony scorer
 
-/// Rewards outfits where colors are harmonious: all neutrals, or one accent +
-/// neutrals, or monochromatic warm/cool groupings.
+/// Rewards harmonious palettes: all neutrals, one accent + neutrals, or a
+/// monochromatic warm/cool grouping. Now also reads `secondaryColors`, applies a
+/// soft cap when too many accent families pile up, and nudges for light/dark
+/// contrast so flat, tonal looks score a touch below ones with depth.
 func scoreColorHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
-    let colors = garments.map(\.primaryColor)
+    // Count families across primary *and* secondary colors — a garment's accent
+    // stripe is part of the palette, not invisible.
+    let colors = garments.flatMap { [$0.primaryColor] + $0.secondaryColors }
     let families = Set(colors.map(\.family))
+    let accents = families.subtracting([.neutral])
 
-    let score: Double
-    let rationale: String?
+    var score: Double
+    var rationale: String?
     if families == [.neutral] {
-        // All neutral = always safe
         score = 1.0
         rationale = "Classic neutral palette"
     } else if families.count == 1 {
-        // Monochromatic (all warm or all cool)
-        score = 0.85
-        rationale = nil
-    } else if families.count == 2 && families.contains(.neutral) {
-        // One accent family + neutrals = great combo
-        score = 0.9
-        rationale = nil
+        score = 0.85                                    // monochromatic
+    } else if accents.count == 1 {
+        score = 0.9                                     // one accent + neutrals
     } else {
-        // Mixed warm + cool without neutrals anchoring = harder to pull off
-        score = 0.5
-        rationale = nil
+        score = 0.5                                     // multiple accents — busy
     }
-    return (score, rationale)
+
+    // Soft cap: two or more distinct accent families is a lot to balance.
+    if accents.count >= 2 { score = min(score, 0.45) }
+
+    // Light/dark contrast nudge over the core (non-accessory) pieces.
+    let lums = garments
+        .filter { $0.category.slot != .accessory }
+        .map { $0.primaryColor.luminance }
+    if let lo = lums.min(), let hi = lums.max() {
+        let range = hi - lo
+        if range > 0.35 {
+            score = min(1.0, score + 0.08)              // pleasing depth
+            if rationale == nil { rationale = "Nice light-and-dark contrast" }
+        } else if range < 0.08 {
+            score = max(0.0, score - 0.05)              // very flat / tonal
+        }
+    }
+
+    return (min(1.0, max(0.0, score)), rationale)
 }
 
 // MARK: - Style match scorer
@@ -203,10 +219,43 @@ func scorePatternHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationa
 
     let patterned = known.filter { $0 }.count
     switch patterned {
-    case 0:  return (0.8, nil)                          // all solids — clean
-    case 1:  return (1.0, "One pattern, kept simple")   // hero + solids
-    case 2:  return (0.45, nil)
-    default: return (0.2, nil)                           // pattern clash
+    case 0:
+        return (0.8, nil)                               // all solids — clean
+    case 1:
+        return (1.0, "One pattern, kept simple")        // hero + solids
+    case 2:
+        // A deliberate two-pattern mix can work when the scales differ and the
+        // palettes are compatible (shared family, or anchored by neutrals).
+        let patternedPieces = garments.filter { $0.isPatterned == true }
+        let scales = Set(patternedPieces.compactMap(\.patternScale))
+        let families = Set(patternedPieces.map { $0.primaryColor.family })
+        let compatiblePalette = families.count == 1 || families.contains(.neutral)
+        if scales.count >= 2 && compatiblePalette {
+            return (0.7, "Patterns mixed with intent")
+        }
+        return (0.4, nil)
+    default:
+        return (0.2, nil)                               // pattern clash
+    }
+}
+
+// MARK: - Focal point scorer
+
+/// Favors outfits with one clear "hero" piece and quieter supporting cast over
+/// three or four items all competing for attention. Loudness blends color
+/// saturation, pattern and texture, so this is the single rule that makes those
+/// axes cooperate instead of each penalising busyness on its own.
+func scoreFocalPoint(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
+    // Accessories are allowed to be loud (that's their job); judge the rest.
+    let pieces = garments.filter { $0.category.slot != .accessory }
+    guard pieces.count >= 2 else { return (0.5, nil) }
+
+    let loudCount = pieces.filter { $0.visualLoudness > 0.55 }.count
+    switch loudCount {
+    case 0:  return (0.7, nil)                                  // all quiet — safe, a touch flat
+    case 1:  return (1.0, "One piece leads, the rest support")
+    case 2:  return (0.5, nil)
+    default: return (0.3, nil)                                  // everything shouting
     }
 }
 

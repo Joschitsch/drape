@@ -121,6 +121,24 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
         if let patternScale { return patternScale != .none }
         return nil
     }
+
+    /// How much the piece "shouts" — a 0…1 blend of color saturation, pattern and
+    /// texture. Used by the focal-point scorer to favor one hero + quiet support.
+    /// Always computable (color is always known); pattern/texture only add.
+    var visualLoudness: Double {
+        // Color chroma tops out around 0.45 in the palette; map it to 0…0.5.
+        var loud = min(1.0, primaryColor.chroma / 0.45) * 0.5
+        if isPatterned == true {
+            switch patternScale {
+            case .large:  loud += 0.4
+            case .medium: loud += 0.3
+            case .small:  loud += 0.25
+            default:      loud += 0.3   // patterned, scale unknown
+            }
+        }
+        if texture == .textured { loud += 0.15 }
+        return min(1.0, loud)
+    }
 }
 
 /// The subset of `UserProfile` the engine reads.

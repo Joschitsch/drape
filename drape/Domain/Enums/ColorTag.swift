@@ -22,7 +22,7 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
     var displayName: String { rawValue.capitalized }
 
     /// Hex used to render the swatch (no leading `#`).
-    var hex: String {
+    nonisolated var hex: String {
         switch self {
         case .ecru: "E4DCC9"
         case .ivory: "F0EADB"
@@ -54,7 +54,7 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
 
     /// 0...1 sRGB components parsed from `hex`. Used by the heuristic classifier
     /// to match an averaged photo color to the nearest palette entry.
-    var rgbComponents: (red: Double, green: Double, blue: Double) {
+    nonisolated var rgbComponents: (red: Double, green: Double, blue: Double) {
         var value: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&value)
         return (
@@ -98,6 +98,22 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
     nonisolated func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)
+    }
+}
+
+extension ColorTag {
+    /// Perceived brightness, 0 (black) … 1 (white). Drives the light/dark contrast
+    /// term in color harmony scoring.
+    nonisolated var luminance: Double {
+        let c = rgbComponents
+        return 0.299 * c.red + 0.587 * c.green + 0.114 * c.blue
+    }
+
+    /// Colorfulness, 0 (grey/neutral) … ~1 (vivid). Max-minus-min of the channels;
+    /// feeds a garment's visual loudness.
+    nonisolated var chroma: Double {
+        let c = rgbComponents
+        return max(c.red, c.green, c.blue) - min(c.red, c.green, c.blue)
     }
 }
 
