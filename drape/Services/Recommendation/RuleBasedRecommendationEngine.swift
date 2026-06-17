@@ -80,44 +80,60 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
                 if hasNonAthleticShoes { continue }
             }
 
-            var totalWeight = 0.0
-            var weightedScore = 0.0
-            var rationale: [String] = []
-
-            func add(weight: Double, result: (score: Double, rationale: String?)) {
-                weightedScore += result.score * weight
-                totalWeight   += weight
-                if let r = result.rationale { rationale.append(r) }
-            }
-
-            // Style-axis weights scale by the user's tuning; the appropriateness
-            // floors (warmth, formality, recency, rain) are not personalised.
-            func styled(_ base: Double, _ axis: StyleAxis) -> Double {
-                base * tuning.multiplier(for: axis)
-            }
-            let relaxed = tuning.prefersRelaxedSilhouette
-
-            add(weight: weights.warmth,    result: warmthResult)
-            add(weight: weights.formality, result: scoreFormality(garments: candidate, occasion: context.occasion, profile: context.profile))
-            add(weight: styled(weights.color, .color), result: scoreColorHarmony(garments: candidate))
-            add(weight: weights.style,     result: scoreStyleMatch(garments: candidate, profile: context.profile, occasion: context.occasion))
-            add(weight: weights.recency,   result: scoreRecency(garments: candidate, recentWears: context.recentWears))
-            add(weight: weights.rain,      result: scoreRainReadiness(garments: candidate, weather: context.weather))
-            add(weight: styled(weights.volume, .volume),       result: scoreVolumeBalance(garments: candidate, prefersRelaxed: relaxed))
-            add(weight: styled(weights.structure, .structure), result: scoreStructurePresence(garments: candidate, occasion: context.occasion, prefersRelaxed: relaxed))
-            add(weight: styled(weights.pattern, .pattern),     result: scorePatternHarmony(garments: candidate, tolerance: tuning.patternTolerance))
-            add(weight: styled(weights.texture, .texture),     result: scoreTextureMix(garments: candidate, weather: context.weather))
-            add(weight: styled(weights.archetype, .archetype), result: scoreArchetypeCoherence(garments: candidate))
-            add(weight: styled(weights.focal, .focal),         result: scoreFocalPoint(garments: candidate))
-
+            // Score via the shared breakdown so the debug playground and the
+            // production ranking can never drift apart.
+            let contribs = contributions(for: candidate, context: context)
+            let totalWeight = contribs.reduce(0) { $0 + $1.weight }
+            let weightedScore = contribs.reduce(0) { $0 + $1.weighted }
             let normalized = totalWeight > 0 ? weightedScore / totalWeight : 0
-            scored.append((candidate, normalized, rationale))
+            scored.append((candidate, normalized, contribs.compactMap(\.rationale)))
         }
 
         return scored
             .sorted { $0.score > $1.score }
             .prefix(context.desiredCount)
             .map { OutfitSuggestion(garmentIDs: $0.garments.map(\.id), score: $0.score, rationale: $0.rationale) }
+    }
+
+    // MARK: - Scoring (single source of truth)
+
+    /// One scorer's contribution to an outfit's score.
+    struct ScorerContribution {
+        let axis: String
+        let raw: Double         // 0…1 from the scorer
+        let weight: Double      // base weight × tuning multiplier
+        let rationale: String?
+        var weighted: Double { raw * weight }
+    }
+
+    /// Runs every scorer for one candidate and returns their weighted
+    /// contributions. The sole place scorers + weights + tuning are combined, so
+    /// both `recommend` and `scoreBreakdown` see identical numbers.
+    func contributions(for candidate: [GarmentSnapshot], context: RecommendationContext) -> [ScorerContribution] {
+        let tuning = context.profile.tuning
+        // Style-axis weights scale by the user's tuning; the appropriateness
+        // floors (warmth, formality, recency, rain) are not personalised.
+        func styled(_ base: Double, _ axis: StyleAxis) -> Double { base * tuning.multiplier(for: axis) }
+        let relaxed = tuning.prefersRelaxedSilhouette
+
+        func c(_ axis: String, _ weight: Double, _ r: (score: Double, rationale: String?)) -> ScorerContribution {
+            ScorerContribution(axis: axis, raw: r.score, weight: weight, rationale: r.rationale)
+        }
+
+        return [
+            c("warmth", weights.warmth, scoreWarmth(garments: candidate, weather: context.weather)),
+            c("formality", weights.formality, scoreFormality(garments: candidate, occasion: context.occasion, profile: context.profile)),
+            c("color", styled(weights.color, .color), scoreColorHarmony(garments: candidate)),
+            c("style", weights.style, scoreStyleMatch(garments: candidate, profile: context.profile, occasion: context.occasion)),
+            c("recency", weights.recency, scoreRecency(garments: candidate, recentWears: context.recentWears)),
+            c("rain", weights.rain, scoreRainReadiness(garments: candidate, weather: context.weather)),
+            c("volume", styled(weights.volume, .volume), scoreVolumeBalance(garments: candidate, prefersRelaxed: relaxed)),
+            c("structure", styled(weights.structure, .structure), scoreStructurePresence(garments: candidate, occasion: context.occasion, prefersRelaxed: relaxed)),
+            c("pattern", styled(weights.pattern, .pattern), scorePatternHarmony(garments: candidate, tolerance: tuning.patternTolerance)),
+            c("texture", styled(weights.texture, .texture), scoreTextureMix(garments: candidate, weather: context.weather)),
+            c("archetype", styled(weights.archetype, .archetype), scoreArchetypeCoherence(garments: candidate)),
+            c("focal", styled(weights.focal, .focal), scoreFocalPoint(garments: candidate)),
+        ]
     }
 
     // MARK: - Candidate generation
@@ -178,4 +194,41 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         }
         return candidates
     }
+
+    #if DEBUG
+    // MARK: - Debug score breakdown (engine playground)
+
+    struct DebugScorerContribution: Sendable {
+        let axis: String
+        let raw: Double
+        let weight: Double
+        var weighted: Double { raw * weight }
+    }
+
+    struct DebugOutfitScore: Sendable {
+        let garmentIDs: [UUID]
+        let normalized: Double      // equals the suggestion's `score`
+        let contributions: [DebugScorerContribution]
+    }
+
+    /// Per-scorer breakdown for each returned suggestion, for the debug playground.
+    /// Reuses `contributions(for:context:)`, so `normalized` here equals the
+    /// `score` `recommend` produced.
+    func scoreBreakdown(_ context: RecommendationContext) async -> [DebugOutfitScore] {
+        let suggestions = await recommend(context)
+        let byID = Dictionary(context.wardrobe.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        return suggestions.map { suggestion in
+            let garments = suggestion.garmentIDs.compactMap { byID[$0] }
+            let contribs = contributions(for: garments, context: context)
+            let totalWeight = contribs.reduce(0) { $0 + $1.weight }
+            let weightedScore = contribs.reduce(0) { $0 + $1.weighted }
+            return DebugOutfitScore(
+                garmentIDs: suggestion.garmentIDs,
+                normalized: totalWeight > 0 ? weightedScore / totalWeight : 0,
+                contributions: contribs.map {
+                    DebugScorerContribution(axis: $0.axis, raw: $0.raw, weight: $0.weight)
+                })
+        }
+    }
+    #endif
 }
