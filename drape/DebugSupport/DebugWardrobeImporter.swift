@@ -29,7 +29,7 @@ struct DebugImageItem: Sendable {
 
 /// Dataset-provided labels, kept separate from our *inferred* attributes so the
 /// evaluator can compare the two. Raw strings are preserved for label mapping.
-struct DebugGroundTruth: Sendable, Codable {
+nonisolated struct DebugGroundTruth: Sendable, Codable {
     var datasetID: String
     var rawCategory: String?
     var category: GarmentCategory?
@@ -63,6 +63,26 @@ struct DebugImportRecord: Sendable {
     let split: DebugSplit
     let groundTruth: DebugGroundTruth?
     let inferred: GarmentSnapshot
+    /// The classifier's *own* category guess, kept for evaluation even though the
+    /// persisted garment may use a dataset-provided category instead.
+    let classifierCategory: GarmentCategory?
+    let categoryConfidence: Double
+
+    init(sourceID: String,
+         garmentID: UUID,
+         split: DebugSplit,
+         groundTruth: DebugGroundTruth?,
+         inferred: GarmentSnapshot,
+         classifierCategory: GarmentCategory? = nil,
+         categoryConfidence: Double = 0) {
+        self.sourceID = sourceID
+        self.garmentID = garmentID
+        self.split = split
+        self.groundTruth = groundTruth
+        self.inferred = inferred
+        self.classifierCategory = classifierCategory
+        self.categoryConfidence = categoryConfidence
+    }
 }
 
 /// Stable, process-independent hashing. Swift's `Hasher` is seeded per run, which
@@ -159,7 +179,9 @@ struct DebugWardrobeImporter {
             garmentID: garment.id,
             split: StableHash.split(datasetID: datasetID, itemID: item.id),
             groundTruth: item.groundTruth,
-            inferred: garment.snapshot)
+            inferred: garment.snapshot,
+            classifierCategory: suggestion.category,
+            categoryConfidence: suggestion.categoryConfidence)
     }
 }
 #endif
