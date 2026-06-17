@@ -36,22 +36,9 @@ final class AddGarmentViewModel {
 
             processed = result
             normalizedImage = UIImage(data: result.imageData)
-            if let color    = suggestion.primaryColor { draft.primaryColor = color }
-            if let category = suggestion.category    { draft.category = category }
-            if let warmth   = suggestion.warmth      { draft.warmth = warmth }
-            if let formality = suggestion.formality  { draft.formality = formality }
-            if let seasons  = suggestion.seasons     { draft.seasons = seasons }
-            if let sub = suggestion.footwearSubcategory { draft.footwearSubcategory = sub }
-            // Silhouette / fabric / pattern — only overwrite when the classifier
-            // offered a guess, leaving unset axes for the user to fill if they care.
-            if let fit = suggestion.fit                   { draft.fit = fit }
-            if let topLength = suggestion.topLength       { draft.topLength = topLength }
-            if let bottomVolume = suggestion.bottomVolume { draft.bottomVolume = bottomVolume }
-            if let structure = suggestion.structure       { draft.structure = structure }
-            if let fabricWeight = suggestion.fabricWeight { draft.fabricWeight = fabricWeight }
-            if let patternType = suggestion.patternType   { draft.patternType = patternType }
-            if let patternScale = suggestion.patternScale { draft.patternScale = patternScale }
-            if let texture = suggestion.texture           { draft.texture = texture }
+            // Pre-fill every classifier-committed axis (silhouette/fabric/pattern
+            // included); unset axes stay for the user to fill if they care.
+            draft.apply(classification: suggestion)
             draft.name = Self.generateName(color: draft.primaryColor, category: draft.category)
             phase = .ready
 

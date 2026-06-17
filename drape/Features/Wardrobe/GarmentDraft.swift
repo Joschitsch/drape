@@ -66,6 +66,29 @@ struct GarmentDraft {
         isFavorite = garment.isFavorite
     }
 
+    /// Pre-fills the draft from a classifier suggestion, overwriting only the
+    /// axes the classifier actually committed to (nil = leave as-is). Shared by
+    /// the add flow and the debug bulk importer so both interpret a
+    /// `ClassificationSuggestion` identically. Does not touch `name` (auto-named
+    /// separately) and only applies `archetype` if the suggestion carries one.
+    mutating func apply(classification s: ClassificationSuggestion) {
+        if let color = s.primaryColor          { primaryColor = color }
+        if let category = s.category           { self.category = category }
+        if let warmth = s.warmth               { self.warmth = warmth }
+        if let formality = s.formality         { self.formality = formality }
+        if let seasons = s.seasons             { self.seasons = seasons }
+        if let sub = s.footwearSubcategory     { footwearSubcategory = sub }
+        if let fit = s.fit                     { self.fit = fit }
+        if let topLength = s.topLength         { self.topLength = topLength }
+        if let bottomVolume = s.bottomVolume   { self.bottomVolume = bottomVolume }
+        if let structure = s.structure         { self.structure = structure }
+        if let fabricWeight = s.fabricWeight   { self.fabricWeight = fabricWeight }
+        if let patternType = s.patternType     { self.patternType = patternType }
+        if let patternScale = s.patternScale   { self.patternScale = patternScale }
+        if let texture = s.texture             { self.texture = texture }
+        if let archetype = s.archetype         { self.archetype = archetype }
+    }
+
     /// Writes the draft back onto a garment and bumps `updatedAt`.
     func apply(to garment: Garment) {
         garment.name = name.trimmed.isEmpty ? nil : name.trimmed
