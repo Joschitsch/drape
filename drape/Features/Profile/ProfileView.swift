@@ -42,6 +42,7 @@ struct ProfileView: View {
                     }
                     #if DEBUG
                     subscriptionCard(entitlements: entitlements)
+                    developerCard
                     #endif
                 }
                 .padding(.top, 20)
@@ -336,6 +337,42 @@ struct ProfileView: View {
             .drapeCard(radius: 14)
             .padding(.horizontal, Theme.contentPadding)
             Text("Dev toggle — not visible in release builds.")
+                .font(Theme.body(12))
+                .foregroundStyle(Theme.inkSoft)
+                .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+
+    @ViewBuilder
+    private var developerCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 0) {
+                MonoLabel("Developer")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                Theme.line.frame(height: 0.5)
+                NavigationLink {
+                    DebugHarnessView()
+                } label: {
+                    HStack {
+                        Text("Attribute & engine harness")
+                            .font(Theme.body(15))
+                            .foregroundStyle(Theme.ink)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Theme.inkSoft)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+            }
+            .drapeCard(radius: 14)
+            .padding(.horizontal, Theme.contentPadding)
+            Text("Imports test wardrobes, scores autofill, runs the engine playground. Debug builds only.")
                 .font(Theme.body(12))
                 .foregroundStyle(Theme.inkSoft)
                 .padding(.horizontal, Theme.contentPadding)
