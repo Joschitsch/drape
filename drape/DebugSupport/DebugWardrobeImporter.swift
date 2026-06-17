@@ -19,11 +19,15 @@ struct DebugImageItem: Sendable {
     let id: String
     let imageData: Data
     let groundTruth: DebugGroundTruth?
+    /// Explicit dev/holdout assignment (e.g. from a dataset's own train/test
+    /// folders). When nil, a stable hash of the id decides.
+    let split: DebugSplit?
 
-    init(id: String, imageData: Data, groundTruth: DebugGroundTruth? = nil) {
+    init(id: String, imageData: Data, groundTruth: DebugGroundTruth? = nil, split: DebugSplit? = nil) {
         self.id = id
         self.imageData = imageData
         self.groundTruth = groundTruth
+        self.split = split
     }
 }
 
@@ -177,7 +181,7 @@ struct DebugWardrobeImporter {
         return DebugImportRecord(
             sourceID: item.id,
             garmentID: garment.id,
-            split: StableHash.split(datasetID: datasetID, itemID: item.id),
+            split: item.split ?? StableHash.split(datasetID: datasetID, itemID: item.id),
             groundTruth: item.groundTruth,
             inferred: garment.snapshot,
             classifierCategory: suggestion.category,

@@ -90,6 +90,9 @@ struct DatasetLabelMapTests {
         #expect(DatasetLabelMap.category(forArticleType: "Watches") == .accessory)
         #expect(DatasetLabelMap.category(forArticleType: "Dresses") == .dress)
         #expect(DatasetLabelMap.category(forArticleType: "Jackets") == .outerwear)
+        // clothing-dataset-small class folder names.
+        #expect(DatasetLabelMap.category(forArticleType: "longsleeve") == .top)
+        #expect(DatasetLabelMap.category(forArticleType: "outwear") == .outerwear)
         #expect(DatasetLabelMap.category(forArticleType: "Quasar") == nil)
     }
 

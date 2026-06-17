@@ -19,6 +19,13 @@ final class DebugHarnessModel {
     var garmentsByID: [UUID: Garment] = [:]
     var isImporting = false
     var progressText: String?
+    var statusText: String?
+    /// Folder to import real images from (e.g. a CC0 dataset). Defaults to a
+    /// `clothing-dataset-small` directory in the app's Documents.
+    var datasetPath: String
+
+    /// Absolute Documents path, shown so the dataset can be copied into place.
+    var documentsHint: String { URL.documentsDirectory.path }
 
     var wardrobe: DebugWardrobe = .mixed
     var occasion: Occasion = .everyday
@@ -32,6 +39,7 @@ final class DebugHarnessModel {
     private let engine = RuleBasedRecommendationEngine()
 
     init(live: AppContainer) {
+        datasetPath = URL.documentsDirectory.appendingPathComponent("clothing-dataset-small").path
         container = ModelContainer.previewContainer(seeded: false)
         // Same real services as the app, but writing images to the debug store so
         // NormalizedImageView resolves them in this subtree.
@@ -47,10 +55,27 @@ final class DebugHarnessModel {
     }
 
     func importSmoke() async {
+        await runImport(SyntheticDebugImageProvider.smokeItems(count: 24))
+    }
+
+    func importFolder() async {
+        let items = DebugDatasetFolderSource.load(
+            directory: URL(fileURLWithPath: datasetPath), datasetID: "clothing-dataset-small")
+        await runImport(items)
+    }
+
+    private func runImport(_ items: [DebugImageItem]) async {
         isImporting = true
         defer { isImporting = false; progressText = nil }
         playground = []
-        let items = SyntheticDebugImageProvider.smokeItems(count: 24)
+        guard !items.isEmpty else {
+            statusText = "No images found at that path."
+            return
+        }
+        // Start clean so successive imports don't accumulate garments.
+        if let existing = try? container.mainContext.fetch(FetchDescriptor<Garment>()) {
+            existing.forEach { container.mainContext.delete($0) }
+        }
         let importer = DebugWardrobeImporter(
             imageProcessor: appContainer.imageProcessor,
             classifier: appContainer.classifier,
@@ -61,6 +86,7 @@ final class DebugHarnessModel {
         }
         let garments = (try? container.mainContext.fetch(FetchDescriptor<Garment>())) ?? []
         garmentsByID = Dictionary(garments.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        statusText = "Imported \(records.count) garments."
     }
 
     var report: AttributeEvalReport { AttributeEval.evaluate(records, on: nil) }
@@ -98,6 +124,7 @@ struct DebugHarnessView: View {
         @Bindable var model = model
         VStack(alignment: .leading, spacing: 20) {
             importSection(model)
+            folderSection(model, $model)
             if !model.records.isEmpty {
                 metricsSection(model)
                 wardrobeSection($model.wardrobe, count: model.selected.count)
@@ -126,6 +153,38 @@ struct DebugHarnessView: View {
             }
             .buttonStyle(.plain)
             .disabled(model.isImporting)
+        }
+    }
+
+    // MARK: - Folder import (real CC0 dataset)
+
+    private func folderSection(_ model: DebugHarnessModel, _ binding: Bindable<DebugHarnessModel>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel("Local dataset (CC0)")
+            Text("Copy clothing-dataset-small into Documents, or paste an absolute path. ~20 images/class are sampled; train→dev, validation/test→holdout.")
+                .font(Theme.body(12)).foregroundStyle(Theme.inkSoft)
+            TextField("Dataset path", text: binding.datasetPath, axis: .vertical)
+                .font(Theme.mono(11))
+                .lineLimit(1...3)
+                .padding(10)
+                .drapeCard(radius: 10)
+            Button {
+                Task { await model.importFolder() }
+            } label: {
+                Text("Import from folder")
+                    .font(Theme.body(15, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.ink, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .disabled(model.isImporting)
+            if let status = model.statusText {
+                Text(status).font(Theme.mono(11)).foregroundStyle(Theme.inkSoft)
+            }
+            Text("Documents: \(model.documentsHint)")
+                .font(Theme.mono(9)).foregroundStyle(Theme.inkFaint)
+                .textSelection(.enabled)
         }
     }
 

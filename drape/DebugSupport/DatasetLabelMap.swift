@@ -18,6 +18,7 @@ enum DatasetLabelMap {
         // Order matters: check specific/compound terms before generic substrings.
         if l.contains("dress") || l.contains("gown") || l.contains("jumpsuit") || l.contains("romper") { return .dress }
         if l.contains("jacket") || l.contains("coat") || l.contains("blazer") || l.contains("parka")
+            || l.contains("outwear") || l.contains("outerwear")
             || l.contains("hoodie sweatshirt") { return .outerwear }
         if l.contains("jean") || l.contains("trouser") || l.contains("pant") || l.contains("short")
             || l.contains("skirt") || l.contains("legging") || l.contains("chino") { return .bottom }
@@ -28,7 +29,8 @@ enum DatasetLabelMap {
             || l.contains("glove") || l.contains("tie") { return .accessory }
         if l.contains("shirt") || l.contains("tee") || l.contains("top") || l.contains("blouse")
             || l.contains("sweater") || l.contains("pullover") || l.contains("hoodie")
-            || l.contains("cardigan") || l.contains("tank") || l.contains("polo") { return .top }
+            || l.contains("cardigan") || l.contains("tank") || l.contains("polo")
+            || l.contains("longsleeve") || l.contains("long sleeve") { return .top }
         return nil
     }
 
