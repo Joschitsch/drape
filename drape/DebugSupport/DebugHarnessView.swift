@@ -79,6 +79,30 @@ final class DebugHarnessModel {
         await runImport(items)
     }
 
+    /// Pick one Fashionpedia folder from Finder/Files (e.g. iCloud Drive) and let
+    /// the source auto-find the annotations JSON + images subfolder inside it — no
+    /// copying into the app's Documents, no exact paths.
+    func importPickedFashionpedia(_ folder: URL) async {
+        let scoped = folder.startAccessingSecurityScopedResource()
+        defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
+        let fm = FileManager.default
+        let contents = (try? fm.contentsOfDirectory(
+            at: folder, includingPropertiesForKeys: [.isDirectoryKey])) ?? []
+
+        guard let json = contents.first(where: { $0.pathExtension.lowercased() == "json" }) else {
+            statusText = "No .json (annotations) found in that folder."
+            return
+        }
+        let subdirs = contents.filter {
+            (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        }
+        let imagesDir = subdirs.first { ["val", "test", "images", "train"].contains($0.lastPathComponent.lowercased()) }
+            ?? subdirs.first ?? folder
+        fashionpediaJSON = json.path
+        fashionpediaImages = imagesDir.path
+        await runImport(FashionpediaCocoSource.load(jsonURL: json, imagesDir: imagesDir))
+    }
+
     /// Imports a dataset folder the user picked from Finder/Files. The picked URL
     /// is security-scoped under the sandbox, so access must be opened around the
     /// (synchronous) read in `DebugDatasetFolderSource.load`.
@@ -132,6 +156,7 @@ struct DebugHarnessView: View {
     @Environment(AppContainer.self) private var live
     @State private var model: DebugHarnessModel?
     @State private var pickingFolder = false
+    @State private var pickingFashionpedia = false
 
     var body: some View {
         ScrollView {
@@ -240,23 +265,41 @@ struct DebugHarnessView: View {
     private func fashionpediaSection(_ model: DebugHarnessModel, _ binding: Bindable<DebugHarnessModel>) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             MonoLabel("Fashionpedia (CC-BY attributes)")
-            Text("Scores pattern / bottom volume / top length against Fashionpedia's CC-BY annotations. Point at a local COCO JSON + images dir (images used locally only).")
+            Text("Scores pattern / bottom volume / top length against Fashionpedia's CC-BY annotations. Drop a fashionpedia folder (annotations .json + a val/ images subfolder) into iCloud Drive, then pick it — no copying needed. Images used locally only.")
                 .font(Theme.body(12)).foregroundStyle(Theme.inkSoft)
-            TextField("instances_attributes JSON path", text: binding.fashionpediaJSON, axis: .vertical)
-                .font(Theme.mono(11)).lineLimit(1...3).padding(10).drapeCard(radius: 10)
-            TextField("images directory", text: binding.fashionpediaImages, axis: .vertical)
-                .font(Theme.mono(11)).lineLimit(1...2).padding(10).drapeCard(radius: 10)
+
+            // Primary: one-tap folder pick (auto-finds the JSON + images subfolder).
             Button {
-                Task { await model.importFashionpedia() }
+                pickingFashionpedia = true
             } label: {
-                Text("Import Fashionpedia (COCO)")
+                Text("Choose Fashionpedia folder…")
                     .font(Theme.body(15, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.ink, lineWidth: 1))
+                    .foregroundStyle(Theme.paper)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Theme.ink, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
             .disabled(model.isImporting)
+            .fileImporter(isPresented: $pickingFashionpedia, allowedContentTypes: [.folder]) { result in
+                if case .success(let url) = result {
+                    Task { await model.importPickedFashionpedia(url) }
+                }
+            }
+
+            // Fallback: explicit paths (handy on the Simulator).
+            DisclosureGroup("Or import from explicit paths") {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("instances_attributes JSON path", text: binding.fashionpediaJSON, axis: .vertical)
+                        .font(Theme.mono(11)).lineLimit(1...3).padding(10).drapeCard(radius: 10)
+                    TextField("images directory", text: binding.fashionpediaImages, axis: .vertical)
+                        .font(Theme.mono(11)).lineLimit(1...2).padding(10).drapeCard(radius: 10)
+                    Button("Import from paths") { Task { await model.importFashionpedia() } }
+                        .font(Theme.body(14)).foregroundStyle(Theme.ink).disabled(model.isImporting)
+                }
+                .padding(.top, 6)
+            }
+            .font(Theme.body(12))
+            .tint(Theme.inkSoft)
         }
     }
 

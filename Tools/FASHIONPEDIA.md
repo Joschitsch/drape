@@ -12,16 +12,24 @@ volume, top length, best-effort texture) — never to train a shipped model.
   measurement only** — gitignored, never committed, never shipped, never used to
   train a shipped model. Same local-only handling as `clothing-dataset-small`.
 
-## Get the data (local, not committed)
-Download the Fashionpedia images + COCO `instances_attributes` JSON from
-https://github.com/cvdfoundation/fashionpedia (val split is plenty for the
-harness). Drop into the app's Documents, e.g.:
+## Get the data (local, not committed) — simplest path
+On a Mac (val split is small, ~1k images — train is multi-GB, not needed):
 
-    <app Documents>/fashionpedia/
+    mkdir -p ~/fashionpedia && cd ~/fashionpedia
+    curl -L -O https://s3.amazonaws.com/ifashionist-dataset/annotations/instances_attributes_val2020.json
+    curl -L -O https://s3.amazonaws.com/ifashionist-dataset/images/val_test2020.zip
+    unzip -q val_test2020.zip            # images land in ./test (val+test together)
+
+Arrange as a single folder (the picker auto-finds the .json and the images subfolder):
+
+    fashionpedia/
       instances_attributes_val2020.json
-      val/<images>.jpg
+      val/   (or test/ — any images subfolder works)
 
-Then in-app: Profile → Developer → Test harness → **Import Fashionpedia (COCO)**.
+Drop `fashionpedia/` into **iCloud Drive**. Then on the device:
+Profile → Developer → Test harness → **Choose Fashionpedia folder…** → pick it.
+(No copying into the app's Documents, no exact paths. The "explicit paths"
+disclosure is a fallback, handy on the Simulator.)
 
 ## How it's used
 `FashionpediaCocoSource` parses the JSON, and for each garment *annotation* crops
