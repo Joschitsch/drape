@@ -24,6 +24,10 @@ final class DebugHarnessModel {
     /// Folder to import real images from (e.g. a CC0 dataset). Defaults to a
     /// `clothing-dataset-small` directory in the app's Documents.
     var datasetPath: String
+    /// Fashionpedia COCO JSON + images dir (attribute ground truth). Defaults under
+    /// a `fashionpedia` directory in the app's Documents.
+    var fashionpediaJSON: String
+    var fashionpediaImages: String
 
     /// Absolute Documents path, shown so the dataset can be copied into place.
     var documentsHint: String { URL.documentsDirectory.path }
@@ -41,6 +45,9 @@ final class DebugHarnessModel {
 
     init(live: AppContainer) {
         datasetPath = URL.documentsDirectory.appendingPathComponent("clothing-dataset-small").path
+        let fp = URL.documentsDirectory.appendingPathComponent("fashionpedia")
+        fashionpediaJSON = fp.appendingPathComponent("instances_attributes_val2020.json").path
+        fashionpediaImages = fp.appendingPathComponent("val").path
         container = ModelContainer.previewContainer(seeded: false)
         // Same real services as the app, but writing images to the debug store so
         // NormalizedImageView resolves them in this subtree.
@@ -62,6 +69,13 @@ final class DebugHarnessModel {
     func importFolder() async {
         let items = DebugDatasetFolderSource.load(
             directory: URL(fileURLWithPath: datasetPath), datasetID: "clothing-dataset-small")
+        await runImport(items)
+    }
+
+    func importFashionpedia() async {
+        let items = FashionpediaCocoSource.load(
+            jsonURL: URL(fileURLWithPath: fashionpediaJSON),
+            imagesDir: URL(fileURLWithPath: fashionpediaImages))
         await runImport(items)
     }
 
@@ -138,6 +152,7 @@ struct DebugHarnessView: View {
         VStack(alignment: .leading, spacing: 20) {
             importSection(model)
             folderSection(model, $model)
+            fashionpediaSection(model, $model)
             if !model.records.isEmpty {
                 metricsSection(model)
                 wardrobeSection($model.wardrobe, count: model.selected.count)
@@ -217,6 +232,31 @@ struct DebugHarnessView: View {
             Text("Documents: \(model.documentsHint)")
                 .font(Theme.mono(9)).foregroundStyle(Theme.inkFaint)
                 .textSelection(.enabled)
+        }
+    }
+
+    // MARK: - Fashionpedia (attribute ground truth)
+
+    private func fashionpediaSection(_ model: DebugHarnessModel, _ binding: Bindable<DebugHarnessModel>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel("Fashionpedia (CC-BY attributes)")
+            Text("Scores pattern / bottom volume / top length against Fashionpedia's CC-BY annotations. Point at a local COCO JSON + images dir (images used locally only).")
+                .font(Theme.body(12)).foregroundStyle(Theme.inkSoft)
+            TextField("instances_attributes JSON path", text: binding.fashionpediaJSON, axis: .vertical)
+                .font(Theme.mono(11)).lineLimit(1...3).padding(10).drapeCard(radius: 10)
+            TextField("images directory", text: binding.fashionpediaImages, axis: .vertical)
+                .font(Theme.mono(11)).lineLimit(1...2).padding(10).drapeCard(radius: 10)
+            Button {
+                Task { await model.importFashionpedia() }
+            } label: {
+                Text("Import Fashionpedia (COCO)")
+                    .font(Theme.body(15, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.ink, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .disabled(model.isImporting)
         }
     }
 

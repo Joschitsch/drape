@@ -40,19 +40,32 @@ nonisolated struct DebugGroundTruth: Sendable, Codable {
     var color: ColorTag?
     var season: Season?
     var formality: Formality?
+    // Visual-attribute ground truth (e.g. from Fashionpedia's CC-BY annotations).
+    var patternType: PatternType?
+    var bottomVolume: BottomVolume?
+    var topLength: TopLength?
+    var texture: Texture?
 
     init(datasetID: String,
          rawCategory: String? = nil,
          category: GarmentCategory? = nil,
          color: ColorTag? = nil,
          season: Season? = nil,
-         formality: Formality? = nil) {
+         formality: Formality? = nil,
+         patternType: PatternType? = nil,
+         bottomVolume: BottomVolume? = nil,
+         topLength: TopLength? = nil,
+         texture: Texture? = nil) {
         self.datasetID = datasetID
         self.rawCategory = rawCategory
         self.category = category
         self.color = color
         self.season = season
         self.formality = formality
+        self.patternType = patternType
+        self.bottomVolume = bottomVolume
+        self.topLength = topLength
+        self.texture = texture
     }
 }
 
