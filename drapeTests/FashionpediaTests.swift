@@ -63,11 +63,16 @@ struct FashionpediaCocoSourceTests {
         }
         try img.pngData()!.write(to: imagesDir.appendingPathComponent("a.jpg"))
 
-        // One pants annotation: wide-leg + striped.
+        // id 10: pants, polygon, wide-leg + striped → kept.
+        // id 11: a "sleeve" part → skipped (no GarmentCategory).
+        // id 12: pants but RLE segmentation (dict) → skipped (no polygon).
         let json = """
         {"images":[{"id":1,"file_name":"a.jpg"}],
-         "annotations":[{"id":10,"image_id":1,"category_id":6,"attribute_ids":[100,200],"bbox":[10,10,50,80]},
-                        {"id":11,"image_id":1,"category_id":31,"attribute_ids":[],"bbox":[0,0,20,20]}],
+         "annotations":[
+           {"id":10,"image_id":1,"category_id":6,"attribute_ids":[100,200],"bbox":[10,10,50,80],"segmentation":[[15,15,55,15,55,85,15,85]]},
+           {"id":11,"image_id":1,"category_id":31,"attribute_ids":[],"bbox":[0,0,20,20],"segmentation":[[1,1,10,1,10,10]]},
+           {"id":12,"image_id":1,"category_id":6,"attribute_ids":[100],"bbox":[20,20,40,40],"segmentation":{"counts":"abc","size":[100,100]}}
+         ],
          "categories":[{"id":6,"name":"pants"},{"id":31,"name":"sleeve"}],
          "attributes":[{"id":100,"name":"wide leg (pants)"},{"id":200,"name":"striped"}]}
         """
@@ -76,7 +81,7 @@ struct FashionpediaCocoSourceTests {
 
         let items = FashionpediaCocoSource.load(jsonURL: jsonURL, imagesDir: imagesDir)
 
-        #expect(items.count == 1)                       // the "sleeve" part is skipped
+        #expect(items.count == 1)                       // sleeve (part) + RLE pants both skipped
         let gt = items.first?.groundTruth
         #expect(gt?.category == .bottom)
         #expect(gt?.bottomVolume == .wide)
