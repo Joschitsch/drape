@@ -53,4 +53,20 @@ struct ClassifierHeuristicTests {
             }
         }
     }
+
+    @Test("Bottom volume spreads across slim/straight/wide by fill ratio")
+    func bottomVolumeGuess() {
+        #expect(VisionGarmentClassifier.bottomVolumeGuess(stats(std: 0, edge: 0, fill: 0.85)) == .wide)
+        #expect(VisionGarmentClassifier.bottomVolumeGuess(stats(std: 0, edge: 0, fill: 0.60)) == .straight)
+        #expect(VisionGarmentClassifier.bottomVolumeGuess(stats(std: 0, edge: 0, fill: 0.40)) == .slim)
+    }
+
+    @Test("Bottom volume is non-degenerate across a fill-ratio sweep (guards the all-wide bug)")
+    func bottomVolumeNonDegenerate() {
+        let values = stride(from: 0.30, through: 0.90, by: 0.05)
+            .map { VisionGarmentClassifier.bottomVolumeGuess(stats(std: 0, edge: 0, fill: $0)) }
+        let distinct = Set(values.compactMap { $0 })
+        #expect(distinct.count >= 2)              // not collapsed to a single value
+        #expect(distinct.contains(.straight))     // the default is reachable
+    }
 }

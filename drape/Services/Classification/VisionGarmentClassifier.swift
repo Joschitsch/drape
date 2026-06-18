@@ -149,8 +149,7 @@ struct VisionGarmentClassifier: GarmentClassifier {
                     else if stats.aspect > 1.5 { estimate.topLength = .long }
                     else { estimate.topLength = .regular }
                 case .bottom:
-                    // Confident only about "wide"; slim vs straight is too noisy from a box.
-                    if stats.fillRatio > 0.62 { estimate.bottomVolume = .wide }
+                    estimate.bottomVolume = Self.bottomVolumeGuess(stats)
                 default:
                     break
                 }
@@ -178,6 +177,18 @@ struct VisionGarmentClassifier: GarmentClassifier {
         if s.luminanceStdDev < 0.05 { return .smooth }
         if s.luminanceStdDev < 0.11 { return .subtleTexture }
         return .textured
+    }
+
+    /// Bottom leg volume from how much of the bounding box the garment fills: a
+    /// wide leg fills more, a slim/tapered leg leaves more empty. Flat-photo
+    /// geometry is a weak proxy, so default to `.straight` and only flag the clear
+    /// extremes — this is what keeps the distribution from collapsing to all-wide.
+    /// Thresholds are calibrated against the on-device distribution and may need
+    /// re-tuning if framing/masking changes.
+    nonisolated static func bottomVolumeGuess(_ s: SurfaceStats) -> BottomVolume? {
+        if s.fillRatio > 0.74 { return .wide }
+        if s.fillRatio < 0.50 { return .slim }
+        return .straight
     }
 
     /// Renders the masked subject into a small grid and measures coverage,
