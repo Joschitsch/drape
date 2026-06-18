@@ -44,7 +44,7 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 
     /// Coarse family used for harmony heuristics. Neutrals pair with anything.
-    var family: ColorFamily {
+    nonisolated var family: ColorFamily {
         switch self {
         case .ecru, .ivory, .oat, .charcoal, .ink, .slate: .neutral
         case .camel, .tobacco, .chocolate, .rust, .burgundy: .warm

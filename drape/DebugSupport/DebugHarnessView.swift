@@ -11,6 +11,7 @@
 #if DEBUG
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 @MainActor
 @Observable
@@ -64,6 +65,17 @@ final class DebugHarnessModel {
         await runImport(items)
     }
 
+    /// Imports a dataset folder the user picked from Finder/Files. The picked URL
+    /// is security-scoped under the sandbox, so access must be opened around the
+    /// (synchronous) read in `DebugDatasetFolderSource.load`.
+    func importPickedFolder(_ url: URL) async {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        datasetPath = url.path
+        let items = DebugDatasetFolderSource.load(directory: url, datasetID: url.lastPathComponent)
+        await runImport(items)
+    }
+
     private func runImport(_ items: [DebugImageItem]) async {
         isImporting = true
         defer { isImporting = false; progressText = nil }
@@ -105,6 +117,7 @@ final class DebugHarnessModel {
 struct DebugHarnessView: View {
     @Environment(AppContainer.self) private var live
     @State private var model: DebugHarnessModel?
+    @State private var pickingFolder = false
 
     var body: some View {
         ScrollView {
@@ -161,8 +174,24 @@ struct DebugHarnessView: View {
     private func folderSection(_ model: DebugHarnessModel, _ binding: Bindable<DebugHarnessModel>) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             MonoLabel("Local dataset (CC0)")
-            Text("Copy clothing-dataset-small into Documents, or paste an absolute path. ~20 images/class are sampled; train→dev, validation/test→holdout.")
+            Text("Pick a dataset folder from Finder/Files, or drop one into Drape's Documents and paste its path. ~20 images/class are sampled; train→dev, validation/test→holdout.")
                 .font(Theme.body(12)).foregroundStyle(Theme.inkSoft)
+            Button {
+                pickingFolder = true
+            } label: {
+                Text("Choose folder in Finder/Files…")
+                    .font(Theme.body(15, weight: .semibold))
+                    .foregroundStyle(Theme.paper)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Theme.ink, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(model.isImporting)
+            .fileImporter(isPresented: $pickingFolder, allowedContentTypes: [.folder]) { result in
+                if case .success(let url) = result {
+                    Task { await model.importPickedFolder(url) }
+                }
+            }
             TextField("Dataset path", text: binding.datasetPath, axis: .vertical)
                 .font(Theme.mono(11))
                 .lineLimit(1...3)
@@ -171,7 +200,7 @@ struct DebugHarnessView: View {
             Button {
                 Task { await model.importFolder() }
             } label: {
-                Text("Import from folder")
+                Text("Import from path")
                     .font(Theme.body(15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .frame(maxWidth: .infinity, minHeight: 44)
@@ -192,21 +221,48 @@ struct DebugHarnessView: View {
 
     private func metricsSection(_ model: DebugHarnessModel) -> some View {
         let report = model.report
-        return VStack(alignment: .leading, spacing: 0) {
-            MonoLabel("Autofill accuracy (\(report.total) items)")
-                .padding(.horizontal, 16).padding(.vertical, 13)
-            ForEach(report.metrics, id: \.name) { m in
-                Theme.line.frame(height: 0.5)
-                HStack {
-                    Text(m.name).font(Theme.body(14))
-                    Spacer()
-                    Text("acc \(pct(m.accuracy)) · cov \(pct(m.coverage))")
-                        .font(Theme.mono(12)).foregroundStyle(Theme.inkSoft)
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 0) {
+                MonoLabel("Autofill — \(report.total) items · coverage · accuracy")
+                    .padding(.horizontal, 16).padding(.vertical, 13)
+                ForEach(report.metrics, id: \.name) { m in
+                    Theme.line.frame(height: 0.5)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(m.name).font(Theme.body(14))
+                            Spacer()
+                            Text("cov \(pct(m.coverage)) · acc \(m.accuracy.map(pct) ?? "—")")
+                                .font(Theme.mono(12)).foregroundStyle(Theme.inkSoft)
+                        }
+                        if !m.distribution.isEmpty {
+                            // Value distribution — spots a degenerate heuristic.
+                            Text(m.distribution.prefix(4).map { "\($0.value)×\($0.count)" }.joined(separator: "  "))
+                                .font(Theme.mono(10)).foregroundStyle(Theme.inkFaint)
+                                .lineLimit(1)
+                        }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 10)
                 }
-                .padding(.horizontal, 16).padding(.vertical, 11)
+            }
+            .drapeCard(radius: 14)
+
+            if !report.confusionTally.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    MonoLabel("Category confusions (expected → got)")
+                        .padding(.horizontal, 16).padding(.vertical, 13)
+                    ForEach(Array(report.confusionTally.prefix(8).enumerated()), id: \.offset) { _, c in
+                        Theme.line.frame(height: 0.5)
+                        HStack {
+                            Text("\(c.expected) → \(c.got)").font(Theme.mono(12))
+                            Spacer()
+                            Text("×\(c.count)").font(Theme.mono(12)).foregroundStyle(Theme.inkSoft)
+                        }
+                        .padding(.horizontal, 16).padding(.vertical, 9)
+                    }
+                }
+                .drapeCard(radius: 14)
             }
         }
-        .drapeCard(radius: 14)
     }
 
     // MARK: - Wardrobe picker

@@ -39,6 +39,7 @@ struct GarmentTile: View {
             MonoLabel(garment.lastWornLabel, size: 10)
                 .lineLimit(1)
         }
+        .contentShape(Rectangle())
     }
 }
 

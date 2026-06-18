@@ -40,11 +40,13 @@ struct AttributeEvalTests {
         ]
         let report = AttributeEval.evaluate(records, on: .holdout)
         let cat = report.metric("category")!
-        #expect(cat.evaluated == 3)
-        #expect(cat.covered == 2)
+        #expect(cat.total == 3)
+        #expect(cat.labeled == 3)
+        #expect(cat.predicted == 2)                          // c has no classifier guess
+        #expect(cat.scored == 2)
         #expect(cat.correct == 1)
-        #expect(abs(cat.accuracy - 0.5) < 1e-9)              // 1 of 2 covered
-        #expect(abs(cat.coverage - 2.0 / 3.0) < 1e-9)
+        #expect(abs((cat.accuracy ?? -1) - 0.5) < 1e-9)      // 1 of 2 scored
+        #expect(abs(cat.coverage - 2.0 / 3.0) < 1e-9)        // predicted / total
     }
 
     @Test("Color is judged at family granularity")
@@ -56,7 +58,8 @@ struct AttributeEvalTests {
         let report = AttributeEval.evaluate(records, on: .holdout)
         let col = report.metric("colorFamily")!
         #expect(col.correct == 1)
-        #expect(col.covered == 2)
+        #expect(col.scored == 2)
+        #expect(col.accuracy != nil)
     }
 
     @Test("Evaluation is restricted to the chosen split")
@@ -77,6 +80,69 @@ struct AttributeEvalTests {
         #expect(report.confusions.contains {
             $0.sourceID == "miss" && $0.expected == "footwear" && $0.got == "accessory"
         })
+    }
+
+    @Test("Category confusions aggregate into a most-common-first tally")
+    func confusionTally() {
+        let records = [
+            record(id: "a", gtCategory: .footwear, classifierCategory: .accessory),
+            record(id: "b", gtCategory: .footwear, classifierCategory: .accessory),
+            record(id: "c", gtCategory: .top, classifierCategory: .dress),
+        ]
+        let tally = AttributeEval.evaluate(records, on: .holdout).confusionTally
+        #expect(tally.first?.expected == "footwear")
+        #expect(tally.first?.got == "accessory")
+        #expect(tally.first?.count == 2)
+    }
+}
+
+@Suite("Attribute coverage & distribution")
+struct AttributeCoverageTests {
+    private func rec(_ id: String, _ inferred: GarmentSnapshot,
+                     classifierCategory: GarmentCategory? = .top) -> DebugImportRecord {
+        DebugImportRecord(
+            sourceID: id, garmentID: inferred.id, split: .holdout,
+            groundTruth: DebugGroundTruth(datasetID: "t"), inferred: inferred,
+            classifierCategory: classifierCategory, categoryConfidence: 0)
+    }
+
+    @Test("Unlabeled axis reports coverage + distribution but no accuracy")
+    func coverageOnlyPath() {
+        let records = [
+            rec("a", garment(.top, texture: .smooth)),
+            rec("b", garment(.top, texture: .textured)),
+            rec("c", garment(.top)),                       // no texture inferred
+        ]
+        let m = AttributeEval.evaluate(records, on: .holdout).metric("texture")!
+        #expect(m.accuracy == nil)                         // dataset doesn't label texture
+        #expect(m.predicted == 2)
+        #expect(abs(m.coverage - 2.0 / 3.0) < 1e-9)
+        #expect(m.distribution.count == 2)                 // smooth, textured
+    }
+
+    @Test("Distribution is non-degenerate across a mixed fixture set")
+    func nonDegenerateDistribution() {
+        let records = [
+            rec("a", garment(.top, patternType: .solid)),
+            rec("b", garment(.top, patternType: .floral)),
+            rec("c", garment(.top, patternType: .stripe)),
+        ]
+        let m = AttributeEval.evaluate(records, on: .holdout).metric("patternType")!
+        #expect(m.distribution.count >= 2)                 // not all one value
+        #expect(m.distribution.map(\.count).reduce(0, +) == 3)
+    }
+
+    @Test("Shape axes count toward coverage even when category classification failed")
+    func decoupledCoverage() {
+        // classifierCategory nil (Vision whiffed) but the mask still yielded shape axes.
+        let records = [
+            rec("a", garment(.top, patternType: .solid, texture: .smooth), classifierCategory: nil),
+            rec("b", garment(.top, patternType: .floral, texture: .textured), classifierCategory: nil),
+        ]
+        let report = AttributeEval.evaluate(records, on: .holdout)
+        #expect(report.metric("category")!.predicted == 0)   // no classifier category
+        #expect(report.metric("texture")!.predicted == 2)    // …but texture still there
+        #expect(report.metric("patternType")!.predicted == 2)
     }
 }
 

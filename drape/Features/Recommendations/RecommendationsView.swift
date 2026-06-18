@@ -110,7 +110,7 @@ struct RecommendationsView: View {
             .accessibilityLabel("Loading weather")
         } else {
             HStack(spacing: 8) {
-                Image(systemName: "cloud.slash")
+                Image(systemName: "icloud.slash")
                     .font(.caption)
                     .foregroundStyle(Theme.inkSoft)
                 Text("Weather unavailable — recommendations use your wardrobe only.")
@@ -265,6 +265,7 @@ private struct OutfitSuggestionCard: View {
                         }
                     }
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -375,6 +376,13 @@ private struct SuggestionDetailView: View {
     let suggestion: OutfitSuggestion
     let label: String
 
+    // This detail is itself pushed via a binding-based `navigationDestination`,
+    // which doesn't compose with a value-based push on top of it (the bar updates
+    // but the destination never renders). So we open the garment with the same
+    // self-contained zoom `fullScreenCover` the wardrobe grid uses.
+    @Namespace private var zoomNamespace
+    @State private var selectedGarment: Garment? = nil
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -387,10 +395,11 @@ private struct SuggestionDetailView: View {
                 VStack(spacing: 0) {
                     let sorted = sortedGarments(garments)
                     ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, garment in
-                        NavigationLink(value: garment) {
+                        Button { selectedGarment = garment } label: {
                             DetailGarmentRow(garment: garment)
                         }
                         .buttonStyle(.plain)
+                        .matchedTransitionSource(id: garment.id, in: zoomNamespace)
                         if idx < sorted.count - 1 {
                             Theme.line.frame(height: 0.5).padding(.leading, 96)
                         }
@@ -402,7 +411,12 @@ private struct SuggestionDetailView: View {
         }
         .navigationTitle(label)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
+        .fullScreenCover(item: $selectedGarment) { garment in
+            NavigationStack {
+                GarmentDetailView(garment: garment)
+            }
+            .navigationTransition(.zoom(sourceID: garment.id, in: zoomNamespace))
+        }
     }
 }
 

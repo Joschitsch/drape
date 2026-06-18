@@ -50,9 +50,11 @@ struct VisionGarmentClassifier: GarmentClassifier {
         let color = colorFromMaskedBuffer(maskedBuffer)
             ?? fallbackColor(of: ciImage)
 
-        let style = match.map {
-            styleAttributes(category: $0.category, label: $0.label, maskedBuffer: maskedBuffer)
-        } ?? .init()
+        // Pattern/texture come straight off the mask and never need a category, so
+        // they're inferred even when classification whiffs; length/volume and the
+        // fabric priors do need the category and stay gated on a match.
+        let stats = maskedBuffer.flatMap(surfaceStats(maskedBuffer:))
+        let style = styleEstimate(category: match?.category, label: match?.label, stats: stats)
 
         let subcategory = match?.category == .footwear
             ? bestFootwearSubcategory(from: observations)
@@ -92,63 +94,70 @@ struct VisionGarmentClassifier: GarmentClassifier {
         var texture: Texture?
     }
 
-    /// Coarse surface statistics over the masked garment pixels.
-    private struct SurfaceStats {
+    /// Coarse surface statistics over the masked garment pixels. Internal so the
+    /// pure pattern/texture mappings can be unit-tested without running Vision.
+    struct SurfaceStats {
         let aspect: Double          // bounding-box height / width
         let fillRatio: Double       // masked coverage of the bounding box (0...1)
         let luminanceStdDev: Double // spread of brightness — high = busy surface
         let edgeDensity: Double     // mean adjacent-pixel brightness delta
     }
 
-    private func styleAttributes(
-        category: GarmentCategory,
-        label: String,
-        maskedBuffer: CVPixelBuffer?
-    ) -> StyleEstimate {
-        // Category/label priors give every clothing piece a sensible default.
+    /// Builds the style estimate from the mask. Pattern + texture are derived
+    /// whenever surface stats exist (no category needed); length/volume and the
+    /// fabric/fit/structure priors are only filled when the category is known.
+    private func styleEstimate(category: GarmentCategory?, label: String?, stats: SurfaceStats?) -> StyleEstimate {
         var estimate = StyleEstimate()
-        let defaults = Self.styleDefaults(label: label, category: category)
-        estimate.fit = defaults.fit
-        estimate.structure = defaults.structure
-        estimate.fabricWeight = defaults.weight
 
-        guard let stats = maskedBuffer.flatMap(surfaceStats(maskedBuffer:)) else {
-            return estimate
+        // ── Category-independent surface axes ────────────────────────────────
+        if let stats {
+            (estimate.patternType, estimate.patternScale) = Self.patternGuess(stats)
+            estimate.texture = Self.textureGuess(stats)
         }
 
-        // Pattern: bias hard toward "solid" — only claim a print when the surface
-        // is both high-contrast and busy, so folds and shadows don't read as a
-        // pattern. The specific kind stays unknown (scale carries "patterned").
-        if stats.luminanceStdDev > 0.14 && stats.edgeDensity > 0.06 {
-            estimate.patternType = nil
-            if stats.edgeDensity > 0.13 { estimate.patternScale = .small }
-            else if stats.edgeDensity > 0.09 { estimate.patternScale = .medium }
-            else { estimate.patternScale = .large }
-        } else {
-            estimate.patternType = .solid
-            estimate.patternScale = PatternScale.none
-        }
+        // ── Category-dependent axes ──────────────────────────────────────────
+        if let category {
+            let defaults = Self.styleDefaults(label: label ?? "", category: category)
+            estimate.fit = defaults.fit
+            estimate.structure = defaults.structure
+            estimate.fabricWeight = defaults.weight
 
-        // Texture from brightness spread — independent of whether it's "patterned".
-        // A smooth solid and a textured knit can both be solid-colored.
-        if stats.luminanceStdDev < 0.05 { estimate.texture = .smooth }
-        else if stats.luminanceStdDev < 0.11 { estimate.texture = .subtleTexture }
-        else { estimate.texture = .textured }
-
-        // Silhouette from bounding-box geometry — applied per category.
-        switch category {
-        case .top:
-            if stats.aspect < 0.95 { estimate.topLength = .cropped }
-            else if stats.aspect > 1.5 { estimate.topLength = .long }
-            else { estimate.topLength = .regular }
-        case .bottom:
-            // Confident only about "wide"; slim vs straight is too noisy from a box.
-            if stats.fillRatio > 0.62 { estimate.bottomVolume = .wide }
-        default:
-            break
+            if let stats {
+                switch category {
+                case .top:
+                    if stats.aspect < 0.95 { estimate.topLength = .cropped }
+                    else if stats.aspect > 1.5 { estimate.topLength = .long }
+                    else { estimate.topLength = .regular }
+                case .bottom:
+                    // Confident only about "wide"; slim vs straight is too noisy from a box.
+                    if stats.fillRatio > 0.62 { estimate.bottomVolume = .wide }
+                default:
+                    break
+                }
+            }
         }
 
         return estimate
+    }
+
+    /// Pattern from brightness spread + edge density. Biased hard toward "solid"
+    /// so folds/shadows don't read as a print; the specific kind stays unknown
+    /// (scale carries "patterned"). Always returns a value for valid stats.
+    nonisolated static func patternGuess(_ s: SurfaceStats) -> (type: PatternType?, scale: PatternScale?) {
+        guard s.luminanceStdDev > 0.14 && s.edgeDensity > 0.06 else {
+            return (.solid, PatternScale.none)
+        }
+        let scale: PatternScale = s.edgeDensity > 0.13 ? .small
+            : (s.edgeDensity > 0.09 ? .medium : .large)
+        return (nil, scale)
+    }
+
+    /// Texture from brightness spread — independent of pattern. A smooth solid and
+    /// a textured knit can both be solid-colored. Always returns a value.
+    nonisolated static func textureGuess(_ s: SurfaceStats) -> Texture {
+        if s.luminanceStdDev < 0.05 { return .smooth }
+        if s.luminanceStdDev < 0.11 { return .subtleTexture }
+        return .textured
     }
 
     /// Renders the masked subject into a small grid and measures coverage,
@@ -208,7 +217,8 @@ struct VisionGarmentClassifier: GarmentClassifier {
 
     /// Label-first, category-fallback priors for fit, structure and fabric weight.
     /// Rough on purpose — they seed the form; the user (and later a model) refine.
-    private static func styleDefaults(
+    /// Internal so the rule table can be unit-tested.
+    static func styleDefaults(
         label: String, category: GarmentCategory
     ) -> (fit: Fit?, structure: Structure?, weight: FabricWeight?) {
         if label.contains("blazer") || label.contains("suit")
@@ -350,7 +360,9 @@ struct VisionGarmentClassifier: GarmentClassifier {
     }
 
     // swiftlint:disable cyclomatic_complexity function_body_length
-    private static func properties(
+    /// The label → (category, warmth, formality, seasons) rule table. Internal so
+    /// the rules feeding the engine's hard filters can be unit-tested.
+    static func properties(
         for label: String
     ) -> (category: GarmentCategory, warmth: WarmthLevel, formality: Formality,
           seasons: Set<Season>, specificity: Int)? {

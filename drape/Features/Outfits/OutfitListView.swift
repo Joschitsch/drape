@@ -15,6 +15,7 @@ struct OutfitListView: View {
     private var outfits: [Outfit]
 
     @State private var showingBuilder = false
+    @Namespace private var zoomNamespace
 
     var body: some View {
         NavigationStack {
@@ -24,8 +25,11 @@ struct OutfitListView: View {
             .background(Theme.paper.ignoresSafeArea())
             .navigationTitle("Outfits")
             .navigationSubtitle("\(outfits.count) look\(outfits.count == 1 ? "" : "s")")
-            .navigationDestination(for: Outfit.self)  { OutfitDetailView(outfit: $0) }
-            .navigationDestination(for: Garment.self) { GarmentDetailView(garment: $0) }
+            .navigationDestination(for: Outfit.self)  { OutfitDetailView(outfit: $0, zoomNamespace: zoomNamespace) }
+            .navigationDestination(for: Garment.self) { garment in
+                GarmentDetailView(garment: garment)
+                    .navigationTransition(.zoom(sourceID: garment.id, in: zoomNamespace))
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { showingBuilder = true } label: { Image(systemName: "plus") }
@@ -116,6 +120,18 @@ struct OutfitStackCard: View {
     let outfit: Outfit
 
     var body: some View {
+        // The card can briefly outlive its outfit: deleting an outfit updates the
+        // @Query, but SwiftUI may re-evaluate this card once more before dropping
+        // it from the list. The model's backing data is detached by then, so
+        // reading a persisted attribute (occasion, name…) would trap. Bail out.
+        if outfit.modelContext == nil {
+            EmptyView()
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             // ── Header ───────────────────────────────────────────────
             HStack(alignment: .firstTextBaseline) {

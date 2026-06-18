@@ -15,20 +15,11 @@ struct GarmentDetailView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
     @State private var isStyling = false
     @State private var celebration: CelebrationEntry? = nil
-
-    /// How far the user has pulled past the top, 0…1 where 1 is the dismiss
-    /// threshold. Drives the live scale/fade so the gesture feels committed.
-    @State private var pullProgress: CGFloat = 0
-    /// Flips true the instant the threshold is crossed — fires the commit haptic.
-    @State private var willDismiss = false
-    /// Guards against the scroll callback firing `dismiss()` more than once.
-    @State private var didDismiss = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -52,29 +43,6 @@ struct GarmentDetailView: View {
                 .scrollIndicators(.hidden)
                 .ignoresSafeArea(edges: .top)
                 .scrollBounceBehavior(.always)
-                // The pull tracks the finger 1:1 (no animation here, or it would
-                // lag behind the scroll); the spring-back comes from the scroll
-                // returning to rest on release.
-                .scaleEffect(reduceMotion ? 1 : 1 - pullProgress * 0.04)
-                .opacity(reduceMotion ? 1 : 1 - pullProgress * 0.12)
-                .onScrollGeometryChange(for: CGFloat.self) { geo in
-                    geo.contentOffset.y + geo.contentInsets.top
-                } action: { _, distanceFromTop in
-                    let progress = min(1, max(0, -distanceFromTop / 90))
-                    pullProgress = progress
-                    if progress >= 1 {
-                        if !willDismiss { willDismiss = true }
-                        if !didDismiss {
-                            didDismiss = true
-                            dismiss()
-                        }
-                    } else if willDismiss {
-                        willDismiss = false
-                    }
-                }
-                .sensoryFeedback(trigger: willDismiss) { _, crossed in
-                    crossed ? .impact(weight: .light) : nil
-                }
 
                 VStack { Spacer(); woreFooter }
 

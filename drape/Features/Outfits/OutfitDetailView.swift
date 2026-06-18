@@ -11,6 +11,7 @@ import SwiftData
 
 struct OutfitDetailView: View {
     @Bindable var outfit: Outfit
+    let zoomNamespace: Namespace.ID
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -37,6 +38,18 @@ struct OutfitDetailView: View {
     }
 
     var body: some View {
+        // Deleting the outfit detaches its backing data, but SwiftUI may
+        // re-evaluate this view once more before the navigation pop removes it.
+        // Reading a persisted attribute (occasion, name…) on the detached model
+        // would trap, so render nothing the moment the outfit is gone.
+        if outfit.modelContext == nil {
+            Color.clear
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -54,6 +67,7 @@ struct OutfitDetailView: View {
                                 DetailGarmentRow(garment: garment)
                             }
                             .buttonStyle(.plain)
+                            .matchedTransitionSource(id: garment.id, in: zoomNamespace)
 
                             if idx < sorted.count - 1 {
                                 Theme.line.frame(height: 0.5).padding(.leading, 96)
@@ -135,8 +149,10 @@ struct OutfitDetailView: View {
     }
 
     private func delete() {
-        deleteOutfit(outfit, context: modelContext)
+        // Pop first so this view is on its way out before the model detaches;
+        // the body guard above covers any re-evaluation during the pop.
         dismiss()
+        deleteOutfit(outfit, context: modelContext)
     }
 }
 

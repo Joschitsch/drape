@@ -59,17 +59,44 @@ enum DatasetLabelMap {
         }
     }
 
-    /// Builds typed ground truth from one CSV row's raw fields.
+    /// Usage/occasion string (e.g. Fashion Product Images `usage`) → `Formality`.
+    nonisolated static func formality(forUsage raw: String) -> Formality? {
+        switch raw.lowercased() {
+        case "casual", "sports", "smart casual where casual": return .casual
+        case "smart casual":                                  return .smartCasual
+        case "formal", "ethnic":                              return .formal
+        default:                                              return nil
+        }
+    }
+
+    /// Season string → `Season`. nil when unrecognised.
+    nonisolated static func season(forName raw: String) -> Season? {
+        switch raw.lowercased() {
+        case "spring":          return .spring
+        case "summer":          return .summer
+        case "fall", "autumn":  return .autumn
+        case "winter":          return .winter
+        default:                return nil
+        }
+    }
+
+    /// Builds typed ground truth from one CSV row's raw fields. `rawUsage`/
+    /// `rawSeason` come from datasets that carry them (e.g. Fashion Product
+    /// Images); when absent those axes stay nil and report coverage-only.
     nonisolated static func groundTruth(
         datasetID: String,
         rawCategory: String?,
-        rawColor: String? = nil
+        rawColor: String? = nil,
+        rawUsage: String? = nil,
+        rawSeason: String? = nil
     ) -> DebugGroundTruth {
         DebugGroundTruth(
             datasetID: datasetID,
             rawCategory: rawCategory,
             category: rawCategory.flatMap(category(forArticleType:)),
-            color: rawColor.flatMap(color(forName:)))
+            color: rawColor.flatMap(color(forName:)),
+            season: rawSeason.flatMap(season(forName:)),
+            formality: rawUsage.flatMap(formality(forUsage:)))
     }
 }
 #endif

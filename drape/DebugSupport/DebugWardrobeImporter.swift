@@ -39,17 +39,20 @@ nonisolated struct DebugGroundTruth: Sendable, Codable {
     var category: GarmentCategory?
     var color: ColorTag?
     var season: Season?
+    var formality: Formality?
 
     init(datasetID: String,
          rawCategory: String? = nil,
          category: GarmentCategory? = nil,
          color: ColorTag? = nil,
-         season: Season? = nil) {
+         season: Season? = nil,
+         formality: Formality? = nil) {
         self.datasetID = datasetID
         self.rawCategory = rawCategory
         self.category = category
         self.color = color
         self.season = season
+        self.formality = formality
     }
 }
 

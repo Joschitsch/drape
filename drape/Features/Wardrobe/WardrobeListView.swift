@@ -29,6 +29,7 @@ struct WardrobeListView: View {
     @State private var garmentToEdit: Garment? = nil
     @State private var garmentToDelete: Garment? = nil
     @State private var selectedGarment: Garment? = nil
+    @Namespace private var zoomNamespace
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: Theme.tileSpacing)]
 
@@ -112,6 +113,7 @@ struct WardrobeListView: View {
                 NavigationStack {
                     GarmentDetailView(garment: garment)
                 }
+                .navigationTransition(.zoom(sourceID: garment.id, in: zoomNamespace))
             }
             .onChange(of: availableCategories) {
                 if let sel = selectedCategory, !availableCategories.contains(sel) {
@@ -183,6 +185,7 @@ struct WardrobeListView: View {
                                 GarmentTile(garment: garment)
                             }
                             .buttonStyle(.plain)
+                            .matchedTransitionSource(id: garment.id, in: zoomNamespace)
                             .contextMenu {
                                 Button {
                                     garment.isFavorite.toggle()
