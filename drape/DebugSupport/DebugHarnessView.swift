@@ -153,6 +153,9 @@ struct DebugHarnessView: View {
     private func importSection(_ model: DebugHarnessModel) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             MonoLabel("Synthetic wardrobe")
+            Text("Category model: \(VisionGarmentClassifier.categoryModelAvailable ? "loaded ✓" : "missing ✗") — runs on device only (its scenePrint feature extractor isn't in the Simulator runtime)")
+                .font(Theme.mono(11)).foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
             Text("Flat symbol renders — exercises the pipeline, not autofill quality. Drop CC0 images locally for real metrics.")
                 .font(Theme.body(12)).foregroundStyle(Theme.inkSoft)
             Button {

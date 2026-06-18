@@ -35,6 +35,10 @@ struct ClassifierRuleTests {
         #expect(trench?.warmth == .warm)
 
         #expect(VisionGarmentClassifier.properties(for: "quux zonk") == nil)
+
+        // Core ML class labels all resolve (so the model's output maps cleanly).
+        #expect(VisionGarmentClassifier.properties(for: "longsleeve")?.category == .top)
+        #expect(VisionGarmentClassifier.properties(for: "outwear")?.category == .outerwear)
     }
 
     @Test("Style-default priors are sensible per label")

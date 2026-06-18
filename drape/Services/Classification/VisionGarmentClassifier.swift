@@ -16,10 +16,28 @@
 
 import Vision
 import CoreImage
+import CoreML
 import UIKit
 
 struct VisionGarmentClassifier: GarmentClassifier {
     private let ciContext = CIContext(options: [.workingColorSpace: NSNull()])
+
+    /// On-device garment-category model trained on the CC0 clothing-dataset-small
+    /// (see Tools/train_category_model.swift). Loaded once; nil when the model
+    /// isn't bundled, so the classifier degrades to the Vision heuristic below.
+    /// `nonisolated(unsafe)` because `VNCoreMLModel` isn't Sendable but is
+    /// effectively immutable and safe for concurrent Vision requests.
+    nonisolated(unsafe) private static let categoryModel: VNCoreMLModel? = {
+        guard let url = Bundle.main.url(forResource: "GarmentCategoryClassifier", withExtension: "mlmodelc"),
+              let model = try? MLModel(contentsOf: url),
+              let vnModel = try? VNCoreMLModel(for: model) else { return nil }
+        return vnModel
+    }()
+
+    #if DEBUG
+    /// Whether the on-device category model loaded — surfaced in the test harness.
+    static var categoryModelAvailable: Bool { categoryModel != nil }
+    #endif
 
     func classify(imageData: Data) async -> ClassificationSuggestion {
         guard let uiImage = UIImage(data: imageData),
@@ -36,7 +54,9 @@ struct VisionGarmentClassifier: GarmentClassifier {
         let observations = classifyRequest.results ?? []
         let maskObs      = maskRequest.results?.first
 
-        let match = bestClothingMatch(from: observations)
+        // The trained Core ML model is the primary category source; the generic
+        // Vision label heuristic is the fallback when the model is unsure or absent.
+        let match = modelMatch(cgImage: cgImage) ?? bestClothingMatch(from: observations)
 
         // Generate the masked subject once and reuse it for color, silhouette and
         // pattern — the foreground mask turns the background transparent so every
@@ -329,6 +349,24 @@ struct VisionGarmentClassifier: GarmentClassifier {
         let label:       String  // lowercased identifier that won, for style priors
     }
 
+    /// Runs the trained category model and turns its top prediction into a
+    /// `ClothingMatch`, reusing the label→properties table for warmth/formality/
+    /// seasons. Returns nil when the model is absent or below the confidence floor,
+    /// so the caller falls back to the generic Vision heuristic.
+    private func modelMatch(cgImage: CGImage) -> ClothingMatch? {
+        guard let model = Self.categoryModel else { return nil }
+        let request = VNCoreMLRequest(model: model)
+        request.imageCropAndScaleOption = .centerCrop
+        try? VNImageRequestHandler(cgImage: cgImage).perform([request])
+        guard let top = (request.results as? [VNClassificationObservation])?.first,
+              top.confidence >= 0.5 else { return nil }
+        let label = top.identifier.lowercased()
+        guard let p = Self.properties(for: label) else { return nil }
+        return ClothingMatch(category: p.category, warmth: p.warmth, formality: p.formality,
+                             seasons: p.seasons, confidence: top.confidence,
+                             specificity: p.specificity, label: label)
+    }
+
     private func bestFootwearSubcategory(from observations: [VNClassificationObservation]) -> FootwearSubcategory? {
         for obs in observations.sorted(by: { $0.confidence > $1.confidence }) where obs.confidence > 0.05 {
             let label = obs.identifier.lowercased()
@@ -368,6 +406,14 @@ struct VisionGarmentClassifier: GarmentClassifier {
           seasons: Set<Season>, specificity: Int)? {
 
         let all = Set(Season.allCases)
+
+        // ── Core ML class labels not covered by the generic terms below ───────
+        if label.contains("longsleeve") {
+            return (.top, .medium, .casual, [.spring, .autumn, .winter], 6)
+        }
+        if label.contains("outwear") || label.contains("outerwear") {
+            return (.outerwear, .warm, .casual, [.autumn, .winter, .spring], 5)
+        }
 
         // ── FOOTWEAR ──────────────────────────────────────────────────────────
         if label.contains("sneaker") || label.contains("trainer")
