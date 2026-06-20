@@ -48,6 +48,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime
+import json
 import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -56,7 +57,7 @@ try:
     import pandas as pd
 except ImportError:  # pragma: no cover - guidance only
     raise SystemExit("Missing dependency: pip install pandas pillow")
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance
 
 # ── Reproducible split (mirrors StableHash.fnv1a in DebugWardrobeImporter) ──────
 FNV_OFFSET = 0xCBF29CE484222325
@@ -266,6 +267,84 @@ def collect_clothing(root: Path) -> list[tuple[str, str, Path]]:
     return out
 
 
+# Neutral canvas matching VisionImageProcessingService.canvasColor (0.95,0.95,0.97).
+FP_CANVAS_RGB = (242, 242, 247)
+
+
+def fashionpedia_pattern_type(names: list[str]) -> str | None:
+    """Fashionpedia textile-pattern attribute names → PatternType raw value.
+    Ported from `FashionpediaAttributeMap.patternType` (Swift). MEASUREMENT-ONLY
+    use, so a parallel copy here is acceptable; do not reuse for a shipped model."""
+    low = [n.lower() for n in names]
+
+    def has(*keys: str) -> bool:
+        return any(any(k in n for k in keys) for n in low)
+
+    if has("floral", "flower"): return "floral"
+    if has("stripe", "pinstripe"): return "stripe"
+    if has("check", "plaid", "tartan", "gingham", "houndstooth", "windowpane", "argyle"): return "check"
+    if has("graphic", "letters", "numbers", "logo", "cartoon", "text", "print"): return "graphic"
+    if has("paisley", "geometric", "abstract", "animal", "leopard", "camouflage",
+           "camo", "polka", "dot", "tie-dye", "tie dye"): return "abstract"
+    if has("plain", "no pattern", "solid"): return "solid"
+    return None
+
+
+def _fp_cutout(img_path: Path, bbox: list[float], polygons: list) -> "Image.Image | None":
+    """Polygon-cut one garment onto the neutral canvas, cropped to its bbox —
+    mirrors FashionpediaCocoSource.garmentCutout so the model sees app-like input."""
+    try:
+        img = Image.open(img_path).convert("RGB")
+    except Exception:
+        return None
+    w_img, h_img = img.size
+    x = max(0, int(bbox[0])); y = max(0, int(bbox[1]))
+    w = int(min(bbox[2], w_img - x)); h = int(min(bbox[3], h_img - y))
+    if w < 8 or h < 8:
+        return None
+    mask = Image.new("L", (w_img, h_img), 0)
+    draw = ImageDraw.Draw(mask)
+    drew = False
+    for poly in polygons:
+        if isinstance(poly, list) and len(poly) >= 6:
+            draw.polygon(list(zip(poly[0::2], poly[1::2])), fill=255)
+            drew = True
+    if not drew:
+        return None
+    canvas = Image.new("RGB", (w_img, h_img), FP_CANVAS_RGB)
+    canvas.paste(img, (0, 0), mask)
+    return canvas.crop((x, y, x + w, y + h))
+
+
+def collect_fashionpedia_coco(json_path: Path, images_dir: Path,
+                              stage_dir: Path) -> list[tuple[str, str, Path]]:
+    """Read Fashionpedia COCO directly: for each single-pattern garment annotation
+    with a polygon, cut it onto the canvas and stage a PNG. MEASUREMENT-ONLY."""
+    coco = json.loads(json_path.read_text())
+    file_by_id = {im["id"]: im["file_name"] for im in coco["images"]}
+    attr_name = {a["id"]: a["name"] for a in coco["attributes"]}
+    stage_dir.mkdir(parents=True, exist_ok=True)
+    out: list[tuple[str, str, Path]] = []
+    for ann in sorted(coco["annotations"], key=lambda a: a["id"]):
+        seg = ann.get("segmentation")
+        if not isinstance(seg, list) or not seg:   # skip RLE (dict) / empty
+            continue
+        names = [attr_name[i] for i in (ann.get("attribute_ids") or []) if i in attr_name]
+        pattern = fashionpedia_pattern_type(names)
+        if not pattern:
+            continue
+        fn = file_by_id.get(ann["image_id"])
+        if not fn:
+            continue
+        cut = _fp_cutout(images_dir / fn, ann["bbox"], seg)
+        if cut is None:
+            continue
+        dst = stage_dir / f"{ann['id']:07d}.png"
+        cut.save(dst)
+        out.append((pattern, str(ann["id"]), dst))
+    return out
+
+
 def collect_pattern(pattern_dir: Path) -> list[tuple[str, str, Path]]:
     csv_path = pattern_dir / "pattern-labels.csv"
     images = pattern_dir / "images"
@@ -323,6 +402,9 @@ def main() -> None:
                     help="Clothing Dataset full root (images.csv + images_compressed/) — CC0, in-domain")
     ap.add_argument("--kaggle-root", type=Path, help="Fashion Product Images root (styles.csv + images/)")
     ap.add_argument("--pattern-dir", type=Path, help="app DEBUG export (images/ + pattern-labels.csv)")
+    ap.add_argument("--fashionpedia-coco", type=Path,
+                    help="Fashionpedia instances_attributes JSON — pattern, MEASUREMENT-ONLY (images not shippable)")
+    ap.add_argument("--fashionpedia-images", type=Path, help="Fashionpedia images dir matching the JSON")
     ap.add_argument("--imaterialist-root", type=Path, help="EVAL-ONLY <class>/<image> tree")
     ap.add_argument("--out", type=Path, required=True, help="output root for the Create ML trees")
     ap.add_argument("--model-card", type=Path, default=Path("Tools/MODEL_CARD.md"))
@@ -355,6 +437,19 @@ def main() -> None:
         print(f"  pattern classes: {dict(hist)}")
         write_model_card(args.model_card, "pattern", "Fashionpedia (DEBUG isolated cutouts)",
                          FASHIONPEDIA_URL, "CC-BY 4.0", hist)
+
+    if args.fashionpedia_coco:
+        print("Pattern: cutting Fashionpedia garments directly (MEASUREMENT-ONLY — not shippable)…")
+        samples = collect_fashionpedia_coco(args.fashionpedia_coco, args.fashionpedia_images,
+                                            args.out / "_fp_stage")
+        print(f"  cut {len(samples)} single-pattern garments")
+        hist = write_split("pattern", "fashionpedia", samples,
+                           args.out, args.max_per_class, args.floor, args.val_frac, args.test_frac)
+        print(f"  pattern classes: {dict(hist)}")
+        write_model_card(args.model_card,
+                         "pattern (MEASUREMENT-ONLY — Fashionpedia images are not license-clear for a shipped model)",
+                         "Fashionpedia val2020 (polygon cutouts)", FASHIONPEDIA_URL,
+                         "annotations CC-BY 4.0; images mixed-source, local measurement only", hist)
 
     if args.imaterialist_root:
         print("Eval: collecting iMaterialist (eval/tuning only)…")

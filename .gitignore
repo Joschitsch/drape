@@ -10,3 +10,8 @@ results/
 # The shipped model lives in drape/Services/Classification/; this is the workspace.
 Tools/data/
 Tools/*.mlmodel
+
+# Measurement-only pattern model — trained on Fashionpedia images, which are NOT
+# license-clear to ship (see Tools/FASHIONPEDIA.md). Bundled locally only to
+# measure on-device; never commit.
+drape/Services/Classification/GarmentPatternClassifier.mlmodel

@@ -175,3 +175,35 @@ swift Tools/train_category_model.swift ~/clothing-dataset-small \
 #### category — accuracy (trained 2026-06-20T07:53:28Z)
 - Held-out validation: 69.5%
 - Held-out test: 71.7%
+
+## pattern (MEASUREMENT-ONLY — Fashionpedia images are not license-clear for a shipped model) model — data provenance (2026-06-20)
+
+- Dataset: Fashionpedia val2020 (polygon cutouts)
+- URL: https://github.com/cvdfoundation/fashionpedia
+- License: annotations CC-BY 4.0; images mixed-source, local measurement only
+- Classes (6): abstract, check, floral, graphic, solid, stripe
+- Per-class histogram:
+    - graphic: 1524
+    - solid: 194
+    - floral: 125
+    - stripe: 93
+    - check: 59
+    - abstract: 27
+
+## pattern (MEASUREMENT-ONLY — Fashionpedia images are not license-clear for a shipped model) model — data provenance (2026-06-20)
+
+- Dataset: Fashionpedia val2020 (polygon cutouts)
+- URL: https://github.com/cvdfoundation/fashionpedia
+- License: annotations CC-BY 4.0; images mixed-source, local measurement only
+- Classes (6): abstract, check, floral, graphic, solid, stripe
+- Per-class histogram:
+    - graphic: 250
+    - solid: 194
+    - floral: 125
+    - stripe: 93
+    - check: 59
+    - abstract: 27
+
+#### pattern — accuracy (trained 2026-06-20T16:04:49Z)
+- Held-out validation: 54.8%
+- Held-out test: 48.1%
