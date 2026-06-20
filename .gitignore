@@ -1,0 +1,4 @@
+# Local Claude Code / agent tooling — not part of the app
+.claude/
+.agents/
+.impeccable/
