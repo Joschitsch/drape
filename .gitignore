@@ -5,3 +5,8 @@
 
 # Ground-truth evaluation exports (data, not code)
 results/
+
+# Offline model-training intermediates — big, regenerable, not part of the app.
+# The shipped model lives in drape/Services/Classification/; this is the workspace.
+Tools/data/
+Tools/*.mlmodel

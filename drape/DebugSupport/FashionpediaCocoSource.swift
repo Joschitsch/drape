@@ -97,6 +97,55 @@ enum FashionpediaCocoSource {
         return items.sorted { $0.id < $1.id }
     }
 
+    /// DEBUG export for offline training. Writes isolated-garment PNG cutouts plus
+    /// a `pattern-labels.csv` (filename,patternType) into `outputDir`, so the
+    /// `Tools/build_training_data.py` prep step can build the Create ML folder tree
+    /// without re-deriving labels. `FashionpediaAttributeMap` stays the single
+    /// source of truth for the pattern mapping — the CSV is its exported product,
+    /// never a re-implementation. Cutouts use the same polygon-isolation + neutral
+    /// canvas as the harness, so the model trains on the exact input the app feeds
+    /// it. Only garments whose attributes map to a `PatternType` are emitted
+    /// (Create ML is single-label; the map resolves multi-attribute cases by a
+    /// fixed priority). `perClassLimit` bounds export size and curbs `solid`'s
+    /// dominance at the source; the prep script does the final balancing.
+    /// Returns the CSV URL, or nil if the dataset couldn't be read.
+    @discardableResult
+    static func exportPatternTrainingData(jsonURL: URL, imagesDir: URL, outputDir: URL,
+                                          perClassLimit: Int = 3000) -> URL? {
+        guard let data = try? Data(contentsOf: jsonURL),
+              let coco = try? JSONDecoder().decode(Coco.self, from: data) else { return nil }
+
+        let fileByImageID = Dictionary(coco.images.map { ($0.id, $0.file_name) }, uniquingKeysWith: { a, _ in a })
+        let attributeName = Dictionary(coco.attributes.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+
+        let fm = FileManager.default
+        let imagesOut = outputDir.appendingPathComponent("images", isDirectory: true)
+        try? fm.createDirectory(at: imagesOut, withIntermediateDirectories: true)
+
+        var perClassCount: [PatternType: Int] = [:]
+        var rows: [String] = ["filename,patternType"]
+
+        for ann in coco.annotations.sorted(by: { $0.id < $1.id }) {
+            let names = (ann.attribute_ids ?? []).compactMap { attributeName[$0] }
+            guard let pattern = FashionpediaAttributeMap.patternType(from: names),
+                  perClassCount[pattern, default: 0] < perClassLimit,
+                  let polygons = ann.polygons, !polygons.isEmpty,   // skip RLE / segless
+                  let file = fileByImageID[ann.image_id],
+                  let cutout = garmentCutout(imagesDir.appendingPathComponent(file),
+                                             bbox: ann.bbox, polygons: polygons)
+            else { continue }
+
+            let name = String(format: "%07d.png", ann.id)
+            guard (try? cutout.write(to: imagesOut.appendingPathComponent(name))) != nil else { continue }
+            rows.append("\(name),\(pattern.rawValue)")
+            perClassCount[pattern, default: 0] += 1
+        }
+
+        let csvURL = outputDir.appendingPathComponent("pattern-labels.csv")
+        try? rows.joined(separator: "\n").write(to: csvURL, atomically: true, encoding: .utf8)
+        return csvURL
+    }
+
     /// Cuts out just the polygon region from the source image and composites it on
     /// the neutral canvas, sized to the (clamped) bbox. Returns PNG data.
     private static func garmentCutout(_ imageURL: URL, bbox: [Double], polygons: [[Double]]) -> Data? {

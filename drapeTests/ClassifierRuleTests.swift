@@ -41,6 +41,32 @@ struct ClassifierRuleTests {
         #expect(VisionGarmentClassifier.properties(for: "outwear")?.category == .outerwear)
     }
 
+    /// The retrained category model emits these fine-grained labels (the canonical
+    /// vocabulary in Tools/build_training_data.py). Every one MUST resolve through
+    /// `properties(for:)` to the expected category — that lookup is how the model's
+    /// prediction becomes warmth/formality/seasons, so an unmapped label would
+    /// silently drop those axes. This pins the model ↔ rule-table contract.
+    @Test("Every canonical category-model label resolves to its expected category")
+    func canonicalVocabularyResolves() {
+        let expected: [String: GarmentCategory] = [
+            "t-shirt": .top, "shirt": .top, "blouse": .top, "tank": .top,
+            "sweater": .top, "sweatshirt": .top,
+            "jacket": .outerwear, "blazer": .outerwear,
+            "jeans": .bottom, "trousers": .bottom, "shorts": .bottom,
+            "skirt": .bottom, "leggings": .bottom,
+            "dress": .dress, "jumpsuit": .dress,
+            "sneaker": .footwear, "sandal": .footwear,
+            "high heel": .footwear, "loafer": .footwear,
+            "handbag": .accessory, "backpack": .accessory,
+            "cap": .accessory, "hat": .accessory, "sunglasses": .accessory,
+            "scarf": .accessory, "tie": .accessory, "belt": .accessory,
+        ]
+        for (label, category) in expected {
+            #expect(VisionGarmentClassifier.properties(for: label)?.category == category,
+                    "label '\(label)' should map to \(category)")
+        }
+    }
+
     @Test("Style-default priors are sensible per label")
     func stylePriors() {
         let blazer = VisionGarmentClassifier.styleDefaults(label: "blazer", category: .outerwear)

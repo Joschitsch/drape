@@ -103,6 +103,36 @@ final class DebugHarnessModel {
         await runImport(FashionpediaCocoSource.load(jsonURL: json, imagesDir: imagesDir))
     }
 
+    /// Exports pattern training data (cutouts + labels CSV) from a picked
+    /// Fashionpedia folder into `Documents/pattern-training`, for the offline
+    /// `Tools/build_training_data.py` prep step. Reuses the same JSON/images
+    /// auto-discovery as `importPickedFashionpedia`.
+    func exportPatternTraining(_ folder: URL) async {
+        let scoped = folder.startAccessingSecurityScopedResource()
+        defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
+        let fm = FileManager.default
+        let contents = (try? fm.contentsOfDirectory(
+            at: folder, includingPropertiesForKeys: [.isDirectoryKey])) ?? []
+        guard let json = contents.first(where: { $0.pathExtension.lowercased() == "json" }) else {
+            statusText = "No .json (annotations) found in that folder."
+            return
+        }
+        let subdirs = contents.filter {
+            (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        }
+        let imagesDir = subdirs.first { ["val", "test", "images", "train"].contains($0.lastPathComponent.lowercased()) }
+            ?? subdirs.first ?? folder
+
+        isImporting = true
+        defer { isImporting = false; progressText = nil }
+        progressText = "Exporting pattern training data…"
+        let outDir = URL.documentsDirectory.appendingPathComponent("pattern-training", isDirectory: true)
+        let csv = FashionpediaCocoSource.exportPatternTrainingData(
+            jsonURL: json, imagesDir: imagesDir, outputDir: outDir)
+        statusText = csv.map { "Exported pattern training data → \($0.deletingLastPathComponent().path)" }
+            ?? "Export failed — couldn't read the dataset."
+    }
+
     /// Imports a dataset folder the user picked from Finder/Files. The picked URL
     /// is security-scoped under the sandbox, so access must be opened around the
     /// (synchronous) read in `DebugDatasetFolderSource.load`.
@@ -157,6 +187,7 @@ struct DebugHarnessView: View {
     @State private var model: DebugHarnessModel?
     @State private var pickingFolder = false
     @State private var pickingFashionpedia = false
+    @State private var pickingPatternExport = false
 
     var body: some View {
         ScrollView {
@@ -295,6 +326,24 @@ struct DebugHarnessView: View {
                         .font(Theme.mono(11)).lineLimit(1...2).padding(10).drapeCard(radius: 10)
                     Button("Import from paths") { Task { await model.importFashionpedia() } }
                         .font(Theme.body(14)).foregroundStyle(Theme.ink).disabled(model.isImporting)
+                }
+                .padding(.top, 6)
+            }
+            .font(Theme.body(12))
+            .tint(Theme.inkSoft)
+
+            // Export pattern training cutouts + labels CSV for offline Create ML.
+            DisclosureGroup("Export pattern training data") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Writes isolated-garment cutouts + pattern-labels.csv to Documents/pattern-training. Feed that folder to Tools/build_training_data.py.")
+                        .font(Theme.body(12)).foregroundStyle(Theme.inkSoft)
+                    Button("Choose Fashionpedia folder to export…") { pickingPatternExport = true }
+                        .font(Theme.body(14)).foregroundStyle(Theme.ink).disabled(model.isImporting)
+                        .fileImporter(isPresented: $pickingPatternExport, allowedContentTypes: [.folder]) { result in
+                            if case .success(let url) = result {
+                                Task { await model.exportPatternTraining(url) }
+                            }
+                        }
                 }
                 .padding(.top, 6)
             }

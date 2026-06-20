@@ -54,6 +54,36 @@ struct ClassifierHeuristicTests {
         }
     }
 
+    @Test("Pattern reconcile: model is authoritative on kind, heuristic on scale")
+    func resolvePattern() {
+        // No model → heuristic stands unchanged (preserves today's behavior).
+        let heuristicBusy: (type: PatternType?, scale: PatternScale?) = (nil, .small)
+        let fallback = VisionGarmentClassifier.resolvePattern(model: nil, heuristic: heuristicBusy)
+        #expect(fallback.type == nil)
+        #expect(fallback.scale == .small)
+
+        // Model says solid → force scale none, even if the heuristic saw edges.
+        let solid = VisionGarmentClassifier.resolvePattern(model: .solid, heuristic: (nil, .small))
+        #expect(solid.type == .solid)
+        #expect(solid.scale == PatternScale.none)
+
+        // Confident kind + a heuristic scale → keep that scale.
+        let striped = VisionGarmentClassifier.resolvePattern(model: .stripe, heuristic: (nil, .large))
+        #expect(striped.type == .stripe)
+        #expect(striped.scale == .large)
+
+        // Confident kind but heuristic found no scale (.none / nil) → default medium,
+        // so a detected print is never left scaleless.
+        let floralNoScale = VisionGarmentClassifier.resolvePattern(
+            model: .floral, heuristic: (.solid, PatternScale.none))
+        #expect(floralNoScale.type == .floral)
+        #expect(floralNoScale.scale == .medium)
+
+        let graphicNilScale = VisionGarmentClassifier.resolvePattern(model: .graphic, heuristic: (nil, nil))
+        #expect(graphicNilScale.type == .graphic)
+        #expect(graphicNilScale.scale == .medium)
+    }
+
     @Test("Bottom volume spreads across slim/straight/wide by fill ratio")
     func bottomVolumeGuess() {
         #expect(VisionGarmentClassifier.bottomVolumeGuess(stats(std: 0, edge: 0, fill: 0.85)) == .wide)

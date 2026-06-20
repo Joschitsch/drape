@@ -34,9 +34,23 @@ struct VisionGarmentClassifier: GarmentClassifier {
         return vnModel
     }()
 
+    /// On-device pattern-type model trained on the CC-BY Fashionpedia attributes
+    /// (see Tools/train_pattern_model.swift). Predicts a `PatternType` raw value.
+    /// Loaded once; nil when the model isn't bundled, so pattern classification
+    /// degrades to the `patternGuess` heuristic below. `nonisolated(unsafe)` for
+    /// the same reason as `categoryModel` — immutable, safe across Vision requests.
+    nonisolated(unsafe) private static let patternModel: VNCoreMLModel? = {
+        guard let url = Bundle.main.url(forResource: "GarmentPatternClassifier", withExtension: "mlmodelc"),
+              let model = try? MLModel(contentsOf: url),
+              let vnModel = try? VNCoreMLModel(for: model) else { return nil }
+        return vnModel
+    }()
+
     #if DEBUG
     /// Whether the on-device category model loaded — surfaced in the test harness.
     static var categoryModelAvailable: Bool { categoryModel != nil }
+    /// Whether the on-device pattern model loaded — surfaced in the test harness.
+    static var patternModelAvailable: Bool { patternModel != nil }
     #endif
 
     func classify(imageData: Data) async -> ClassificationSuggestion {
@@ -77,11 +91,15 @@ struct VisionGarmentClassifier: GarmentClassifier {
         let color = colorFromMaskedBuffer(maskedBuffer)
             ?? fallbackColor(of: ciImage)
 
-        // Pattern/texture come straight off the mask and never need a category, so
-        // they're inferred even when classification whiffs; length/volume and the
-        // fabric priors do need the category and stay gated on a match.
+        // Pattern/texture never need a category, so they're inferred even when
+        // classification whiffs; length/volume and the fabric priors do need the
+        // category and stay gated on a match. The pattern *kind* comes from the
+        // trained model (run on the normalised garment image); the heuristic
+        // supplies pattern *scale* and texture off the mask.
         let stats = maskedBuffer.flatMap(surfaceStats(maskedBuffer:))
-        let style = styleEstimate(category: match?.category, label: match?.label, stats: stats)
+        let modelPattern = modelPatternType(cgImage: cgImage)
+        let style = styleEstimate(category: match?.category, label: match?.label,
+                                  stats: stats, modelPattern: modelPattern)
 
         let subcategory = match?.category == .footwear
             ? bestFootwearSubcategory(from: observations)
@@ -150,12 +168,19 @@ struct VisionGarmentClassifier: GarmentClassifier {
     /// Builds the style estimate from the mask. Pattern + texture are derived
     /// whenever surface stats exist (no category needed); length/volume and the
     /// fabric/fit/structure priors are only filled when the category is known.
-    private func styleEstimate(category: GarmentCategory?, label: String?, stats: SurfaceStats?) -> StyleEstimate {
+    private func styleEstimate(category: GarmentCategory?, label: String?,
+                               stats: SurfaceStats?, modelPattern: PatternType?) -> StyleEstimate {
         var estimate = StyleEstimate()
 
         // ── Category-independent surface axes ────────────────────────────────
+        // Pattern *kind* is the model's (when confident); pattern *scale* and
+        // texture come off the mask. Resolve whenever either source has signal.
+        if stats != nil || modelPattern != nil {
+            let heuristic = stats.map(Self.patternGuess) ?? (type: nil, scale: nil)
+            (estimate.patternType, estimate.patternScale) =
+                Self.resolvePattern(model: modelPattern, heuristic: heuristic)
+        }
         if let stats {
-            (estimate.patternType, estimate.patternScale) = Self.patternGuess(stats)
             estimate.texture = Self.textureGuess(stats)
         }
 
@@ -193,6 +218,22 @@ struct VisionGarmentClassifier: GarmentClassifier {
         let scale: PatternScale = s.edgeDensity > 0.13 ? .small
             : (s.edgeDensity > 0.09 ? .medium : .large)
         return (nil, scale)
+    }
+
+    /// Reconciles the pattern model (authoritative on *kind*) with the heuristic
+    /// (which supplies *scale*). With no confident model prediction, the heuristic
+    /// stands as-is — preserving today's behavior. A `.solid` prediction forces
+    /// scale `.none`; a confident non-solid kind with no heuristic scale defaults
+    /// to `.medium` so a detected print is never left scaleless.
+    nonisolated static func resolvePattern(
+        model: PatternType?,
+        heuristic: (type: PatternType?, scale: PatternScale?)
+    ) -> (type: PatternType?, scale: PatternScale?) {
+        guard let model else { return heuristic }
+        if model == .solid { return (.solid, PatternScale.none) }
+        let scale: PatternScale = (heuristic.scale ?? PatternScale.none) == PatternScale.none
+            ? .medium : heuristic.scale!
+        return (model, scale)
     }
 
     /// Texture from brightness spread — independent of pattern. A smooth solid and
@@ -388,18 +429,40 @@ struct VisionGarmentClassifier: GarmentClassifier {
     /// `ClothingMatch`, reusing the label→properties table for warmth/formality/
     /// seasons. Returns nil when the model is absent or below the confidence floor,
     /// so the caller falls back to the generic Vision heuristic.
+    ///
+    /// The floor is deliberately low (0.3): the in-domain category model has ~15
+    /// classes, so a correct prediction's peak confidence is naturally lower than a
+    /// coarse model's. A higher floor discarded right-but-unsure garment guesses and
+    /// deferred to Vision's generic labels, which mislabel isolated tops as
+    /// "necktie"/"bag" — wrong category *and* wrong derived warmth/seasons. Trusting
+    /// the trained model down to 0.3 keeps those derivations on a garment label.
     private func modelMatch(cgImage: CGImage) -> ClothingMatch? {
         guard let model = Self.categoryModel else { return nil }
         let request = VNCoreMLRequest(model: model)
         request.imageCropAndScaleOption = .centerCrop
         try? VNImageRequestHandler(cgImage: cgImage).perform([request])
         guard let top = (request.results as? [VNClassificationObservation])?.first,
-              top.confidence >= 0.5 else { return nil }
+              top.confidence >= 0.3 else { return nil }
         let label = top.identifier.lowercased()
         guard let p = Self.properties(for: label) else { return nil }
         return ClothingMatch(category: p.category, warmth: p.warmth, formality: p.formality,
                              seasons: p.seasons, confidence: top.confidence,
                              specificity: p.specificity, label: label)
+    }
+
+    /// Runs the trained pattern model on the normalised garment image and returns
+    /// its top `PatternType` when above the confidence floor. The floor is higher
+    /// than the category model's (0.6 vs 0.5): pattern kinds are easily confused,
+    /// so we only override the heuristic when the model is genuinely sure, and
+    /// otherwise return nil to fall back to `patternGuess`.
+    private func modelPatternType(cgImage: CGImage) -> PatternType? {
+        guard let model = Self.patternModel else { return nil }
+        let request = VNCoreMLRequest(model: model)
+        request.imageCropAndScaleOption = .centerCrop
+        try? VNImageRequestHandler(cgImage: cgImage).perform([request])
+        guard let top = (request.results as? [VNClassificationObservation])?.first,
+              top.confidence >= 0.6 else { return nil }
+        return PatternType(rawValue: top.identifier.lowercased())
     }
 
     private func bestFootwearSubcategory(from observations: [VNClassificationObservation]) -> FootwearSubcategory? {
