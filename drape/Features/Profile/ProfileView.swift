@@ -369,10 +369,28 @@ struct ProfileView: View {
                     .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
+                Theme.line.frame(height: 0.5)
+                NavigationLink {
+                    DebugGroundTruthView()
+                } label: {
+                    HStack {
+                        Text("Ground-truth review & export")
+                            .font(Theme.body(15))
+                            .foregroundStyle(Theme.ink)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Theme.inkSoft)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
             }
             .drapeCard(radius: 14)
             .padding(.horizontal, Theme.contentPadding)
-            Text("Imports test wardrobes, scores autofill, runs the engine playground. Debug builds only.")
+            Text("Imports test wardrobes, scores autofill, runs the engine playground, and reviews real-garment autofill against ground truth. Debug builds only.")
                 .font(Theme.body(12))
                 .foregroundStyle(Theme.inkSoft)
                 .padding(.horizontal, Theme.contentPadding)

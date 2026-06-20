@@ -39,7 +39,7 @@ final class AddGarmentViewModel {
             // Pre-fill every classifier-committed axis (silhouette/fabric/pattern
             // included); unset axes stay for the user to fill if they care.
             draft.apply(classification: suggestion)
-            draft.name = Self.generateName(color: draft.primaryColor, category: draft.category)
+            draft.name = Self.generateName(category: draft.category)
             phase = .ready
 
             // Archetype is semantic — infer it after the pixel pass, off the
@@ -56,10 +56,10 @@ final class AddGarmentViewModel {
         }
     }
 
-    /// Produces a human-readable default name from the auto-detected attributes.
-    /// e.g. "Blue Top", "Black Sneakers", "White Coat".
-    private static func generateName(color: ColorTag, category: GarmentCategory) -> String {
-        "\(color.displayName) \(category.displayName)"
+    /// Produces a default name from the auto-detected category.
+    /// e.g. "Top", "Footwear", "Outerwear".
+    private static func generateName(category: GarmentCategory) -> String {
+        category.displayName
     }
 
     /// Persists the normalized image and inserts the garment. Returns whether it

@@ -182,7 +182,7 @@ struct DebugWardrobeImporter {
         let archetype = await styleArchetype.inferArchetype(
             descriptor: suggestion.descriptor, category: draft.category, styles: [])
         if let archetype { draft.archetype = archetype }
-        draft.name = "\(draft.primaryColor.displayName) \(draft.category.displayName)"
+        draft.name = draft.category.displayName
 
         guard let reference = try? await imageStore.save(processed) else { return nil }
         let garment = Garment(

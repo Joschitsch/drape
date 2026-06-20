@@ -247,8 +247,15 @@ struct WardrobeListView: View {
                 ForEach(chiplets) { chiplet in
                     Button(action: chiplet.remove) {
                         HStack(spacing: 5) {
-                            Text(chiplet.label)
-                                .font(Theme.body(12, weight: .medium))
+                            if let tag = chiplet.swatch {
+                                Circle()
+                                    .fill(tag.color)
+                                    .frame(width: 12, height: 12)
+                                    .overlay(Circle().strokeBorder(Theme.paper.opacity(0.5), lineWidth: 0.5))
+                            } else {
+                                Text(chiplet.label)
+                                    .font(Theme.body(12, weight: .medium))
+                            }
                             Image(systemName: "xmark")
                                 .font(.system(size: 9, weight: .bold))
                         }
@@ -271,13 +278,13 @@ struct WardrobeListView: View {
     }
 
     private struct Chiplet: Identifiable {
-        let id: String; let label: String; let remove: () -> Void
+        let id: String; let label: String; var swatch: ColorTag? = nil; let remove: () -> Void
     }
 
     private var summaryChiplets: [Chiplet] {
         var out: [Chiplet] = []
         for c in filter.colors.sorted(by: { $0.displayName < $1.displayName }) {
-            out.append(Chiplet(id: "color-\(c.id)", label: c.displayName) { filter.colors.remove(c) })
+            out.append(Chiplet(id: "color-\(c.id)", label: c.displayName, swatch: c) { filter.colors.remove(c) })
         }
         for f in filter.formalities.sorted(by: { $0.displayName < $1.displayName }) {
             out.append(Chiplet(id: "form-\(f.id)", label: f.displayName) { filter.formalities.remove(f) })

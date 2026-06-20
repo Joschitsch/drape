@@ -1,0 +1,2666 @@
+{
+  "axes" : [
+    {
+      "accuracy" : 0.6842105263157895,
+      "agreed" : 39,
+      "key" : "category",
+      "labeled" : 57,
+      "reviewed" : 57,
+      "title" : "Category"
+    },
+    {
+      "accuracy" : 1,
+      "agreed" : 2,
+      "key" : "footwearSubcategory",
+      "labeled" : 2,
+      "reviewed" : 57,
+      "title" : "Footwear type"
+    },
+    {
+      "accuracy" : 0.6666666666666666,
+      "agreed" : 38,
+      "key" : "primaryColor",
+      "labeled" : 57,
+      "reviewed" : 57,
+      "title" : "Primary color"
+    },
+    {
+      "accuracy" : 0.631578947368421,
+      "agreed" : 36,
+      "key" : "formality",
+      "labeled" : 57,
+      "reviewed" : 57,
+      "title" : "Formality"
+    },
+    {
+      "accuracy" : 0.9122807017543859,
+      "agreed" : 52,
+      "key" : "warmth",
+      "labeled" : 57,
+      "reviewed" : 57,
+      "title" : "Warmth"
+    },
+    {
+      "accuracy" : 0.7368421052631579,
+      "agreed" : 42,
+      "key" : "seasons",
+      "labeled" : 57,
+      "reviewed" : 57,
+      "title" : "Seasons"
+    },
+    {
+      "accuracy" : 0.5636363636363636,
+      "agreed" : 31,
+      "key" : "fit",
+      "labeled" : 55,
+      "reviewed" : 57,
+      "title" : "Fit"
+    },
+    {
+      "accuracy" : 0.36666666666666664,
+      "agreed" : 11,
+      "key" : "topLength",
+      "labeled" : 30,
+      "reviewed" : 57,
+      "title" : "Top length"
+    },
+    {
+      "accuracy" : 0.6470588235294118,
+      "agreed" : 11,
+      "key" : "bottomVolume",
+      "labeled" : 17,
+      "reviewed" : 57,
+      "title" : "Bottom volume"
+    },
+    {
+      "accuracy" : 0.5740740740740741,
+      "agreed" : 31,
+      "key" : "structure",
+      "labeled" : 54,
+      "reviewed" : 57,
+      "title" : "Structure"
+    },
+    {
+      "accuracy" : 0.6909090909090909,
+      "agreed" : 38,
+      "key" : "fabricWeight",
+      "labeled" : 55,
+      "reviewed" : 57,
+      "title" : "Fabric weight"
+    },
+    {
+      "accuracy" : 0.5714285714285714,
+      "agreed" : 32,
+      "key" : "patternType",
+      "labeled" : 56,
+      "reviewed" : 57,
+      "title" : "Pattern type"
+    },
+    {
+      "accuracy" : 0.6428571428571429,
+      "agreed" : 36,
+      "key" : "patternScale",
+      "labeled" : 56,
+      "reviewed" : 57,
+      "title" : "Pattern scale"
+    },
+    {
+      "accuracy" : 0.5535714285714286,
+      "agreed" : 31,
+      "key" : "texture",
+      "labeled" : 56,
+      "reviewed" : 57,
+      "title" : "Texture"
+    },
+    {
+      "accuracy" : 0.47368421052631576,
+      "agreed" : 27,
+      "key" : "archetype",
+      "labeled" : 57,
+      "reviewed" : 57,
+      "title" : "Archetype"
+    }
+  ],
+  "exportedAt" : "2026-06-19T17:23:41Z",
+  "records" : [
+    {
+      "auto" : {
+        "archetype" : "boho",
+        "category" : "accessory",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "927A43F5-4DF0-49D3-8274-232F46663A70",
+      "imageAssetID" : "6F7E0E05-897F-4F05-9AC6-FA52A02385DB.png",
+      "name" : "Accessory",
+      "reviewed" : true,
+      "thumbnailAssetID" : "C32D38AD-AAE3-44A2-94BB-0007E41F5D46.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ivory",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:48:19Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "accessory",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "forest",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "C484511D-53CC-415F-8904-53D23B772042",
+      "imageAssetID" : "AB6D0A75-0005-4122-9C25-2E2CBD87A695.png",
+      "name" : "Accessory",
+      "reviewed" : true,
+      "thumbnailAssetID" : "7E28E13C-51EB-4F1A-8471-71AD9D249A06.png",
+      "truth" : {
+        "archetype" : "boho",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "forest",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:02:07Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "accessory",
+        "formality" : 3,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "66E7962B-386E-4196-B0A9-A3E772E46FBD",
+      "imageAssetID" : "FEE4576D-4DF8-421D-AE04-09F920344DFF.png",
+      "name" : "Accessory",
+      "reviewed" : true,
+      "thumbnailAssetID" : "8A05D429-C804-42AB-8A76-C3EF63C5B457.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "structured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:20:30Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "accessory",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "22B76724-DD50-49B5-98FF-8DDC56E65EA1",
+      "imageAssetID" : "4D111BBA-36A5-410C-A79B-6C8B44DAA8D0.png",
+      "name" : "Accessory",
+      "reviewed" : true,
+      "thumbnailAssetID" : "7C24CC4A-9468-4611-A62E-D93D96A223BE.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 3,
+        "patternScale" : "large",
+        "patternType" : "floral",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:10:31Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "rust",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "5C5A5A1B-88EE-454E-AB9B-948053E74048",
+      "imageAssetID" : "6512B1B7-7766-4806-9101-04BFFCB28C3C.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "D5CE6BA2-7672-4C3C-826C-7897F2D1FC30.png",
+      "truth" : {
+        "archetype" : "boho",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "medium",
+        "patternType" : "floral",
+        "primaryColor" : "rust",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:11:36Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "9BECC841-3E9F-42B4-B65C-CA74A576A246",
+      "imageAssetID" : "DB80E940-AF8A-4BED-8C5D-0248D614D1DC.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "17860FAB-E4A0-41C4-AB42-6450A95C68E2.png",
+      "truth" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:59:33Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "D3B66B1A-33C4-49F3-A6D2-FC630B923D79",
+      "imageAssetID" : "65FE0870-9D26-470C-9938-CA21D665CF6F.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "76BA705F-FD42-4B38-955D-934550B0EA26.png",
+      "truth" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "forest",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:55:18Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "219C13F6-FF89-4FEE-A929-774A8BBAD00A",
+      "imageAssetID" : "1BBD662D-AD8C-466C-8DF2-74D7B8BE77BB.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "BA001F1E-175C-4BDB-8D3D-33D8013B6802.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "floral",
+        "primaryColor" : "ivory",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:45:45Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "boho",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "E5209682-ECCC-481B-A168-FDE6E6E95C89",
+      "imageAssetID" : "EEF32B94-6F21-4A37-834D-0D1DA0CBEB4A.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "F23BF606-7948-4DFF-BE3D-4282C6B50764.png",
+      "truth" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:58:49Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "slim",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "35F517D9-DE78-4FD9-A6F3-F5D5377AF077",
+      "imageAssetID" : "7AF6F951-7E07-4F31-829A-BC620F6ACE65.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "79D4459B-A7A2-4F2A-8C5D-B75CBAB5696F.png",
+      "truth" : {
+        "archetype" : "boho",
+        "category" : "top",
+        "fabricWeight" : "medium",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "burgundy",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:09:04Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "boho",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "DA926F8C-8643-4C6C-85F0-834C67247F92",
+      "imageAssetID" : "CF807D01-8B54-4307-9CCA-E0BDCEE8FD28.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "D24FAB92-4509-4FF1-83C1-F88DBAC9EA66.png",
+      "truth" : {
+        "archetype" : "boho",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "floral",
+        "primaryColor" : "burgundy",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:44:29Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "forest",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "1466C0FD-8173-4054-A72B-592A4D537EBD",
+      "imageAssetID" : "FFDEF31E-AAD8-4A0A-9708-B568FF405B18.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "FA3540D6-2C42-48A2-A15C-26FFA29636A9.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:20:34Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "F3FFE725-B39D-4C83-8FE9-F4D62BEF02A5",
+      "imageAssetID" : "5EFEDAAB-1A24-4ACB-8378-D818C0CAFF3E.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "F8DF384F-5A13-48A8-8F67-5181AF310328.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 3,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:07:48Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "smooth",
+        "warmth" : 1
+      },
+      "id" : "2F2C3824-588B-4927-ADA2-B22E61AF014D",
+      "imageAssetID" : "CE0ED390-3399-4578-B74F-CC5FA15E20A9.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "CD85C1F7-79E5-42AF-B0E3-15A71F061E46.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "oat",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:52:35Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "boho",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "D2C13082-68AB-42AE-B667-63A2DDA4AE8E",
+      "imageAssetID" : "2346C49F-5925-4F42-BF05-E7315E17E8B9.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "51D2390A-69A7-4ACA-92E9-5944B9F5AC7F.png",
+      "truth" : {
+        "archetype" : "boho",
+        "category" : "dress",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "medium",
+        "patternType" : "floral",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:43:24Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "boho",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "tobacco",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "6DBD2DD9-5C72-4A5E-B898-EBF0DB0DCA65",
+      "imageAssetID" : "920A6A12-82E1-4E88-9FBD-9541115F6B61.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "F6822063-25DA-431F-BAB6-62F25B13F8BC.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "tobacco",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:01:18Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "83799912-64A6-4559-BAB8-EB218B33B0A0",
+      "imageAssetID" : "E2A411DF-DBF1-4F65-AC9A-ACD983B415BD.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "DC93A82D-A137-425D-B7DB-8A49B4161B73.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "denim",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:50:19Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "E8D8F75E-A30D-429E-9BAE-3B360CCA8C00",
+      "imageAssetID" : "00E75701-464D-4996-A8B5-1AB5DF36056A.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "1AB4A59A-F8F5-448C-B062-F8CD67CEB047.png",
+      "truth" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:57:27Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "D453CE79-E102-4F6B-BE09-62319CE2A666",
+      "imageAssetID" : "FF0212F8-EA57-42EB-A101-0292F940B3FC.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "07D22763-E9EE-4FA9-975F-59B76E0842DD.png",
+      "truth" : {
+        "archetype" : "boho",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "light",
+        "fit" : "relaxed",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "abstract",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:12:24Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "959CDCB9-BEDE-4CD6-AE82-A9A983EACF22",
+      "imageAssetID" : "3693D6F0-CE33-4221-A7D6-4ADD3B3FFFB8.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "DE739CFF-BBFB-4840-B387-33BB6398BDA2.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:22:58Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "boho",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "05262EBB-D1DF-4E4F-9735-29A05703B511",
+      "imageAssetID" : "4A8AD15D-21F4-4541-80BB-041F3C805BE0.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "B3F2E65E-9CEF-4DCD-96D0-2E6E38F49229.png",
+      "truth" : {
+        "archetype" : "boho",
+        "bottomVolume" : "wide",
+        "category" : "top",
+        "fabricWeight" : "medium",
+        "fit" : "slim",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:16:59Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "6F252418-BB1C-432D-97B0-C9ABB19650C7",
+      "imageAssetID" : "97994D62-D01D-4589-8560-82A3518C7B5B.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "5AC94FD8-BE70-439A-9CE4-03677790ACC6.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "category" : "dress",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 3,
+        "patternScale" : "small",
+        "patternType" : "floral",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:18:07Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "794533B0-2376-45A8-8045-B8BBABCBA688",
+      "imageAssetID" : "D4B2E083-C0EA-4EDA-94CA-A81DDF0EB894.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "57507C52-1251-49FF-AFBC-C90D711B5B48.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:53:50Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "preppy",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 1
+      },
+      "id" : "337F0DBE-2AF6-487C-BF1F-47D736C9C616",
+      "imageAssetID" : "CF430DC5-25E6-493F-A294-5A9DBFF1AF3D.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "6C979483-1A0F-4BB4-847D-CBC971718892.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:58:13Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "4CA0A558-0F7F-43DC-A491-A6D4B4CEBA50",
+      "imageAssetID" : "5C8B148A-F260-4E1D-AC2E-CB2AF4AF64B5.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "737899AD-0FE7-492A-BD91-A89AB32215E0.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "relaxed",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:08:21Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "820FAC7D-CE06-4F57-B2D2-D5F1F3677B47",
+      "imageAssetID" : "B78FAC2D-DC5D-4406-A602-ACF07FF50AF2.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "D0EF028C-A795-4C23-9264-A4FEF473D7A8.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 3,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:21:07Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "preppy",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "A40A200F-CE7B-4BBF-8C98-A3169B229553",
+      "imageAssetID" : "EA071417-56FC-4601-B344-EBDC5DC98AFF.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "0752659C-E96A-4897-AB95-4DB3C401FB1B.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "oversized",
+        "formality" : 2,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T17:16:10Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "9BD9314D-391A-4EBC-9C74-6EC0F032C3DE",
+      "imageAssetID" : "5FC8E4EC-143C-41C9-874D-C1717977414D.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "D20AF790-17F3-4BE5-AF27-29263E3E3B1B.png",
+      "truth" : {
+        "archetype" : "classic",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "oversized",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T17:04:44Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "7F614BD0-6CFC-405E-ACD9-C8B4E0E8A901",
+      "imageAssetID" : "D4FD2B13-F315-4A59-BB5F-D87B594565BF.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "2E3C8C6F-DFE8-46FB-8E97-AD6D1FAC5062.png",
+      "truth" : {
+        "archetype" : "classic",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "relaxed",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:54:34Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "wide",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "camel",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "FD2B1477-BED3-4479-A6A8-2B7A77BCC348",
+      "imageAssetID" : "EF9DD94D-4C37-4E66-8F96-0B196FC53A70.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "BF6E7304-86D8-4E95-B86E-217658DCBAA8.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "bottomVolume" : "slim",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:03:45Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "id" : "1F043FB6-236F-4A57-BB96-C09FC3FBC1CC",
+      "imageAssetID" : "D6275E48-93C7-454A-9B1A-F6AFAD24DE1A.png",
+      "name" : "Bottom",
+      "reviewed" : true,
+      "thumbnailAssetID" : "6732F9E3-5107-47E8-BFDE-CBEA705DBD19.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "bottomVolume" : "straight",
+        "category" : "bottom",
+        "fabricWeight" : "light",
+        "fit" : "relaxed",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "sage",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:55:52Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "82A6781A-38B5-46DF-9063-E0BA263139B8",
+      "imageAssetID" : "C3D19D91-8A57-4587-AA50-E7EE566C308F.png",
+      "name" : "Dress",
+      "reviewed" : true,
+      "thumbnailAssetID" : "8F8CCA5A-A2FD-4130-A5A1-FB63D75A06A6.png",
+      "truth" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "forest",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:21:44Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "romantic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "10D0D01F-6153-4FD4-A598-9EF3A286E422",
+      "imageAssetID" : "9D4E74C3-95A6-4AEA-9E87-026D30E541F1.png",
+      "name" : "Dress",
+      "reviewed" : true,
+      "thumbnailAssetID" : "28D21A87-ACF0-4A91-A87B-DFF668CD6F20.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "abstract",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:17:26Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "denim",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "8441C3BE-AEEB-4420-B0D9-BE5384AA83BB",
+      "imageAssetID" : "3651A390-0E06-4555-A9A8-13AB2EC8A57C.png",
+      "name" : "Dress",
+      "reviewed" : true,
+      "thumbnailAssetID" : "4A0678FC-2926-421D-A91F-F2F21E296847.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "relaxed",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "denim",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:51:21Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "medium",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "F7BF076B-1E51-4AA0-8444-D8F7BED821A0",
+      "imageAssetID" : "74E1C833-D41B-49F9-BCB4-6E77D9C2F631.png",
+      "name" : "Dress",
+      "reviewed" : true,
+      "thumbnailAssetID" : "896ABA49-DA17-4189-B854-63C1D966E077.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "dress",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "medium",
+        "patternType" : "abstract",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:14:37Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "footwear",
+        "footwearSubcategory" : "athletic",
+        "formality" : 0,
+        "patternScale" : "small",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "texture" : "textured",
+        "warmth" : 0
+      },
+      "id" : "75555DE4-7A83-406A-99A8-D14522F5A294",
+      "imageAssetID" : "DD0AE56F-E211-485B-AF53-67EE9A993228.png",
+      "name" : "Footwear",
+      "reviewed" : true,
+      "thumbnailAssetID" : "8465D4DB-EDBF-4992-A965-ACD75AC0B123.png",
+      "truth" : {
+        "archetype" : "sporty",
+        "category" : "footwear",
+        "footwearSubcategory" : "athletic",
+        "formality" : 0,
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:30:22Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "footwear",
+        "footwearSubcategory" : "sandal",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "id" : "7DBDA81E-840D-40E9-AAC7-3DA849875D89",
+      "imageAssetID" : "555814F1-A55B-4EEC-9A60-EA3000196D21.png",
+      "name" : "Footwear",
+      "reviewed" : true,
+      "thumbnailAssetID" : "82DF2CF7-0CDB-4F20-B1A8-262748734BEC.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "footwear",
+        "footwearSubcategory" : "sandal",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "oat",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:38:30Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "outerwear",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "structured",
+        "texture" : "subtleTexture",
+        "warmth" : 2
+      },
+      "id" : "3144A354-1433-4BAD-A0EE-C26DD1471EF4",
+      "imageAssetID" : "FD81130B-178A-410A-8F2C-CBD8025D5A55.png",
+      "name" : "Outerwear",
+      "reviewed" : true,
+      "thumbnailAssetID" : "E6956472-6CC5-4597-858A-3839FEB6CE0D.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "outerwear",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "autumn"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:40:40Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "id" : "35E1CE58-B787-432F-8422-E2050815ED3A",
+      "imageAssetID" : "F1E2083D-B391-48A7-B169-8413D0D5A412.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "651C8636-6E6E-4B4B-94A5-647290510879.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:41:54Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 1
+      },
+      "id" : "C54596C5-6ED9-4D7A-BB0E-301F5A6A1BBF",
+      "imageAssetID" : "C5942A87-2FF8-4014-99C8-639AAFD4C800.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "36A8A3E6-D751-44F2-8687-90839BDFB435.png",
+      "truth" : {
+        "archetype" : "boho",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter",
+          "summer"
+        ],
+        "structure" : "structured",
+        "texture" : "textured",
+        "topLength" : "cropped",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T17:19:56Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "id" : "37533970-F8CB-4BC8-AA63-DC87EDD19946",
+      "imageAssetID" : "8746107C-7B30-4E75-A3F1-C183845472B9.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "863533A9-3CDC-4A62-8069-66C002A30E79.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:25:16Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "id" : "1E8E2184-B3D1-4172-A47D-8F73149F5A80",
+      "imageAssetID" : "CCC01222-0F3D-42CC-9156-16ABEE88150C.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "B4F9B65B-8A6B-484B-BC47-452BCE6ABD8A.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "medium",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:13:54Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "id" : "2786B042-13C9-478C-AA7A-F962AC65407E",
+      "imageAssetID" : "11177577-9CCF-4F1E-B026-0A15B092F2D5.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "12FA89E4-4368-435B-81B2-097FD8767080.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:22:28Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "92787C9E-43CD-416E-893D-841786BBB636",
+      "imageAssetID" : "A5C5C555-3AD2-4D6E-BDF5-B26E932C3846.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "D56B073F-5C6A-46FE-9201-6C847FF210D7.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:06:32Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "preppy",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 1
+      },
+      "id" : "EC7ABE7A-7B15-466B-87AF-30000E7FC575",
+      "imageAssetID" : "A96D033C-D60A-4765-BFBF-99C195408443.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "D3B59289-DC83-4235-BACF-A152741A0A15.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:00:34Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "large",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "id" : "F4D7B3FC-94B1-416B-A52C-162EC75871DA",
+      "imageAssetID" : "9CAC031D-516A-46BE-BB64-CF56F2AE81E0.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "1DEC4E00-1D37-4079-9BC8-1FAC01E20E71.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:15:20Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "id" : "50F49D23-99B8-47E7-AB42-8D67B0BB868F",
+      "imageAssetID" : "6FC35790-8D27-40CA-B83F-B892A2D764F6.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "6CD83FA3-A677-4746-9C6D-0230EBFA29C1.png",
+      "truth" : {
+        "archetype" : "minimalist",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ecru",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:13:23Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "id" : "2DEAD7F6-0C55-43FB-A171-AC44AD58050D",
+      "imageAssetID" : "7A355B48-B404-4003-8661-61A58B36AAEF.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "AA7E7969-D458-4466-8E67-68106964A7FB.png",
+      "truth" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:09:39Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "burgundy",
+        "seasons" : [
+
+        ],
+        "texture" : "subtleTexture",
+        "warmth" : 1
+      },
+      "id" : "A16E867C-FD09-4664-9B89-D73120740E53",
+      "imageAssetID" : "CA62F0A7-EE03-4C95-99EA-D0F4612D2052.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "34B71DDD-A053-4477-8524-2D2A65D741A1.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "burgundy",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:22:22Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "small",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "id" : "F9420159-5AB6-4C20-BE14-E21F6F80E8EB",
+      "imageAssetID" : "ADAD1C40-A0D4-41CF-9D1E-33F32913B8E3.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "04FF12E1-B629-4365-A726-C66FF2F9F7FC.png",
+      "truth" : {
+        "archetype" : "preppy",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "navy",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "structured",
+        "texture" : "textured",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:56:57Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "textured",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "id" : "CFE95192-E8FD-4C7E-B8F4-97D87EC2620C",
+      "imageAssetID" : "B18B9EA2-969D-47FB-A5BE-A602C8CC973B.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "32292079-AF26-4D65-89E0-E99F1699CFDA.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "check",
+        "primaryColor" : "mauve",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "textured",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T17:18:54Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "id" : "B9032AA2-6227-406E-8DC3-07CA53A0AA20",
+      "imageAssetID" : "3BAC7E11-7B5F-4AEB-A60E-F409D80D8946.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "A7E2471D-6958-4E14-9A50-AE2EDBA5E49C.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "chocolate",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T16:46:48Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "id" : "5D529301-A3D0-49DE-83F8-9F4CA1C9DF8C",
+      "imageAssetID" : "A708F5F1-E959-4AEA-8661-94D9BC022A3D.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "B7820EC9-36ED-422D-A753-3836C6B28A3D.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:22:21Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "id" : "8B1549F1-603B-4E96-BF59-4E0C382E91B7",
+      "imageAssetID" : "366BB7D5-0681-487B-99DB-4544904347C5.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "BF0E1555-BC80-4866-9368-39E60FD4D88C.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 1,
+        "patternScale" : "small",
+        "patternType" : "stripe",
+        "primaryColor" : "tobacco",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "semiStructured",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:23:33Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "id" : "8341DFCC-9FC8-493F-8BFC-3A0EA4D9BF00",
+      "imageAssetID" : "49804D6A-2A28-4D5D-B9F5-8BE62EF2E9A3.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "9C4C8F6F-8FF8-4630-9D71-38EA5DC2AE9A.png",
+      "truth" : {
+        "archetype" : "romantic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "slim",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "charcoal",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "structured",
+        "texture" : "textured",
+        "topLength" : "cropped",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T16:49:36Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "winter"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 1
+      },
+      "id" : "5DF16845-47C9-4BAC-8E8C-11BDC06517AF",
+      "imageAssetID" : "0E30C34D-3D75-42F6-9932-FFA1C23BCA5B.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "C4B5569F-FB38-4BBD-B523-3F544F7877B9.png",
+      "truth" : {
+        "archetype" : "classic",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "slate",
+        "seasons" : [
+          "spring",
+          "autumn",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "cropped",
+        "warmth" : 1
+      },
+      "updatedAt" : "2026-06-19T17:05:22Z"
+    },
+    {
+      "auto" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "subtleTexture",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "id" : "3B1618CF-7E90-4F60-84BE-79B4FA293FB8",
+      "imageAssetID" : "9340A708-FCF2-4B1B-89C4-F4191703C9F2.png",
+      "name" : "Top",
+      "reviewed" : true,
+      "thumbnailAssetID" : "8F398643-5811-4EB4-AB9D-30708BC0093C.png",
+      "truth" : {
+        "archetype" : "sporty",
+        "category" : "top",
+        "fabricWeight" : "light",
+        "fit" : "regular",
+        "formality" : 0,
+        "patternScale" : "none",
+        "patternType" : "solid",
+        "primaryColor" : "ink",
+        "seasons" : [
+          "spring",
+          "summer"
+        ],
+        "structure" : "soft",
+        "texture" : "smooth",
+        "topLength" : "regular",
+        "warmth" : 0
+      },
+      "updatedAt" : "2026-06-19T17:10:48Z"
+    }
+  ],
+  "reviewedCount" : 57,
+  "total" : 57
+}

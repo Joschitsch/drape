@@ -40,8 +40,15 @@ struct VisionGarmentClassifier: GarmentClassifier {
     #endif
 
     func classify(imageData: Data) async -> ClassificationSuggestion {
+        await analyze(imageData: imageData).suggestion
+    }
+
+    /// Shared core: produces the suggestion *and* the masked-pixel surface stats.
+    /// `classify` drops the stats; the DEBUG diagnostics hook keeps them so the
+    /// ground-truth loop can export the raw features that drive threshold tuning.
+    private func analyze(imageData: Data) async -> (suggestion: ClassificationSuggestion, stats: SurfaceStats?) {
         guard let uiImage = UIImage(data: imageData),
-              let cgImage = uiImage.cgImage else { return .empty }
+              let cgImage = uiImage.cgImage else { return (.empty, nil) }
 
         let ciImage = CIImage(cgImage: cgImage)
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
@@ -80,7 +87,7 @@ struct VisionGarmentClassifier: GarmentClassifier {
             ? bestFootwearSubcategory(from: observations)
             : nil
 
-        return ClassificationSuggestion(
+        let suggestion = ClassificationSuggestion(
             category:             match?.category,
             primaryColor:         color,
             categoryConfidence:   Double(match?.confidence ?? 0),
@@ -98,7 +105,24 @@ struct VisionGarmentClassifier: GarmentClassifier {
             texture:              style.texture,
             descriptor:           match?.label
         )
+        return (suggestion, stats)
     }
+
+    #if DEBUG
+    /// DEBUG-only: classify and also surface the raw masked-pixel statistics, so the
+    /// ground-truth re-run loop can export the features that the numeric heuristics
+    /// (texture / pattern / length / volume) are fit against.
+    func classifyWithDiagnostics(imageData: Data) async -> (ClassificationSuggestion, ClassifierDiagnostics?) {
+        let result = await analyze(imageData: imageData)
+        let diagnostics = result.stats.map {
+            ClassifierDiagnostics(luminanceStdDev: $0.luminanceStdDev,
+                                  edgeDensity: $0.edgeDensity,
+                                  aspect: $0.aspect,
+                                  fillRatio: $0.fillRatio)
+        }
+        return (result.suggestion, diagnostics)
+    }
+    #endif
 
     // MARK: - Silhouette / fabric / pattern heuristics
 
@@ -587,3 +611,7 @@ struct VisionGarmentClassifier: GarmentClassifier {
     }
     // swiftlint:enable cyclomatic_complexity function_body_length
 }
+
+#if DEBUG
+extension VisionGarmentClassifier: DiagnosticGarmentClassifier {}
+#endif

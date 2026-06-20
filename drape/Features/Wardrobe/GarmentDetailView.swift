@@ -160,7 +160,6 @@ struct GarmentDetailView: View {
 
     private var attributeTags: some View {
         let tags: [String] = [
-            garment.primaryColor.displayName,
             garment.formality.displayName,
             garment.warmth.displayName + " warmth",
         ] + [garment.archetype?.displayName, garment.fit?.displayName].compactMap { $0 }
