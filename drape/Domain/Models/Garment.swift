@@ -30,10 +30,15 @@ final class Garment {
 
     var primaryColor: ColorTag = ColorTag.ink
     var secondaryColors: [ColorTag] = []
-    /// Exact user-picked color (hex) for display. When set, it overrides
-    /// `primaryColor` visually; `primaryColor` still holds the nearest named
-    /// color so the engine can read a color family.
+    /// The garment's exact primary color (hex). Source of truth for both display
+    /// and the recommendation engine's perceptual color harmony; `primaryColor`
+    /// holds the nearest named tag for the filter/swatch and as a fallback when
+    /// no hex was captured. Set by the classifier (extracted) or the color picker.
     var customColorHex: String? = nil
+    /// Exact secondary/accent colors (hex), extracted alongside the primary. The
+    /// engine's source of truth for accents; `secondaryColors` holds the snapped
+    /// tags for any UI/debug use. Additive with a default — no SwiftData migration.
+    var secondaryColorHexes: [String] = []
 
     var formality: Formality = Formality.casual
     var warmth: WarmthLevel = WarmthLevel.medium
@@ -108,6 +113,14 @@ final class Garment {
     /// Number of times this item has been worn — drives cost-per-wear and the
     /// "rarely used" analytics.
     var wearCount: Int { wearEvents.count }
+
+    /// The garment's true primary color as hex: the captured/picked `customColorHex`
+    /// when present, otherwise the named `primaryColor`'s canonical hex. This is
+    /// what the engine reasons about.
+    var resolvedColorHex: String {
+        if let hex = customColorHex, !hex.isEmpty { return hex }
+        return primaryColor.hex
+    }
 
     // MARK: - Style-attribute accessors
     //

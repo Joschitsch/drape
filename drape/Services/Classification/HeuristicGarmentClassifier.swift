@@ -33,9 +33,10 @@ struct HeuristicGarmentClassifier: GarmentClassifier {
         )
 
         guard let avg = averageColor(of: image.cropped(to: crop)) else { return .empty }
+        let color = PerceptualColor(red: avg.0, green: avg.1, blue: avg.2)
         let tag = ColorTag.nearest(red: avg.0, green: avg.1, blue: avg.2)
         // Color is a hint, not a certainty; category is deliberately unset.
-        return ClassificationSuggestion(primaryColor: tag, categoryConfidence: 0)
+        return ClassificationSuggestion(primaryColor: tag, primaryColorHex: color.hex, categoryConfidence: 0)
     }
 
     /// Reduces a region to its single average sRGB color via `CIAreaAverage`.

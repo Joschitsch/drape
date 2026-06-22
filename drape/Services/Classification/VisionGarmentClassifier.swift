@@ -88,8 +88,8 @@ struct VisionGarmentClassifier: GarmentClassifier {
                                         croppedToInstancesExtent: true)
         }
 
-        let color = colorFromMaskedBuffer(maskedBuffer)
-            ?? fallbackColor(of: ciImage)
+        let colors = colorsFromMaskedBuffer(maskedBuffer)
+            ?? fallbackColors(of: ciImage)
 
         // Pattern/texture never need a category, so they're inferred even when
         // classification whiffs; length/volume and the fabric priors do need the
@@ -107,7 +107,10 @@ struct VisionGarmentClassifier: GarmentClassifier {
 
         let suggestion = ClassificationSuggestion(
             category:             match?.category,
-            primaryColor:         color,
+            primaryColor:         colors?.primary,
+            secondaryColors:      colors?.secondaries ?? [],
+            primaryColorHex:      colors?.primaryHex,
+            secondaryColorHexes:  colors?.secondaryHexes ?? [],
             categoryConfidence:   Double(match?.confidence ?? 0),
             warmth:               match?.warmth,
             formality:            match?.formality,
@@ -362,55 +365,88 @@ struct VisionGarmentClassifier: GarmentClassifier {
 
     // MARK: - Color extraction
 
-    /// Inner-crop average mapped to the nearest `ColorTag` — the fallback when no
-    /// foreground mask is available. Misses most canvas on well-framed shots.
-    private func fallbackColor(of image: CIImage) -> ColorTag? {
-        let e = image.extent
-        return averageColor(of: image.cropped(to: e.insetBy(dx: e.width * 0.25, dy: e.height * 0.25)))
+    /// The garment's extracted palette: a true primary plus any distinct accents,
+    /// each as both an exact hex and its nearest named `ColorTag`.
+    private struct ExtractedColors {
+        let primary: ColorTag
+        let primaryHex: String
+        let secondaries: [ColorTag]
+        let secondaryHexes: [String]
     }
 
-    /// Alpha-weighted average over the masked subject: the foreground mask turns
-    /// the background transparent, so `CIAreaAverage` (premultiplied) divided by
-    /// the average alpha yields the true garment color with no canvas bleed.
-    private func colorFromMaskedBuffer(_ buffer: CVPixelBuffer?) -> ColorTag? {
+    /// How many pixels (long edge) to sample for clustering. A single garment's
+    /// colors are coarse, so a small grid is plenty and keeps k-means cheap.
+    private static let colorSampleSize = 96
+    private static let extractor = DominantColorExtractor()
+
+    /// Builds an `ExtractedColors` from a list of garment-pixel colors via
+    /// dominant-color clustering. Returns nil when there were no usable pixels.
+    private func extract(from samples: [PerceptualColor]) -> ExtractedColors? {
+        let dominant = Self.extractor.dominant(from: samples, maxColors: 3)
+        guard let primary = dominant.first else { return nil }
+        let secondaries = Array(dominant.dropFirst())
+        func tag(_ c: PerceptualColor) -> ColorTag { ColorTag.nearest(red: c.red, green: c.green, blue: c.blue) }
+        return ExtractedColors(
+            primary: tag(primary),
+            primaryHex: primary.hex,
+            secondaries: secondaries.map(tag),
+            secondaryHexes: secondaries.map(\.hex))
+    }
+
+    /// Clusters the masked subject's pixels: the foreground mask makes the
+    /// background transparent, so we keep only well-covered pixels (un-premultiplied
+    /// to recover the straight garment color) and cluster those. Yields a true
+    /// dominant color plus distinct accents — not a muddy single average.
+    private func colorsFromMaskedBuffer(_ buffer: CVPixelBuffer?) -> ExtractedColors? {
         guard let buffer else { return nil }
         let masked = CIImage(cvPixelBuffer: buffer)
-
-        guard let filter = CIFilter(name: "CIAreaAverage", parameters: [
-                  kCIInputImageKey:  masked,
-                  kCIInputExtentKey: CIVector(cgRect: masked.extent)]),
-              let output = filter.outputImage else { return nil }
-
-        var px = [UInt8](repeating: 0, count: 4)
-        ciContext.render(output, toBitmap: &px, rowBytes: 4,
-                         bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-                         format: .RGBA8,
-                         colorSpace: CGColorSpaceCreateDeviceRGB())
-
-        let a = Double(px[3]) / 255
-        guard a > 0.02 else { return nil }   // essentially no subject
-        // Un-premultiply to recover the straight garment color.
-        let r = min(1, Double(px[0]) / 255 / a)
-        let g = min(1, Double(px[1]) / 255 / a)
-        let b = min(1, Double(px[2]) / 255 / a)
-        return ColorTag.nearest(red: r, green: g, blue: b)
+        let samples = sampledColors(of: masked, alphaThreshold: 0.5)
+        guard samples.count >= 8 else { return nil }   // too little subject to trust
+        return extract(from: samples)
     }
 
-    /// CIAreaAverage over the given region, mapped to the nearest `ColorTag`.
-    private func averageColor(of image: CIImage) -> ColorTag? {
-        guard let filter = CIFilter(name: "CIAreaAverage", parameters: [
-                  kCIInputImageKey:    image,
-                  kCIInputExtentKey:   CIVector(cgRect: image.extent)]),
-              let output = filter.outputImage else { return nil }
+    /// Fallback when no foreground mask is available: cluster the inner crop, which
+    /// is mostly garment on a well-framed shot. No alpha to gate on.
+    private func fallbackColors(of image: CIImage) -> ExtractedColors? {
+        let e = image.extent
+        let inner = image.cropped(to: e.insetBy(dx: e.width * 0.25, dy: e.height * 0.25))
+        let samples = sampledColors(of: inner, alphaThreshold: 0)
+        guard !samples.isEmpty else { return nil }
+        return extract(from: samples)
+    }
 
-        var pixel = [UInt8](repeating: 0, count: 4)
-        ciContext.render(output, toBitmap: &pixel, rowBytes: 4,
-                         bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+    /// Renders `image` down to a small RGBA8 grid and returns the colors of pixels
+    /// whose alpha clears `alphaThreshold`, un-premultiplied. The downsample both
+    /// bounds clustering cost and averages out sensor noise.
+    private func sampledColors(of image: CIImage, alphaThreshold: Double) -> [PerceptualColor] {
+        let extent = image.extent
+        guard extent.width >= 1, extent.height >= 1 else { return [] }
+
+        let scale = Double(Self.colorSampleSize) / Double(max(extent.width, extent.height))
+        let w = max(1, Int((extent.width * scale).rounded()))
+        let h = max(1, Int((extent.height * scale).rounded()))
+        let scaled = image
+            .transformed(by: CGAffineTransform(scaleX: CGFloat(scale), y: CGFloat(scale)))
+
+        var bytes = [UInt8](repeating: 0, count: w * h * 4)
+        ciContext.render(scaled, toBitmap: &bytes, rowBytes: w * 4,
+                         bounds: CGRect(x: 0, y: 0, width: w, height: h),
                          format: .RGBA8,
                          colorSpace: CGColorSpaceCreateDeviceRGB())
-        return ColorTag.nearest(red:   Double(pixel[0]) / 255,
-                                green: Double(pixel[1]) / 255,
-                                blue:  Double(pixel[2]) / 255)
+
+        var samples: [PerceptualColor] = []
+        samples.reserveCapacity(w * h)
+        for i in stride(from: 0, to: bytes.count, by: 4) {
+            let a = Double(bytes[i + 3]) / 255
+            guard a > alphaThreshold else { continue }
+            // Un-premultiply to recover the straight color (a == 0 already skipped).
+            let inv = a > 0 ? 1 / a : 1
+            samples.append(PerceptualColor(
+                red:   min(1, Double(bytes[i]) / 255 * inv),
+                green: min(1, Double(bytes[i + 1]) / 255 * inv),
+                blue:  min(1, Double(bytes[i + 2]) / 255 * inv)))
+        }
+        return samples
     }
 
     // MARK: - Label → property mapping

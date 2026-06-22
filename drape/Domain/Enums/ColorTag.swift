@@ -52,16 +52,15 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// The palette entry's canonical color in perceptual terms. The single place
+    /// the tag's hex is parsed; `luminance`/`chroma`/`rgbComponents` read from it.
+    nonisolated var perceptualColor: PerceptualColor { PerceptualColor(hex: hex) }
+
     /// 0...1 sRGB components parsed from `hex`. Used by the heuristic classifier
     /// to match an averaged photo color to the nearest palette entry.
     nonisolated var rgbComponents: (red: Double, green: Double, blue: Double) {
-        var value: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&value)
-        return (
-            Double((value >> 16) & 0xFF) / 255,
-            Double((value >> 8) & 0xFF) / 255,
-            Double(value & 0xFF) / 255
-        )
+        let c = perceptualColor
+        return (c.red, c.green, c.blue)
     }
 
     /// The palette entry closest to the given sRGB color (Euclidean distance).
@@ -104,17 +103,11 @@ enum ColorTag: String, Codable, CaseIterable, Identifiable, Sendable {
 extension ColorTag {
     /// Perceived brightness, 0 (black) … 1 (white). Drives the light/dark contrast
     /// term in color harmony scoring.
-    nonisolated var luminance: Double {
-        let c = rgbComponents
-        return 0.299 * c.red + 0.587 * c.green + 0.114 * c.blue
-    }
+    nonisolated var luminance: Double { perceptualColor.luminance }
 
     /// Colorfulness, 0 (grey/neutral) … ~1 (vivid). Max-minus-min of the channels;
     /// feeds a garment's visual loudness.
-    nonisolated var chroma: Double {
-        let c = rgbComponents
-        return max(c.red, c.green, c.blue) - min(c.red, c.green, c.blue)
-    }
+    nonisolated var chroma: Double { perceptualColor.chroma }
 }
 
 /// Broad color groupings for the harmony scorer.

@@ -19,6 +19,7 @@ struct GarmentDraft {
     var primaryColor: ColorTag = .ink
     var customColorHex: String? = nil
     var secondaryColors: [ColorTag] = []
+    var secondaryColorHexes: [String] = []
     var formality: Formality = .casual
     var warmth: WarmthLevel = .medium
     var seasons: Set<Season> = []
@@ -48,6 +49,7 @@ struct GarmentDraft {
         primaryColor = garment.primaryColor
         customColorHex = garment.customColorHex
         secondaryColors = garment.secondaryColors
+        secondaryColorHexes = garment.secondaryColorHexes
         formality = garment.formality
         warmth = garment.warmth
         seasons = Set(garment.seasons)
@@ -73,6 +75,16 @@ struct GarmentDraft {
     /// separately) and only applies `archetype` if the suggestion carries one.
     mutating func apply(classification s: ClassificationSuggestion) {
         if let color = s.primaryColor          { primaryColor = color }
+        // The extracted hex is the true color; the tag above is its display label.
+        if let hex = s.primaryColorHex         { customColorHex = hex }
+        if !s.secondaryColorHexes.isEmpty {
+            secondaryColorHexes = s.secondaryColorHexes
+            // Keep the snapped tags in step for any UI/debug reads.
+            secondaryColors = s.secondaryColorHexes.map {
+                let c = PerceptualColor(hex: $0)
+                return ColorTag.nearest(red: c.red, green: c.green, blue: c.blue)
+            }
+        }
         if let category = s.category           { self.category = category }
         if let warmth = s.warmth               { self.warmth = warmth }
         if let formality = s.formality         { self.formality = formality }
@@ -97,6 +109,7 @@ struct GarmentDraft {
         garment.primaryColor = primaryColor
         garment.customColorHex = customColorHex
         garment.secondaryColors = secondaryColors
+        garment.secondaryColorHexes = secondaryColorHexes
         garment.formality = formality
         garment.warmth = warmth
         garment.seasons = Season.allCases.filter { seasons.contains($0) }

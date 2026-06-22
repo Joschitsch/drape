@@ -67,37 +67,49 @@ func scoreFormality(garments: [GarmentSnapshot], occasion: Occasion, profile: Pr
 
 // MARK: - Color harmony scorer
 
-/// Rewards harmonious palettes: all neutrals, one accent + neutrals, or a
-/// monochromatic warm/cool grouping. Now also reads `secondaryColors`, applies a
-/// soft cap when too many accent families pile up, and nudges for light/dark
-/// contrast so flat, tonal looks score a touch below ones with depth.
+/// Rewards harmonious palettes, reasoning about each garment's *true* perceptual
+/// color (hue/saturation/lightness) rather than a coarse warm/cool/neutral bucket.
+/// Neutrals pair with anything; chromatic colors are judged by how their hues
+/// relate — analogous and complementary read intentional, the discord zone in
+/// between reads as a clash. Reads `secondaryColors` too (an accent stripe is part
+/// of the palette) and nudges for light/dark contrast.
 func scoreColorHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
-    // Count families across primary *and* secondary colors — a garment's accent
-    // stripe is part of the palette, not invisible.
-    let colors = garments.flatMap { [$0.primaryColor] + $0.secondaryColors }
-    let families = Set(colors.map(\.family))
-    let accents = families.subtracting([.neutral])
+    // Every primary *and* secondary color, perceptually.
+    let colors = garments.flatMap { [$0.primaryColorValue] + $0.secondaryColorValues }
+    let chromatic = colors.filter { !$0.isNeutral }
 
     var score: Double
     var rationale: String?
-    if families == [.neutral] {
+
+    if chromatic.isEmpty {
         score = 1.0
         rationale = "Classic neutral palette"
-    } else if families.count == 1 {
-        score = 0.85                                    // monochromatic
-    } else if accents.count == 1 {
-        score = 0.9                                     // one accent + neutrals
     } else {
-        score = 0.5                                     // multiple accents — busy
+        // Collapse near-identical hues so repeating one accent isn't "busy".
+        let hues = distinctHueGroups(chromatic)
+        switch hues.count {
+        case 1:
+            score = 0.9
+            rationale = "One accent over neutrals"
+        case 2:
+            switch hues[0].hueRelationship(to: hues[1]) {
+            case .analogous:     score = 0.88; rationale = "Tonal, analogous palette"
+            case .complementary: score = 0.85; rationale = "Balanced complementary contrast"
+            case .clashing:      score = 0.5
+            }
+        default:
+            score = 0.45                                // 3+ distinct hues — busy
+        }
+        // Soft-cap: several genuinely vivid pieces are a lot to balance at once.
+        if chromatic.filter({ $0.chroma > 0.5 }).count >= 3 {
+            score = min(score, 0.4)
+        }
     }
 
-    // Soft cap: two or more distinct accent families is a lot to balance.
-    if accents.count >= 2 { score = min(score, 0.45) }
-
-    // Light/dark contrast nudge over the core (non-accessory) pieces.
+    // Light/dark contrast nudge over the core (non-accessory) pieces — true color.
     let lums = garments
         .filter { $0.category.slot != .accessory }
-        .map { $0.primaryColor.luminance }
+        .map { $0.primaryColorValue.luminance }
     if let lo = lums.min(), let hi = lums.max() {
         let range = hi - lo
         if range > 0.35 {
@@ -109,6 +121,19 @@ func scoreColorHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale
     }
 
     return (min(1.0, max(0.0, score)), rationale)
+}
+
+/// Reduces chromatic colors to one representative per distinct hue: colors within
+/// analogous reach of an already-kept hue fold into it. Processing the most
+/// saturated first makes the representatives the boldest of each group.
+private func distinctHueGroups(_ colors: [PerceptualColor]) -> [PerceptualColor] {
+    var reps: [PerceptualColor] = []
+    for c in colors.sorted(by: { $0.chroma > $1.chroma }) {
+        if !reps.contains(where: { $0.hueRelationship(to: c) == .analogous }) {
+            reps.append(c)
+        }
+    }
+    return reps
 }
 
 // MARK: - Style match scorer
@@ -255,11 +280,11 @@ func scorePatternHarmony(garments: [GarmentSnapshot], tolerance: PatternToleranc
             return (1.0, "One pattern, kept simple")    // hero + solids
         case 2:
             // A deliberate two-pattern mix can work when the scales differ and the
-            // palettes are compatible (shared family, or anchored by neutrals).
+            // palettes are compatible (one hue family, or anchored by neutrals).
             let patternedPieces = garments.filter { $0.isPatterned == true }
             let scales = Set(patternedPieces.compactMap(\.patternScale))
-            let families = Set(patternedPieces.map { $0.primaryColor.family })
-            let compatiblePalette = families.count == 1 || families.contains(.neutral)
+            let chromatic = patternedPieces.map(\.primaryColorValue).filter { !$0.isNeutral }
+            let compatiblePalette = distinctHueGroups(chromatic).count <= 1
             if scales.count >= 2 && compatiblePalette {
                 return (0.7, "Patterns mixed with intent")
             }

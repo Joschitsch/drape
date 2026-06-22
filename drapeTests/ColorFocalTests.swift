@@ -42,14 +42,23 @@ struct ColorHarmonyV2Tests {
         #expect(scoreColorHarmony(garments: neutral).score >= 0.9)
     }
 
-    @Test("Two clashing accent families are softly capped")
-    func twoAccentsCapped() {
-        let twoAccents = [
-            garment(.top, color: .rust),       // warm
-            garment(.bottom, color: .forest),  // cool
+    @Test("Two clashing hues score below an analogous pair")
+    func clashingHuesScoreBelowAnalogous() {
+        // Vivid orange + vivid green sit in the discord zone of the wheel; orange +
+        // amber are neighbours. The perceptual model can tell them apart — the old
+        // warm/cool family buckets could not.
+        let clashing = [
+            garment(.top, colorHex: "E0651A"),     // orange  (~23°)
+            garment(.bottom, colorHex: "2FB02F"),  // green   (~120°)
             garment(.footwear, color: .ink),
         ]
-        #expect(scoreColorHarmony(garments: twoAccents).score <= 0.5)
+        let analogous = [
+            garment(.top, colorHex: "E0651A"),     // orange  (~23°)
+            garment(.bottom, colorHex: "E0A21A"),  // amber   (~41°)
+            garment(.footwear, color: .ink),
+        ]
+        #expect(scoreColorHarmony(garments: clashing).score
+                < scoreColorHarmony(garments: analogous).score)
     }
 
     @Test("Light/dark contrast scores above a flat tonal look")

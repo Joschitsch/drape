@@ -54,6 +54,12 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
     var footwearSubcategory: FootwearSubcategory?
     var primaryColor: ColorTag
     var secondaryColors: [ColorTag]
+    /// The garment's *true* primary color in perceptual terms (from its captured
+    /// hex when available, else the named tag's canonical hex). This — not the
+    /// snapped tag — is what color harmony reasons about.
+    var primaryColorValue: PerceptualColor
+    /// True secondary/accent colors in perceptual terms.
+    var secondaryColorValues: [PerceptualColor]
     var formality: Formality
     var warmth: WarmthLevel
     var seasons: [Season]
@@ -77,6 +83,8 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
         footwearSubcategory: FootwearSubcategory? = nil,
         primaryColor: ColorTag,
         secondaryColors: [ColorTag] = [],
+        primaryColorHex: String? = nil,
+        secondaryColorHexes: [String] = [],
         formality: Formality,
         warmth: WarmthLevel,
         seasons: [Season] = [],
@@ -96,6 +104,11 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
         self.footwearSubcategory = footwearSubcategory
         self.primaryColor = primaryColor
         self.secondaryColors = secondaryColors
+        self.primaryColorValue = PerceptualColor(hex: primaryColorHex ?? primaryColor.hex)
+        // Prefer the exact secondary hexes; fall back to each snapped tag's hex.
+        self.secondaryColorValues = secondaryColorHexes.isEmpty
+            ? secondaryColors.map { PerceptualColor(hex: $0.hex) }
+            : secondaryColorHexes.map { PerceptualColor(hex: $0) }
         self.formality = formality
         self.warmth = warmth
         self.seasons = seasons
@@ -131,8 +144,10 @@ struct GarmentSnapshot: Identifiable, Hashable, Sendable {
     /// texture. Used by the focal-point scorer to favor one hero + quiet support.
     /// Always computable (color is always known); pattern/texture only add.
     var visualLoudness: Double {
-        // Color chroma tops out around 0.45 in the palette; map it to 0…0.5.
-        var loud = min(1.0, primaryColor.chroma / 0.45) * 0.5
+        // Color chroma tops out around 0.45 in the palette; map it to 0…0.5. Reads
+        // the garment's *true* color, so a vivid custom pick isn't flattened to its
+        // muted nearest tag.
+        var loud = min(1.0, primaryColorValue.chroma / 0.45) * 0.5
         if isPatterned == true {
             switch patternScale {
             case .large:  loud += 0.4
@@ -177,6 +192,8 @@ extension Garment {
             footwearSubcategory: subcategory.flatMap { FootwearSubcategory(rawValue: $0) },
             primaryColor: primaryColor,
             secondaryColors: secondaryColors,
+            primaryColorHex: resolvedColorHex,
+            secondaryColorHexes: secondaryColorHexes,
             formality: formality,
             warmth: warmth,
             seasons: seasons,

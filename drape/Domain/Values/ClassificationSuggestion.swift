@@ -13,6 +13,11 @@ struct ClassificationSuggestion: Sendable {
     var category: GarmentCategory?
     var primaryColor: ColorTag?
     var secondaryColors: [ColorTag]
+    /// Exact extracted primary color (hex). The true color; `primaryColor` is its
+    /// nearest named tag. Nil when no color could be read.
+    var primaryColorHex: String?
+    /// Exact extracted secondary/accent colors (hex), most prominent first.
+    var secondaryColorHexes: [String]
     /// Confidence 0...1 for the category guess, surfaced subtly in the UI.
     var categoryConfidence: Double
     /// Derived from category rules; nil = leave the draft default unchanged.
@@ -41,6 +46,8 @@ struct ClassificationSuggestion: Sendable {
         category: GarmentCategory? = nil,
         primaryColor: ColorTag? = nil,
         secondaryColors: [ColorTag] = [],
+        primaryColorHex: String? = nil,
+        secondaryColorHexes: [String] = [],
         categoryConfidence: Double = 0,
         warmth: WarmthLevel? = nil,
         formality: Formality? = nil,
@@ -60,6 +67,8 @@ struct ClassificationSuggestion: Sendable {
         self.category = category
         self.primaryColor = primaryColor
         self.secondaryColors = secondaryColors
+        self.primaryColorHex = primaryColorHex
+        self.secondaryColorHexes = secondaryColorHexes
         self.categoryConfidence = categoryConfidence
         self.warmth = warmth
         self.formality = formality
