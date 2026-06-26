@@ -26,7 +26,7 @@ struct EditGarmentView: View {
             ScrollView {
                 GarmentAttributeFields(draft: $draft, inForm: false)
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Edit Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -109,8 +109,6 @@ struct OnboardingView: View {
             occasion: occasion,
             initialFormality: draft.targetFormality,
             initialStyles: Set(draft.styles),
-            customStyles: profile.customStyles,
-            onAddStyle: addCustomStyle,
             onUpdate: { formality, styles in
                 model.update(occasion: occasion, formality: formality, styles: styles)
             }
@@ -164,19 +162,11 @@ struct OnboardingView: View {
             }
             .padding(.top, 32)
 
-            GlobalStylePicker(selected: $model.globalStyles,
-                              customStyles: profile.customStyles,
-                              onAdd: addCustomStyle)
+            GlobalStylePicker(selected: $model.globalStyles)
                 .padding(.horizontal, 24)
 
             Spacer()
         }
-    }
-
-    private func addCustomStyle(_ style: String) {
-        guard !profile.customStyles.contains(style) else { return }
-        profile.customStyles.append(style)
-        try? modelContext.save()
     }
 }
 
@@ -186,24 +176,18 @@ private struct OccasionPreferenceStepWrapper: View {
     let occasion: Occasion
     @State var formality: Formality
     @State var styles: Set<String>
-    let customStyles: [String]
-    let onAddStyle: (String) -> Void
     let onUpdate: (Formality, Set<String>) -> Void
 
     init(occasion: Occasion, initialFormality: Formality, initialStyles: Set<String>,
-         customStyles: [String], onAddStyle: @escaping (String) -> Void,
          onUpdate: @escaping (Formality, Set<String>) -> Void) {
         self.occasion = occasion
         self._formality = State(initialValue: initialFormality)
         self._styles = State(initialValue: initialStyles)
-        self.customStyles = customStyles
-        self.onAddStyle = onAddStyle
         self.onUpdate = onUpdate
     }
 
     var body: some View {
-        OccasionPreferenceStep(occasion: occasion, formality: $formality, styles: $styles,
-                               customStyles: customStyles, onAddStyle: onAddStyle)
+        OccasionPreferenceStep(occasion: occasion, formality: $formality, styles: $styles)
             .onChange(of: formality) { _, new in onUpdate(new, styles) }
             .onChange(of: styles) { _, new in onUpdate(formality, new) }
     }
@@ -211,10 +195,8 @@ private struct OccasionPreferenceStepWrapper: View {
 
 private struct GlobalStylePicker: View {
     @Binding var selected: Set<String>
-    var customStyles: [String]
-    var onAdd: (String) -> Void
 
     var body: some View {
-        StyleSelector(selection: $selected, customStyles: customStyles, onAdd: onAdd)
+        StyleSelector(selection: $selected)
     }
 }

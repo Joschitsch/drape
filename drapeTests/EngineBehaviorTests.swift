@@ -75,21 +75,28 @@ struct EngineBehaviorTests {
         #expect(suggestions[0].score >= suggestions[1].score)
     }
 
-    @Test("Same context twice gives identical results below the shuffle cap")
-    func deterministicBelowShuffleThreshold() async {
-        let wardrobe = [
+    @Test("Same context twice gives identical results, even above the candidate cap")
+    func deterministicResults() async {
+        // Small wardrobe: well under the candidate cap.
+        let small = [
             garment(.top, formality: .smartCasual, color: .navy, styles: ["minimal"]),
             garment(.top, formality: .casual, color: .rust),
             garment(.bottom, formality: .casual, warmth: .medium, color: .denim),
             garment(.footwear, formality: .smartCasual, color: .ivory),
             garment(.outerwear, formality: .smartCasual, warmth: .medium, color: .camel),
         ]
-        let ctx = context(wardrobe: wardrobe, occasion: .everyday, weather: rainy15)
+        // Large wardrobe: enough tops/bottoms/footwear to blow past the 200
+        // candidate ceiling, where the old engine shuffled and was non-deterministic.
+        let large = (0..<12).map { _ in garment(.top) }
+            + (0..<12).map { _ in garment(.bottom) }
+            + (0..<12).map { _ in garment(.footwear) }
 
-        let first = await engine.recommend(ctx)
-        let second = await engine.recommend(ctx)
-
-        #expect(first.map(\.garmentIDs) == second.map(\.garmentIDs))
-        #expect(first.map(\.score) == second.map(\.score))
+        for wardrobe in [small, large] {
+            let ctx = context(wardrobe: wardrobe, occasion: .everyday, weather: rainy15)
+            let first = await engine.recommend(ctx)
+            let second = await engine.recommend(ctx)
+            #expect(first.map(\.garmentIDs) == second.map(\.garmentIDs))
+            #expect(first.map(\.score) == second.map(\.score))
+        }
     }
 }

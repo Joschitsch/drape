@@ -58,6 +58,26 @@ struct ColorHarmonyV2Tests {
         let flat = [garment(.top, color: .ink), garment(.bottom, color: .ink), garment(.footwear, color: .ink)]
         #expect(scoreColorHarmony(garments: contrast).score > scoreColorHarmony(garments: flat).score)
     }
+
+    @Test("Analogous earth tones beat a mid-gap hue clash")
+    func analogousBeatsClash() {
+        let analogous = [garment(.top, color: .camel), garment(.bottom, color: .tobacco), garment(.footwear, color: .chocolate)]
+        let clash = [garment(.top, color: .rust), garment(.bottom, color: .forest), garment(.footwear, color: .ink)]
+        #expect(scoreColorHarmony(garments: analogous).score > scoreColorHarmony(garments: clash).score)
+    }
+
+    @Test("A single accent on neutrals scores high")
+    func oneAccentOnNeutralsIsHigh() {
+        let oneAccent = [garment(.top, color: .rust), garment(.bottom, color: .charcoal), garment(.footwear, color: .ink)]
+        #expect(scoreColorHarmony(garments: oneAccent).score >= 0.9)
+    }
+
+    @Test("A muted complementary pairing beats a mid-gap clash")
+    func complementaryAnchoredScoresWell() {
+        let muted = [garment(.top, color: .camel), garment(.bottom, color: .navy), garment(.footwear, color: .ink)]
+        let clash = [garment(.top, color: .rust), garment(.bottom, color: .forest), garment(.footwear, color: .ink)]
+        #expect(scoreColorHarmony(garments: muted).score > scoreColorHarmony(garments: clash).score)
+    }
 }
 
 @Suite("Focal point scorer")

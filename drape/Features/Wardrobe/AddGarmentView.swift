@@ -23,7 +23,7 @@ struct AddGarmentView: View {
         return NavigationStack {
             content(model: model)
                 .scrollContentBackground(.hidden)
-                .background(Theme.paper.ignoresSafeArea())
+                .background(AppBackground().ignoresSafeArea())
                 .presentationDragIndicator(.visible)
                 .navigationTitle("Add Item")
                 .navigationBarTitleDisplayMode(.inline)

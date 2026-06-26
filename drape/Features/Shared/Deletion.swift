@@ -35,6 +35,25 @@ func deleteOutfit(_ outfit: Outfit, context: ModelContext) {
     try? context.save()
 }
 
+/// Undoes a just-logged wear by removing its `WearEvent`. The event's `garments`
+/// is a many-to-many relationship; a plain `context.delete` leaves the garments'
+/// inverse `wearEvents` still pointing at it, so SwiftData resurrects the record
+/// on the next save and the wear count never drops. Detaching both sides first
+/// makes the delete stick.
+@MainActor
+func undoWearEvent(_ event: WearEvent, context: ModelContext) {
+    // Detach both sides of the many-to-many before deleting: clearing the
+    // garments' inverse `wearEvents` (and the event's own arrays) stops SwiftData
+    // resurrecting the record on the next save. Covered by UndoWearEventTests.
+    for garment in event.garments {
+        garment.wearEvents.removeAll { $0.persistentModelID == event.persistentModelID }
+    }
+    event.garments = []
+    event.outfit = nil
+    context.delete(event)
+    try? context.save()
+}
+
 // MARK: - Confirmation modifier
 
 extension View {

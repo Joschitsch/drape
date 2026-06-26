@@ -82,7 +82,7 @@ struct EngineGoldenRuleTests {
         #expect(goodTop!.score > badTop!.score)
     }
 
-    @Test("Canned contexts each return sorted, in-range suggestions")
+    @Test("Canned contexts each return in-range suggestions led by the best")
     func cannedContextsRank() async {
         let wardrobe = [
             garment(.top, formality: .smartCasual, structure: .semiStructured, patternType: .solid),
@@ -100,7 +100,11 @@ struct EngineGoldenRuleTests {
             let suggestions = await engine.recommend(
                 context(wardrobe: wardrobe, occasion: occasion, weather: weather))
             for s in suggestions { #expect(s.score >= 0 && s.score <= 1) }
-            #expect(suggestions.map(\.score) == suggestions.map(\.score).sorted(by: >))
+            // MMR diversity means scores aren't strictly descending after the
+            // anchor, but the lead card stays the global best.
+            if let lead = suggestions.first {
+                #expect(suggestions.allSatisfy { lead.score >= $0.score })
+            }
         }
     }
 }

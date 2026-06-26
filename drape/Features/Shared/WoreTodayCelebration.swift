@@ -3,7 +3,8 @@
 //  drape
 //
 //  The "Wore today" moment — a full-screen overlay that acknowledges the wear
-//  log with warmth. Auto-dismisses after 3.2 seconds; tap anywhere to dismiss.
+//  log with warmth. Auto-dismisses after 3.2 seconds; tap the dimmed backdrop
+//  to dismiss, or Undo to take the wear back.
 //
 
 import SwiftUI
@@ -30,9 +31,14 @@ struct WoreTodayCelebration: View {
     var body: some View {
         ZStack {
             // ── Blurred backdrop ─────────────────────────────────────
+            // The dismiss tap lives on the backdrop alone — not the whole
+            // overlay — so it can't swallow taps meant for the Undo button
+            // sitting in the content above it.
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { onDismiss() }
 
             VStack(spacing: 28) {
                 // ── Canvas + ring + checkmark ────────────────────────
@@ -67,11 +73,17 @@ struct WoreTodayCelebration: View {
 
                 // ── Copy ─────────────────────────────────────────────
                 VStack(spacing: 12) {
-                    MonoLabel(isFirstWear ? "First wear logged" : "Noted for today")
+                    VStack(spacing: 12) {
+                        MonoLabel(isFirstWear ? "First wear logged" : "Noted for today")
 
-                    SerifText(headline, size: 27, italic: true)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                        SerifText(headline, size: 27, italic: true)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                    // Combine only the copy so the Undo button stays its own
+                    // element — both for VoiceOver and for plain hit-testing.
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(isFirstWear ? "First wear logged." : "Noted for today.") \(headline)")
 
                     if let onUndo {
                         Button {
@@ -92,12 +104,8 @@ struct WoreTodayCelebration: View {
                 }
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture { onDismiss() }
         .onAppear { animate() }
-        .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isModal)
-        .accessibilityLabel("\(isFirstWear ? "First wear logged." : "Noted for today.") \(headline)")
     }
 
     private func animate() {

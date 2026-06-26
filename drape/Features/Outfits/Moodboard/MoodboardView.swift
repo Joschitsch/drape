@@ -55,7 +55,7 @@ struct MoodboardView: View {
                     }
                 }
             }
-            .background(PaperBackground().ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

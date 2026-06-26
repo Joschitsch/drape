@@ -11,8 +11,6 @@ struct OccasionPreferenceStep: View {
     let occasion: Occasion
     @Binding var formality: Formality
     @Binding var styles: Set<String>
-    var customStyles: [String] = []
-    var onAddStyle: (String) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
@@ -27,9 +25,7 @@ struct OccasionPreferenceStep: View {
             OccasionPreferenceEditor(
                 occasion: occasion,
                 formality: $formality,
-                styles: $styles,
-                customStyles: customStyles,
-                onAddStyle: onAddStyle
+                styles: $styles
             )
 
             Spacer()

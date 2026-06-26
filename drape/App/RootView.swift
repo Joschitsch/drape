@@ -38,6 +38,10 @@ struct RootView: View {
         .task {
             PreviewData.ensureProfile(into: modelContext)
             await PreviewData.backfillImages(context: modelContext, imageStore: container.imageStore)
+            // One-time: re-cut early opaque garment PNGs into transparent cut-outs
+            // so they float on the Warm Linen background. No-op after first run.
+            let garments = (try? modelContext.fetch(FetchDescriptor<Garment>())) ?? []
+            await GarmentCutoutMigration.run(garments: garments, imageStore: container.imageStore)
         }
         .fullScreenCover(isPresented: .constant(showOnboarding)) {
             if let profile {

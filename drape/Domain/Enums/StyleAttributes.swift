@@ -168,6 +168,15 @@ enum Archetype: String, CaseIterable, Codable, Identifiable, Sendable {
         }
     }
 
+    /// Folds any style label — a canonical raw value, a legacy built-in, or an
+    /// old custom string — to one comparable form: the matching archetype's raw
+    /// value when it maps, otherwise the normalized string. Lets preference
+    /// matching survive the styles→archetype unification regardless of how older
+    /// data was stored.
+    nonisolated static func canonicalStyle(_ raw: String) -> String {
+        from(style: raw)?.rawValue ?? Style.normalize(raw)
+    }
+
     /// Collapses a free-form style label (built-in or user-defined) onto the fixed
     /// archetype set, so legacy `styles` and the new axis share one comparable space.
     nonisolated static func from(style raw: String) -> Archetype? {

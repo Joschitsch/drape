@@ -34,15 +34,27 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         self.weights = weights
     }
 
+    /// How many garments per slot survive into the cross product, and the overall
+    /// candidate ceiling. `topKPerSlot` keeps each slot's strongest pieces (by the
+    /// cheap `slotFit` pre-score) so a good outfit is never randomly truncated
+    /// before it's scored.
+    private static let topKPerSlot = 8
+    private static let maxCandidates = 200
+    /// MMR trade-off: relevance (score) vs. novelty (dissimilarity to picks).
+    /// 1.0 = pure score, 0.0 = pure variety. 0.7 favors quality but breaks up
+    /// near-duplicate outfits that differ only by one slot.
+    private static let mmrLambda = 0.7
+
     func recommend(_ context: RecommendationContext) async -> [OutfitSuggestion] {
-        let candidates = buildCandidates(from: context.wardrobe,
-                                         lockedGarmentID: context.lockedGarmentID)
+        let candidates = buildCandidates(context: context)
         guard !candidates.isEmpty else { return [] }
 
-        // Per-user personalisation: appetites + clamped feedback nudges.
-        let tuning = context.profile.tuning
+        // The user's repeated "too dressy"/"too casual" feedback shifts the
+        // target within ±1 level; the occasion's tolerance band is unchanged.
+        let formalityTarget = formalityTarget(context: context)
+        let formalityTolerance = context.occasion.formalityTolerance
 
-        var scored: [(garments: [GarmentSnapshot], score: Double, rationale: [String])] = []
+        var scored: [ScoredCandidate] = []
 
         for candidate in candidates {
             let warmthResult = scoreWarmth(garments: candidate, weather: context.weather)
@@ -54,13 +66,6 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             // single too-casual piece can't hide behind dressier companions.
             // A user per-occasion preference moves the target but never widens
             // the occasion's tolerance.
-            let userOccasionPref = context.profile.occasionPreference(for: context.occasion)
-            // The user's repeated "too dressy"/"too casual" feedback shifts the
-            // target within ±1 level; the occasion's tolerance band is unchanged.
-            let formalityTarget = Double(
-                (userOccasionPref?.targetFormality ?? context.occasion.targetFormality).rawValue
-            ) + tuning.formalityBias
-            let formalityTolerance = context.occasion.formalityTolerance
             let core = candidate.filter {
                 $0.category.slot != .accessory && $0.category.slot != .outerwear
             }
@@ -86,13 +91,79 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
             let totalWeight = contribs.reduce(0) { $0 + $1.weight }
             let weightedScore = contribs.reduce(0) { $0 + $1.weighted }
             let normalized = totalWeight > 0 ? weightedScore / totalWeight : 0
-            scored.append((candidate, normalized, contribs.compactMap(\.rationale)))
+            scored.append(ScoredCandidate(garments: candidate, score: normalized,
+                                          rationale: contribs.compactMap(\.rationale)))
         }
 
-        return scored
-            .sorted { $0.score > $1.score }
-            .prefix(context.desiredCount)
+        return selectDiverse(scored, count: context.desiredCount)
             .map { OutfitSuggestion(garmentIDs: $0.garments.map(\.id), score: $0.score, rationale: $0.rationale) }
+    }
+
+    /// A scored, still-resolved outfit candidate (garments kept so the diversity
+    /// pass can measure overlap before they're flattened to ids).
+    private struct ScoredCandidate {
+        let garments: [GarmentSnapshot]
+        let score: Double
+        let rationale: [String]
+    }
+
+    /// The effective formality target for the context: the occasion's target (or
+    /// the user's per-occasion override) shifted by their clamped feedback bias.
+    /// Constant per context, so it's computed once and shared by the candidate
+    /// pre-filter and the hard formality floor.
+    private func formalityTarget(context: RecommendationContext) -> Double {
+        let userOccasionPref = context.profile.occasionPreference(for: context.occasion)
+        let base = (userOccasionPref?.targetFormality ?? context.occasion.targetFormality).rawValue
+        return Double(base) + context.profile.tuning.formalityBias
+    }
+
+    // MARK: - Result diversity (MMR)
+
+    /// Selects up to `count` outfits balancing score against variety. The first
+    /// pick is the highest-scored outfit (the relevance anchor, so the lead card
+    /// is always "the best"); each subsequent pick maximises Maximal Marginal
+    /// Relevance — high score, low similarity to what's already chosen — so the
+    /// surfaced set differs by more than a single swapped shoe.
+    private func selectDiverse(_ scored: [ScoredCandidate], count: Int) -> [ScoredCandidate] {
+        guard count > 0 else { return [] }
+        // Deterministic ordering: by score, then a stable id-sequence tie-break.
+        var remaining = scored.sorted { a, b in
+            if a.score != b.score { return a.score > b.score }
+            return idKey(a.garments) < idKey(b.garments)
+        }
+        guard !remaining.isEmpty else { return [] }
+
+        var selected: [ScoredCandidate] = [remaining.removeFirst()]
+        while selected.count < count && !remaining.isEmpty {
+            var bestIndex = 0
+            var bestValue = -Double.infinity
+            for (i, candidate) in remaining.enumerated() {
+                let maxSim = selected.map { similarity(candidate.garments, $0.garments) }.max() ?? 0
+                let mmr = Self.mmrLambda * candidate.score - (1 - Self.mmrLambda) * maxSim
+                if mmr > bestValue {       // strict > keeps the deterministic order on ties
+                    bestValue = mmr
+                    bestIndex = i
+                }
+            }
+            selected.append(remaining.remove(at: bestIndex))
+        }
+        return selected
+    }
+
+    /// Jaccard overlap of two outfits' garment ids (0 = no shared pieces, 1 =
+    /// identical). Two outfits sharing top + bottom but differing in footwear
+    /// land around 0.5, enough for MMR to prefer a genuinely different look.
+    private func similarity(_ a: [GarmentSnapshot], _ b: [GarmentSnapshot]) -> Double {
+        let aIDs = Set(a.map(\.id))
+        let bIDs = Set(b.map(\.id))
+        let union = aIDs.union(bIDs).count
+        guard union > 0 else { return 0 }
+        return Double(aIDs.intersection(bIDs).count) / Double(union)
+    }
+
+    /// Stable string key for a garment set, for deterministic tie-breaking.
+    private func idKey(_ garments: [GarmentSnapshot]) -> String {
+        garments.map(\.id.uuidString).sorted().joined()
     }
 
     // MARK: - Scoring (single source of truth)
@@ -141,19 +212,46 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
     /// Enumerates valid outfit combinations:
     ///   - (top, bottom, footwear) with optional outerwear
     ///   - (dress, footwear) with optional outerwear
-    /// Combinations are sampled to keep them tractable at large wardrobe sizes.
-    /// When `lockedGarmentID` is set, only combinations containing that garment
-    /// survive — the "Style this piece" flow, filtered *before* the sampling cap
-    /// so the locked item's outfits are never shuffled away.
-    private func buildCandidates(from wardrobe: [GarmentSnapshot], lockedGarmentID: UUID? = nil) -> [[GarmentSnapshot]] {
-        let tops      = wardrobe.filter { $0.category == .top }
-        let bottoms   = wardrobe.filter { $0.category == .bottom }
-        let dresses   = wardrobe.filter { $0.category == .dress }
-        let footwear  = wardrobe.filter { $0.category == .footwear }
-        let outerwear = wardrobe.filter { $0.category == .outerwear }
+    ///
+    /// Each slot is first trimmed to its `topKPerSlot` strongest pieces by the
+    /// cheap `slotFit` pre-score, so a good outfit is never randomly dropped
+    /// before scoring and the result is fully deterministic (no shuffle). When
+    /// `lockedGarmentID` is set, that garment is force-kept in its slot and only
+    /// combinations containing it survive — the "Style this piece" flow.
+    private func buildCandidates(context: RecommendationContext) -> [[GarmentSnapshot]] {
+        let wardrobe = context.wardrobe
+        let locked = context.lockedGarmentID
+        let target = formalityTarget(context: context)
 
-        // Optional layers: nil (no outerwear) plus each outerwear item.
-        let outerOptions: [GarmentSnapshot?] = [nil] + outerwear.map { Optional($0) }
+        // Pre-score every garment once, then trim each slot to its strongest.
+        let fitByID = Dictionary(
+            wardrobe.map { ($0.id, slotFit($0, context: context, formalityTarget: target)) },
+            uniquingKeysWith: { a, _ in a })
+        func fit(_ g: GarmentSnapshot) -> Double { fitByID[g.id] ?? 0 }
+
+        func topK(_ category: GarmentCategory) -> [GarmentSnapshot] {
+            let items = wardrobe.filter { $0.category == category }
+            let ranked = items.sorted { a, b in
+                let fa = fit(a), fb = fit(b)
+                if fa != fb { return fa > fb }
+                return a.id.uuidString < b.id.uuidString   // stable tie-break
+            }
+            var kept = Array(ranked.prefix(Self.topKPerSlot))
+            // A locked garment must survive even if it ranks below the cap.
+            if let locked, let item = items.first(where: { $0.id == locked }),
+               !kept.contains(where: { $0.id == locked }) {
+                kept.append(item)
+            }
+            return kept
+        }
+
+        let tops     = topK(.top)
+        let bottoms  = topK(.bottom)
+        let dresses  = topK(.dress)
+        let footwear = topK(.footwear)
+
+        // Optional layers: nil (no outerwear) plus each kept outerwear item.
+        let outerOptions: [GarmentSnapshot?] = [nil] + topK(.outerwear).map { Optional($0) }
 
         var candidates: [[GarmentSnapshot]] = []
 
@@ -182,17 +280,62 @@ struct RuleBasedRecommendationEngine: RecommendationEngine {
         }
 
         // "Style this piece": keep only outfits that include the locked garment.
-        if let lockedGarmentID {
-            candidates = candidates.filter { combo in combo.contains { $0.id == lockedGarmentID } }
+        if let locked {
+            candidates = candidates.filter { combo in combo.contains { $0.id == locked } }
         }
 
-        // Cap at 200 candidates (shuffle so we don't always pick the same items
-        // when the wardrobe is large).
-        if candidates.count > 200 {
-            candidates.shuffle()
-            candidates = Array(candidates.prefix(200))
+        // Deterministic cap: keep the combinations whose pieces pre-score best,
+        // so the ceiling never drops a strong outfit at random.
+        if candidates.count > Self.maxCandidates {
+            candidates = candidates
+                .sorted { a, b in
+                    let sa = a.reduce(0) { $0 + fit($1) }
+                    let sb = b.reduce(0) { $0 + fit($1) }
+                    if sa != sb { return sa > sb }
+                    return idKey(a) < idKey(b)   // stable tie-break
+                }
+                .prefix(Self.maxCandidates)
+                .map { $0 }
         }
         return candidates
+    }
+
+    /// Cheap per-garment appropriateness for the current context, used to trim
+    /// each slot before the cross product. Blends only always-known,
+    /// single-garment signals — formality distance to the target, warmth vs.
+    /// weather, and recency — so it's a fast pre-filter, not the full ranker.
+    private func slotFit(_ g: GarmentSnapshot, context: RecommendationContext, formalityTarget: Double) -> Double {
+        // Formality: closeness to the occasion target (0…1).
+        let formalityFit = max(0, 1 - abs(Double(g.formality.rawValue) - formalityTarget) / 3.0)
+
+        // Warmth: only layers carry meaningful warmth; footwear/accessories and
+        // the no-weather case stay neutral.
+        let warmthFit: Double
+        if let weather = context.weather,
+           g.category.slot != .footwear, g.category.slot != .accessory {
+            let temp = weather.apparentTemperatureCelsius
+            let lo = g.warmth.comfortableDownToCelsius
+            let hi = g.warmth.comfortableUpToCelsius
+            if temp >= lo && temp <= hi {
+                warmthFit = 1.0
+            } else {
+                let dist = temp < lo ? lo - temp : temp - hi
+                let fade = temp < lo ? 5.0 : 8.0
+                warmthFit = max(0, 1 - dist / fade)
+            }
+        } else {
+            warmthFit = 0.5
+        }
+
+        // Recency: recently-worn pieces are deprioritised so fresh items make it
+        // into the pool. Full credit once a piece is >14 days rested.
+        var recencyFit = 1.0
+        if let last = context.recentWears[g.id] {
+            let days = Date.now.timeIntervalSince(last) / 86_400
+            recencyFit = max(0, min(1, days / 14.0))
+        }
+
+        return formalityFit * 1.5 + warmthFit * 1.0 + recencyFit * 0.5
     }
 
     #if DEBUG

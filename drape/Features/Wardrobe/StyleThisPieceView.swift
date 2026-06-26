@@ -55,7 +55,7 @@ struct StyleThisPieceView: View {
                 }
                 .padding(Theme.contentPadding)
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Style this piece")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

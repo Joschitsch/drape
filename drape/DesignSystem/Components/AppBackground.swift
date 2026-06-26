@@ -1,72 +1,67 @@
 //
-//  PaperBackground.swift
+//  AppBackground.swift
 //  drape
 //
-//  The tactile paper layer the Moodboard collage sits on. Fully procedural (no
-//  asset, renders inside `ImageRenderer` for export) and unmistakably "paper":
-//  a warm base, large soft mottle, two-pass grain, fibers, an upper sheen and a
-//  warm vignette.
+//  The single "Warm Linen" surface every garment- and outfit-showing screen sits
+//  on. Fully procedural (no asset; renders inside `ImageRenderer` for Moodboard
+//  export) and tactile: a warm flat base, a two-pass grain blended multiply
+//  (light) / screen (dark), and soft radial light/shadow overlays.
 //
 //  Colors are chosen from the explicit color scheme — NOT via dynamic
 //  (`Theme.adaptive`) colors — because `Canvas`/`GraphicsContext` resolves
 //  dynamic colors against the light trait, which made the texture invisible in
-//  dark mode in-app while still rendering in exports.
+//  dark mode in-app while still rendering in exports. Callers that rasterize this
+//  via `ImageRenderer` must inject `\.colorScheme` so the export matches on-screen.
 //
 
 import SwiftUI
 
-struct PaperBackground: View {
+struct AppBackground: View {
     var seed: UInt64 = 0x5eed_1234
 
     @Environment(\.colorScheme) private var scheme
 
     private var isDark: Bool { scheme == .dark }
 
-    private var baseTop: Color { isDark ? Color(hex: "262019") : Color(hex: "F3ECDE") }
-    private var baseBottom: Color { isDark ? Color(hex: "1A1611") : Color(hex: "E6DAC6") }
-    private var mottle: Color { isDark ? Color(hex: "4A3D2C") : Color(hex: "C9B48F") }
-    private var sheen: Color { isDark ? Color(hex: "5A4F3E") : Color(hex: "FFFBF2") }
+    private var base: Color { isDark ? Color(hex: "1C1914") : Color(hex: "DDD3C4") }
     private var darkSpeck: Color { isDark ? Color(hex: "0E0B07") : Color(hex: "5E4B33") }
     private var lightSpeck: Color { isDark ? Color(hex: "C9BCA6") : Color(hex: "FFFFFF") }
-    private var vignette: Color { isDark ? Color.black : Color(hex: "241A12") }
 
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [baseTop, baseBottom],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+        GeometryReader { geo in
+            let maxDim = max(geo.size.width, geo.size.height)
+            ZStack {
+                base
 
-            Canvas { context, size in
-                drawMottle(&context, size)
-                drawGrain(&context, size)
-                drawFibers(&context, size)
+                // Fine paper grain. Multiply darkens the linen in light mode;
+                // screen lifts it in dark mode — the SwiftUI equivalent of the
+                // spec's fractalNoise + mix-blend-mode.
+                Canvas { context, size in
+                    drawGrain(&context, size)
+                    drawFibers(&context, size)
+                }
+                .blendMode(isDark ? .screen : .multiply)
+                .opacity(isDark ? 0.20 : 0.5)
+
+                overlays(maxDim: maxDim)
             }
-
-            // Soft paper sheen, upper-centre.
-            RadialGradient(colors: [sheen.opacity(isDark ? 0.22 : 0.35), .clear],
-                           center: .init(x: 0.5, y: 0.26), startRadius: 0, endRadius: 360)
-                .blendMode(.softLight)
-
-            // Warm vignette to settle the edges.
-            RadialGradient(colors: [.clear, vignette.opacity(isDark ? 0.30 : 0.16)],
-                           center: .center, startRadius: 80, endRadius: 620)
         }
     }
 
-    /// A handful of big, very soft warm blobs → tactile unevenness, not flat fill.
-    private func drawMottle(_ context: inout GraphicsContext, _ size: CGSize) {
-        var rng = SystemlessRandom(seed: seed)
-        let maxDim = max(size.width, size.height)
-        let alphaBoost = isDark ? 1.6 : 1.0
-        for _ in 0..<7 {
-            let cx = rng.unit() * size.width
-            let cy = rng.unit() * size.height
-            let r = (0.25 + rng.unit() * 0.35) * maxDim
-            let alpha = (0.05 + rng.unit() * 0.06) * alphaBoost
-            let rect = CGRect(x: cx - r, y: cy - r, width: 2 * r, height: 2 * r)
-            context.fill(Path(ellipseIn: rect),
-                         with: .radialGradient(Gradient(colors: [mottle.opacity(alpha), .clear]),
-                                               center: CGPoint(x: cx, y: cy),
-                                               startRadius: 0, endRadius: r))
+    /// Soft directional light + warm shadow pooled at opposite corners.
+    @ViewBuilder
+    private func overlays(maxDim: CGFloat) -> some View {
+        if isDark {
+            RadialGradient(colors: [Color(hex: "3C2D16").opacity(0.20), .clear],
+                           center: .init(x: 0.5, y: 0.0),
+                           startRadius: 0, endRadius: 0.6 * maxDim)
+        } else {
+            RadialGradient(colors: [Color(hex: "FFF5E1").opacity(0.55), .clear],
+                           center: .init(x: 0.4, y: 0.2),
+                           startRadius: 0, endRadius: 0.5 * maxDim)
+            RadialGradient(colors: [Color(hex: "645037").opacity(0.30), .clear],
+                           center: .init(x: 0.7, y: 0.9),
+                           startRadius: 0, endRadius: 0.5 * maxDim)
         }
     }
 

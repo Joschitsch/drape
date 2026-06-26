@@ -33,7 +33,6 @@ struct GarmentDraft {
     var patternType: PatternType? = nil
     var patternScale: PatternScale? = nil
     var texture: Texture? = nil
-    var archetype: Archetype? = nil
     var brand: String = ""
     var notes: String = ""
     var isFavorite: Bool = false
@@ -51,7 +50,11 @@ struct GarmentDraft {
         formality = garment.formality
         warmth = garment.warmth
         seasons = Set(garment.seasons)
-        styles = Set(garment.styles)
+        // Unify onto the canonical style vocabulary: normalise legacy/free-form
+        // styles and fold any previously-inferred archetype into the one field.
+        var canonical = Set(garment.styles.compactMap { Archetype.from(style: $0)?.rawValue })
+        if let a = garment.archetype { canonical.insert(a.rawValue) }
+        styles = canonical
         fit = garment.fit
         topLength = garment.topLength
         bottomVolume = garment.bottomVolume
@@ -60,7 +63,6 @@ struct GarmentDraft {
         patternType = garment.patternType
         patternScale = garment.patternScale
         texture = garment.texture
-        archetype = garment.archetype
         brand = garment.brand ?? ""
         notes = garment.notes ?? ""
         isFavorite = garment.isFavorite
@@ -70,7 +72,8 @@ struct GarmentDraft {
     /// axes the classifier actually committed to (nil = leave as-is). Shared by
     /// the add flow and the debug bulk importer so both interpret a
     /// `ClassificationSuggestion` identically. Does not touch `name` (auto-named
-    /// separately) and only applies `archetype` if the suggestion carries one.
+    /// separately). A suggested archetype is folded into `styles` (the single
+    /// style field) as a pre-filled, user-correctable chip.
     mutating func apply(classification s: ClassificationSuggestion) {
         if let color = s.primaryColor          { primaryColor = color }
         if let category = s.category           { self.category = category }
@@ -86,7 +89,7 @@ struct GarmentDraft {
         if let patternType = s.patternType     { self.patternType = patternType }
         if let patternScale = s.patternScale   { self.patternScale = patternScale }
         if let texture = s.texture             { self.texture = texture }
-        if let archetype = s.archetype         { self.archetype = archetype }
+        if let archetype = s.archetype         { styles.insert(archetype.rawValue) }
     }
 
     /// Writes the draft back onto a garment and bumps `updatedAt`.
@@ -101,6 +104,9 @@ struct GarmentDraft {
         garment.warmth = warmth
         garment.seasons = Season.allCases.filter { seasons.contains($0) }
         garment.styles = styles.sorted()
+        // The style vocabulary is unified onto `styles`; the legacy separate
+        // archetype field is deprecated and cleared so it can't drift.
+        garment.archetype = nil
         garment.fit = fit
         garment.topLength = topLength
         garment.bottomVolume = bottomVolume
@@ -109,7 +115,6 @@ struct GarmentDraft {
         garment.patternType = patternType
         garment.patternScale = patternScale
         garment.texture = texture
-        garment.archetype = archetype
         garment.brand = brand.trimmed.isEmpty ? nil : brand.trimmed
         garment.notes = notes.trimmed.isEmpty ? nil : notes.trimmed
         garment.isFavorite = isFavorite

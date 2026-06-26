@@ -22,7 +22,7 @@ struct OutfitListView: View {
             Group {
                 if outfits.isEmpty { emptyState } else { list }
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Outfits")
             .navigationSubtitle("\(outfits.count) look\(outfits.count == 1 ? "" : "s")")
             .navigationDestination(for: Outfit.self)  { OutfitDetailView(outfit: $0, zoomNamespace: zoomNamespace) }

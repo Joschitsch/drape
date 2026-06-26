@@ -13,8 +13,6 @@ struct OccasionPreferenceEditor: View {
     let occasion: Occasion
     @Binding var formality: Formality
     @Binding var styles: Set<String>
-    var customStyles: [String] = []
-    var onAddStyle: (String) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -24,7 +22,7 @@ struct OccasionPreferenceEditor: View {
             }
             VStack(alignment: .leading, spacing: 10) {
                 prompt("What's the vibe? Pick any.")
-                StyleSelector(selection: $styles, customStyles: customStyles, onAdd: onAddStyle)
+                StyleSelector(selection: $styles)
             }
         }
     }

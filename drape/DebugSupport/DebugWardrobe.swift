@@ -30,9 +30,9 @@ enum DebugWardrobe: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .classicOffice:
             if s.formality.rawValue >= Formality.business.rawValue { return true }
-            return [.classic, .preppy].contains(s.archetype)
+            return !s.archetypeVotes.isDisjoint(with: [.classic, .preppy])
         case .streetwear:
-            return [.streetwear, .sporty, .edgy].contains(s.archetype)
+            return !s.archetypeVotes.isDisjoint(with: [.streetwear, .sporty, .edgy])
         case .mixed:
             return true
         }

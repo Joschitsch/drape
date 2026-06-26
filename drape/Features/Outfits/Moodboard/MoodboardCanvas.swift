@@ -37,7 +37,7 @@ struct MoodboardCanvas: View {
     var body: some View {
         ZStack {
             if showsBackground {
-                PaperBackground()
+                AppBackground()
             }
 
             // `placements` arrives sorted back→front.

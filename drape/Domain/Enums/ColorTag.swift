@@ -115,6 +115,26 @@ extension ColorTag {
         let c = rgbComponents
         return max(c.red, c.green, c.blue) - min(c.red, c.green, c.blue)
     }
+
+    /// Hue angle in degrees (0…360), or `nil` for near-grey colors where hue is
+    /// meaningless. Lets the harmony scorer reason about color-theory
+    /// relationships (tonal, analogous, complementary) instead of coarse families.
+    nonisolated var hue: Double? {
+        let c = rgbComponents
+        let maxV = max(c.red, c.green, c.blue)
+        let minV = min(c.red, c.green, c.blue)
+        let delta = maxV - minV
+        guard delta > 0.04 else { return nil }   // effectively grey
+        let h: Double
+        if maxV == c.red {
+            h = 60 * (((c.green - c.blue) / delta).truncatingRemainder(dividingBy: 6))
+        } else if maxV == c.green {
+            h = 60 * ((c.blue - c.red) / delta + 2)
+        } else {
+            h = 60 * ((c.red - c.green) / delta + 4)
+        }
+        return h < 0 ? h + 360 : h
+    }
 }
 
 /// Broad color groupings for the harmony scorer.

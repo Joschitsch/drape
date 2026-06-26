@@ -67,48 +67,98 @@ func scoreFormality(garments: [GarmentSnapshot], occasion: Occasion, profile: Pr
 
 // MARK: - Color harmony scorer
 
-/// Rewards harmonious palettes: all neutrals, one accent + neutrals, or a
-/// monochromatic warm/cool grouping. Now also reads `secondaryColors`, applies a
-/// soft cap when too many accent families pile up, and nudges for light/dark
-/// contrast so flat, tonal looks score a touch below ones with depth.
+/// Grades a palette by real color-theory relationships over drape's fixed
+/// swatch hues, not just coarse warm/cool/neutral counts. Neutrals are free
+/// anchors; the chromatic "accent" colors carry the look. Rewards tonal/neutral
+/// depth, a single accent (or analogous run) on neutrals, and balanced
+/// complementary pairs; penalises the awkward middle (hues neither close nor
+/// opposite) and three-plus competing hues. Reads `secondaryColors` too — an
+/// accent stripe is part of the palette.
 func scoreColorHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale: String?) {
-    // Count families across primary *and* secondary colors — a garment's accent
-    // stripe is part of the palette, not invisible.
     let colors = garments.flatMap { [$0.primaryColor] + $0.secondaryColors }
-    let families = Set(colors.map(\.family))
-    let accents = families.subtracting([.neutral])
+    guard !colors.isEmpty else { return (0.5, nil) }
+
+    let accents = colors.filter { $0.family != .neutral }
+    let hasNeutralAnchor = colors.contains { $0.family == .neutral }
+
+    // Light/dark depth over the core (non-accessory) pieces.
+    let lums = garments.filter { $0.category.slot != .accessory }.map { $0.primaryColor.luminance }
+    let depth = (lums.max() ?? 0) - (lums.min() ?? 0)
+
+    func clamp(_ x: Double) -> Double { min(1.0, max(0.0, x)) }
+
+    // All-neutral: the safe classic palette. Reward tonal depth, dock flatness.
+    if accents.isEmpty {
+        var score = 0.9
+        var rationale: String? = "Classic neutral palette"
+        if depth > 0.35 { score += 0.08; rationale = "Crisp light-and-dark neutrals" }
+        else if depth < 0.08 { score -= 0.05 }
+        return (clamp(score), rationale)
+    }
+
+    // Cluster accent hues so an analogous run reads as one color story.
+    let clusters = clusterHues(accents.compactMap(\.hue), within: 40)
 
     var score: Double
     var rationale: String?
-    if families == [.neutral] {
-        score = 1.0
-        rationale = "Classic neutral palette"
-    } else if families.count == 1 {
-        score = 0.85                                    // monochromatic
-    } else if accents.count == 1 {
-        score = 0.9                                     // one accent + neutrals
-    } else {
-        score = 0.5                                     // multiple accents — busy
-    }
-
-    // Soft cap: two or more distinct accent families is a lot to balance.
-    if accents.count >= 2 { score = min(score, 0.45) }
-
-    // Light/dark contrast nudge over the core (non-accessory) pieces.
-    let lums = garments
-        .filter { $0.category.slot != .accessory }
-        .map { $0.primaryColor.luminance }
-    if let lo = lums.min(), let hi = lums.max() {
-        let range = hi - lo
-        if range > 0.35 {
-            score = min(1.0, score + 0.08)              // pleasing depth
-            if rationale == nil { rationale = "Nice light-and-dark contrast" }
-        } else if range < 0.08 {
-            score = max(0.0, score - 0.05)              // very flat / tonal
+    switch clusters.count {
+    case 0:
+        score = 0.85; rationale = "Soft tonal palette"          // muted, near-grey accents
+    case 1:
+        score = hasNeutralAnchor ? 0.95 : 0.88
+        rationale = accents.count == 1 ? "One clean accent on neutrals" : "Harmonious analogous tones"
+    case 2:
+        if circularGap(clusters[0], clusters[1]) >= 150 {
+            // Complementary: graded by how loud the quieter accent is. One
+            // dominant color + a muted counterpart reads sophisticated; two
+            // strong opposites read busy.
+            score = quieterAccentChroma(accents) < 0.18 ? 0.88 : 0.72
+            rationale = "Balanced complementary accents"
+        } else {
+            score = 0.4                                         // awkward middle — clash
         }
+    default:
+        score = 0.35                                            // three+ competing hues
     }
 
-    return (min(1.0, max(0.0, score)), rationale)
+    if hasNeutralAnchor { score += 0.05 }                       // neutrals harmonise
+    if depth > 0.35 { score += 0.05 }                          // pleasing depth
+    return (clamp(score), rationale)
+}
+
+// MARK: Color-harmony helpers
+
+/// Collapses hue angles into representative clusters: hues within `within`
+/// degrees of each other (circularly) count as one color story.
+private func clusterHues(_ hues: [Double], within: Double) -> [Double] {
+    let sorted = hues.sorted()
+    guard !sorted.isEmpty else { return [] }
+    var reps: [Double] = []
+    for h in sorted {
+        if let last = reps.last, circularGap(last, h) <= within { continue }
+        reps.append(h)
+    }
+    // Merge a wraparound cluster (e.g. 350° and 10°).
+    if reps.count > 1, circularGap(reps.first!, reps.last!) <= within { reps.removeLast() }
+    return reps
+}
+
+/// Smallest angular distance between two hues, 0…180°.
+private func circularGap(_ a: Double, _ b: Double) -> Double {
+    let d = abs(a - b).truncatingRemainder(dividingBy: 360)
+    return min(d, 360 - d)
+}
+
+/// Chroma of the loudest accent in a *different* hue cluster from the dominant
+/// accent — i.e. how strong the secondary color is. Low means one color clearly
+/// leads; high means two colors compete.
+private func quieterAccentChroma(_ accents: [ColorTag]) -> Double {
+    guard let dominant = accents.max(by: { $0.chroma < $1.chroma }),
+          let domHue = dominant.hue else { return 0 }
+    return accents
+        .filter { ($0.hue.map { circularGap($0, domHue) } ?? 0) > 40 }
+        .map(\.chroma)
+        .max() ?? 0
 }
 
 // MARK: - Style match scorer
@@ -116,10 +166,12 @@ func scoreColorHarmony(garments: [GarmentSnapshot]) -> (score: Double, rationale
 /// Rewards outfits whose garment styles overlap with the user's preferred styles.
 /// Merges global preferences with any occasion-specific style overrides.
 func scoreStyleMatch(garments: [GarmentSnapshot], profile: ProfilePreferences, occasion: Occasion) -> (score: Double, rationale: String?) {
+    // Canonicalise both sides so matching is robust to how a style was stored
+    // (canonical raw value, legacy built-in, or old custom string).
     let occasionStyles = profile.occasionPreference(for: occasion)?.styles ?? []
-    let allPreferred = Set(profile.preferredStyles + occasionStyles)
+    let allPreferred = Set((profile.preferredStyles + occasionStyles).map(Archetype.canonicalStyle))
     guard !allPreferred.isEmpty else { return (0.5, nil) }
-    let outfitStyles = Set(garments.flatMap(\.styles))
+    let outfitStyles = Set(garments.flatMap(\.styles).map(Archetype.canonicalStyle))
     guard !outfitStyles.isEmpty else { return (0.3, nil) }
 
     let overlap = outfitStyles.intersection(allPreferred).count

@@ -17,6 +17,7 @@ enum MoodboardRenderer {
     @MainActor
     static func renderImage(garments: [Garment],
                             container: AppContainer,
+                            colorScheme: ColorScheme,
                             size: CGSize = exportSize) async -> UIImage? {
         var cutouts: [UUID: UIImage] = [:]
         var fallbacks: [UUID: UIImage] = [:]
@@ -38,6 +39,10 @@ enum MoodboardRenderer {
                 size: size
             )
             .frame(width: size.width, height: size.height)
+            // AppBackground reads `\.colorScheme` from the environment; inject the
+            // caller's scheme so the export matches the on-screen appearance
+            // (ImageRenderer otherwise resolves to light).
+            .environment(\.colorScheme, colorScheme)
         )
         renderer.scale = 2
         return renderer.uiImage

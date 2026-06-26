@@ -65,7 +65,7 @@ struct WardrobeListView: View {
                     scrollContent
                 }
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Wardrobe")
             .navigationSubtitle("\(garments.count) of \(SubscriptionTier.free.garmentLimit ?? 30) pieces")
             .toolbar {
@@ -112,6 +112,12 @@ struct WardrobeListView: View {
             .fullScreenCover(item: $selectedGarment) { garment in
                 NavigationStack {
                     GarmentDetailView(garment: garment)
+                        .navigationDestination(for: Outfit.self) {
+                            OutfitDetailView(outfit: $0, zoomNamespace: zoomNamespace)
+                        }
+                        .navigationDestination(for: Garment.self) {
+                            GarmentDetailView(garment: $0)
+                        }
                 }
                 .navigationTransition(.zoom(sourceID: garment.id, in: zoomNamespace))
             }

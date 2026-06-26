@@ -73,7 +73,7 @@ struct OutfitBuilderView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 100)
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .presentationDragIndicator(.visible)
             .navigationTitle(model.isEditing ? "Edit Outfit" : "New Outfit")
             .navigationBarTitleDisplayMode(.inline)

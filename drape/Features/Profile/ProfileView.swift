@@ -118,9 +118,7 @@ struct ProfileView: View {
                 Theme.line.frame(height: 0.5)
                 VStack(alignment: .leading, spacing: 10) {
                     MonoLabel("Styles you lean on", size: 9.5)
-                    StyleSelector(selection: stylesBinding(profile),
-                                  customStyles: profile.customStyles,
-                                  onAdd: { addCustomStyle($0, profile) })
+                    StyleSelector(selection: stylesBinding(profile))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -150,9 +148,7 @@ struct ProfileView: View {
                         OccasionPreferenceEditor(
                             occasion: occasion,
                             formality: occasionFormalityBinding(profile, occasion),
-                            styles: occasionStylesBinding(profile, occasion),
-                            customStyles: profile.customStyles,
-                            onAddStyle: { addCustomStyle($0, profile) }
+                            styles: occasionStylesBinding(profile, occasion)
                         )
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
@@ -407,12 +403,6 @@ struct ProfileView: View {
             get: { Set(profile.preferredStyles) },
             set: { profile.preferredStyles = $0.sorted(); persist() }
         )
-    }
-
-    private func addCustomStyle(_ style: String, _ profile: UserProfile) {
-        guard !profile.customStyles.contains(style) else { return }
-        profile.customStyles.append(style)
-        persist()
     }
 
     private func occasionFormalityBinding(_ profile: UserProfile, _ occasion: Occasion) -> Binding<Formality> {

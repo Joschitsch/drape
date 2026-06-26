@@ -42,14 +42,15 @@ final class AddGarmentViewModel {
             draft.name = Self.generateName(category: draft.category)
             phase = .ready
 
-            // Archetype is semantic — infer it after the pixel pass, off the
-            // critical path, so the form is interactive while Apple Intelligence
-            // (or the heuristic fallback) resolves it.
+            // Style is semantic — infer it after the pixel pass, off the critical
+            // path, so the form is interactive while Apple Intelligence (or the
+            // heuristic fallback) resolves it. The result pre-fills the single
+            // style field as a correctable chip rather than a hidden archetype.
             let archetype = await container.styleArchetype.inferArchetype(
                 descriptor: suggestion.descriptor,
                 category: draft.category,
                 styles: Array(draft.styles))
-            if let archetype { draft.archetype = archetype }
+            if let archetype { draft.styles.insert(archetype.rawValue) }
         } catch {
             errorMessage = "Couldn't process that photo. Please try another."
             phase = .empty

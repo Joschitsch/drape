@@ -57,7 +57,7 @@ struct RecommendationsView: View {
                 .animation(.snappy(duration: 0.35), value: model.isLoadingWeather)
                 .animation(.snappy(duration: 0.35), value: model.lastWeather)
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .task { await model.loadWeather(container: container) }
             .navigationTitle("Style")
         }
@@ -372,6 +372,7 @@ private struct SuggestionDetailView: View {
     let label: String
 
     @Environment(AppContainer.self) private var container
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedGarment: Garment? = nil
     @State private var shareImage: SharedSuggestionImage? = nil
 
@@ -394,7 +395,7 @@ private struct SuggestionDetailView: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(Theme.paper.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
         .navigationTitle(label)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -417,8 +418,9 @@ private struct SuggestionDetailView: View {
 
     private func share() {
         let items = garments
+        let scheme = colorScheme
         Task {
-            if let image = await MoodboardRenderer.renderImage(garments: items, container: container) {
+            if let image = await MoodboardRenderer.renderImage(garments: items, container: container, colorScheme: scheme) {
                 shareImage = SharedSuggestionImage(image: image)
             }
         }

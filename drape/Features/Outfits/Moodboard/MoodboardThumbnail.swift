@@ -31,7 +31,7 @@ struct MoodboardThumbnail: View {
         GeometryReader { geo in
             let inner = fitted(in: geo.size)
             ZStack {
-                PaperBackground()
+                AppBackground()
                 MoodboardCanvas(
                     placements: placements,
                     cutouts: cutouts,

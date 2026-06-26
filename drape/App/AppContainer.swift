@@ -72,7 +72,11 @@ final class AppContainer {
             styleArchetype: FoundationModelsStyleArchetypeModel(),
             weather: OpenMeteoWeatherService(),          // free, no key (Step 4)
             location: CoreLocationProvider(),            // Step 4
-            recommendationEngine: RuleBasedRecommendationEngine(), // Step 4
+            // Rules produce a diverse, hard-filtered shortlist; an on-device
+            // stylist re-ranks it for taste (no-op fallback when unavailable).
+            recommendationEngine: StylistRerankingEngine(
+                base: RuleBasedRecommendationEngine(),
+                stylist: FoundationModelsOutfitStylist()),
             entitlements: MockEntitlementService()
         )
     }

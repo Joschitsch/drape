@@ -17,6 +17,7 @@ struct OutfitDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(AppContainer.self) private var container
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
@@ -74,8 +75,7 @@ struct OutfitDetailView: View {
                     isFirstWear: entry.isFirstWear,
                     onDismiss: { withAnimation { celebration = nil } },
                     onUndo: {
-                        modelContext.delete(entry.undoEvent)
-                        try? modelContext.save()
+                        undoWearEvent(entry.undoEvent, context: modelContext)
                         withAnimation { celebration = nil }
                     }
                 )
@@ -83,7 +83,7 @@ struct OutfitDetailView: View {
                 .zIndex(10)
             }
         }
-        .background(Theme.paper.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
         .navigationTitle(outfit.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $tappedGarment) { garment in
@@ -122,8 +122,9 @@ struct OutfitDetailView: View {
 
     private func share() {
         let garments = outfit.garments
+        let scheme = colorScheme
         Task {
-            if let image = await MoodboardRenderer.renderImage(garments: garments, container: container) {
+            if let image = await MoodboardRenderer.renderImage(garments: garments, container: container, colorScheme: scheme) {
                 shareImage = SharedImage(image: image)
             }
         }

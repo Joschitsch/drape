@@ -8,15 +8,10 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct GarmentAttributeFields: View {
     @Binding var draft: GarmentDraft
     var inForm: Bool = true
-
-    @Query private var profiles: [UserProfile]
-    @Environment(\.modelContext) private var modelContext
-    private var profile: UserProfile? { profiles.first }
 
     var body: some View {
         if inForm {
@@ -49,9 +44,7 @@ struct GarmentAttributeFields: View {
                     SelectableChipsRow(items: Season.allCases, title: \.displayName, selection: $draft.seasons)
                 }
                 field("Styles") {
-                    StyleSelector(selection: $draft.styles,
-                                  customStyles: profile?.customStyles ?? [],
-                                  onAdd: addCustomStyle)
+                    StyleSelector(selection: $draft.styles)
                 }
             }
 
@@ -67,7 +60,6 @@ struct GarmentAttributeFields: View {
                 field("Fabric weight") { weightSelector }
                 field("Texture") { textureSelector }
                 field("Pattern") { patternSelector }
-                field("Style archetype") { archetypeSelector }
             }
 
             Section("Details") {
@@ -136,9 +128,7 @@ struct GarmentAttributeFields: View {
             }
             Theme.line.frame(height: 0.5)
             cardField("Styles") {
-                StyleSelector(selection: $draft.styles,
-                              customStyles: profile?.customStyles ?? [],
-                              onAdd: addCustomStyle)
+                StyleSelector(selection: $draft.styles)
             }
         }
         .drapeCard(radius: 14)
@@ -163,8 +153,6 @@ struct GarmentAttributeFields: View {
             cardField("Texture") { textureSelector }
             Theme.line.frame(height: 0.5)
             cardField("Pattern") { patternSelector }
-            Theme.line.frame(height: 0.5)
-            cardField("Style archetype") { archetypeSelector }
         }
         .drapeCard(radius: 14)
     }
@@ -192,9 +180,6 @@ struct GarmentAttributeFields: View {
     @ViewBuilder private var textureSelector: some View {
         OptionalSingleChoiceChips(items: Texture.allCases, title: \.displayName, selection: $draft.texture)
     }
-    @ViewBuilder private var archetypeSelector: some View {
-        OptionalSingleChoiceChips(items: Archetype.allCases, title: \.displayName, selection: $draft.archetype)
-    }
 
     private var detailsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -219,12 +204,6 @@ struct GarmentAttributeFields: View {
     }
 
     // MARK: - Shared helpers
-
-    private func addCustomStyle(_ style: String) {
-        guard let profile, !profile.customStyles.contains(style) else { return }
-        profile.customStyles.append(style)
-        try? modelContext.save()
-    }
 
     /// For Form context — labeled selector group.
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

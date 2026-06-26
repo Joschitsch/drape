@@ -77,7 +77,9 @@ struct AttributeSnapshot: Codable, Equatable, Sendable {
         patternType = d.patternType
         patternScale = d.patternScale
         texture = d.texture
-        archetype = d.archetype
+        // Style is unified onto `styles`; recover the archetype axis from the
+        // canonical style the detector wrote there (first match).
+        archetype = d.styles.compactMap { Archetype(rawValue: $0) }.first
     }
 }
 

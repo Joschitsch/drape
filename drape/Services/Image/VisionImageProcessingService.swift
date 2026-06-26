@@ -14,11 +14,12 @@ import UIKit
 /// Produces a visually consistent wardrobe image entirely on-device (no cost,
 /// no network — see the project cost constraint).
 ///
-/// Pipeline: decode → fix orientation → Vision foreground-instance mask → tint
-/// the cut-out onto a neutral square canvas with padding → encode full image +
-/// thumbnail as PNG. If no subject is found (or Vision is unavailable) it falls
-/// back to fitting the original image onto the same canvas, so capture never
-/// hard-fails.
+/// Pipeline: decode → fix orientation → Vision foreground-instance mask →
+/// composite the cut-out onto a transparent square canvas with padding → encode
+/// full image + thumbnail as PNG. The garment floats on the app's Warm Linen
+/// background (see AppBackground) rather than a baked-in canvas color. If no
+/// subject is found (or Vision is unavailable) it falls back to fitting the
+/// original image onto the same canvas, so capture never hard-fails.
 struct VisionImageProcessingService: ImageProcessingService {
     /// Side length of the full normalized image, in pixels.
     var fullSide: CGFloat = 1024
@@ -26,8 +27,9 @@ struct VisionImageProcessingService: ImageProcessingService {
     var thumbnailSide: CGFloat = 320
     /// Fraction of the canvas the subject is inset by on each side.
     var paddingFraction: CGFloat = 0.08
-    /// Neutral canvas color (matches secondarySystemBackground-ish light gray).
-    var canvasColor = CIColor(red: 0.95, green: 0.95, blue: 0.97)
+    /// Fully transparent canvas so the garment cut-out floats on whatever surface
+    /// shows it (the app's Warm Linen background).
+    var canvasColor = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
 
     private let context = CIContext()
 
@@ -53,8 +55,8 @@ struct VisionImageProcessingService: ImageProcessingService {
 
     // MARK: - Compositing
 
-    /// Centers and scales the subject onto a neutral square canvas, then encodes
-    /// PNG data at the requested side length.
+    /// Centers and scales the subject onto a transparent square canvas, then
+    /// encodes PNG data at the requested side length.
     private func render(subject: CIImage, side: CGFloat) throws -> Data {
         let canvasRect = CGRect(x: 0, y: 0, width: side, height: side)
         let canvas = CIImage(color: canvasColor).cropped(to: canvasRect)
