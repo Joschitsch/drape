@@ -35,7 +35,10 @@ struct OutfitListView: View {
                     Button { showingBuilder = true } label: { Image(systemName: "plus") }
                 }
             }
-            .sheet(isPresented: $showingBuilder) { OutfitBuilderView() }
+            .sheet(isPresented: $showingBuilder) {
+                if FeatureFlags.useMoodboardBuilder { MoodboardView() }
+                else { OutfitBuilderView() }
+            }
         }
     }
 
@@ -92,7 +95,10 @@ private struct DeletableOutfitCard: View {
                 Label("Delete", systemImage: "trash")
             }
         }
-        .sheet(isPresented: $showingEdit) { OutfitBuilderView(editing: outfit) }
+        .sheet(isPresented: $showingEdit) {
+            if FeatureFlags.useMoodboardBuilder { MoodboardView(editing: outfit) }
+            else { OutfitBuilderView(editing: outfit) }
+        }
         .drapeDeleteConfirmation(
             title: "Delete \u{201C}\(outfit.name)\u{201D}?",
             message: "The garments in it stay in your wardrobe.",
@@ -144,19 +150,11 @@ struct OutfitStackCard: View {
 
             Divider().overlay(Theme.line)
 
-            // ── Garment rows ─────────────────────────────────────────
-            let sorted = sortedGarments(outfit.garments)
-            ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, garment in
-                GarmentStackRow(garment: garment, compact: true)
-                if idx < sorted.count - 1 {
-                    HStack { Color.clear.frame(height: 0) }
-                        .overlay(alignment: .leading) {
-                            Theme.line
-                                .frame(height: 0.5)
-                                .padding(.leading, 78) // inset past thumbnail
-                        }
-                }
-            }
+            // ── Collage preview ──────────────────────────────────────
+            MoodboardThumbnail(garments: outfit.garments)
+                .frame(height: 220)
+                .frame(maxWidth: .infinity)
+                .clipped()
 
             Divider().overlay(Theme.line)
 

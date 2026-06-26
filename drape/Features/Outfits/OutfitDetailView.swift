@@ -8,6 +8,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct OutfitDetailView: View {
     @Bindable var outfit: Outfit
@@ -15,10 +16,13 @@ struct OutfitDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppContainer.self) private var container
 
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
     @State private var celebration: OutfitCelebration? = nil
+    @State private var tappedGarment: Garment? = nil
+    @State private var shareImage: SharedImage? = nil
 
     private var lastWorn: Date? { outfit.wearEvents.map(\.date).max() }
 
@@ -51,40 +55,15 @@ struct OutfitDetailView: View {
 
     private var content: some View {
         ZStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // ── Kicker ───────────────────────────────────────
-                    VStack(alignment: .leading, spacing: 8) {
-                        MonoLabel(kickerText)
-                        SerifText(outfit.name, size: 28)
-                    }
+            // ── Read-only collage fills between nav bar and footer ────
+            VStack(spacing: 0) {
+                MoodboardThumbnail(
+                    garments: outfit.garments,
+                    useFullResolution: true,
+                    onTapPiece: { tappedGarment = $0 }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                    // ── Garment stack (larger thumbnails) ────────────
-                    VStack(spacing: 0) {
-                        let sorted = sortedGarments(outfit.garments)
-                        ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, garment in
-                            NavigationLink(value: garment) {
-                                DetailGarmentRow(garment: garment)
-                            }
-                            .buttonStyle(.plain)
-                            .matchedTransitionSource(id: garment.id, in: zoomNamespace)
-
-                            if idx < sorted.count - 1 {
-                                Theme.line.frame(height: 0.5).padding(.leading, 96)
-                            }
-                        }
-                    }
-                    .drapeCard(radius: 18)
-
-                    Spacer(minLength: 120)
-                }
-                .padding(Theme.contentPadding)
-            }
-            .scrollIndicators(.hidden)
-
-            // ── Sticky footer ────────────────────────────────────────
-            VStack {
-                Spacer()
                 woreFooter
             }
 
@@ -104,14 +83,22 @@ struct OutfitDetailView: View {
                 .zIndex(10)
             }
         }
+        .background(Theme.paper.ignoresSafeArea())
         .navigationTitle(outfit.name)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $tappedGarment) { garment in
+            GarmentDetailView(garment: garment)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button { share() } label: { Image(systemName: "square.and.arrow.up") }
+                    .accessibilityLabel("Share outfit")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") { isEditing = true }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button { isEditing = true } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
                     Button(role: .destructive) { Task { @MainActor in showDeleteConfirm = true } } label: {
                         Label("Delete", systemImage: "trash")
                     }
@@ -124,7 +111,22 @@ struct OutfitDetailView: View {
                 ) { delete() }
             }
         }
-        .sheet(isPresented: $isEditing) { OutfitBuilderView(editing: outfit) }
+        .sheet(item: $shareImage) { item in
+            ShareSheet(items: [item.image])
+        }
+        .sheet(isPresented: $isEditing) {
+            if FeatureFlags.useMoodboardBuilder { MoodboardView(editing: outfit) }
+            else { OutfitBuilderView(editing: outfit) }
+        }
+    }
+
+    private func share() {
+        let garments = outfit.garments
+        Task {
+            if let image = await MoodboardRenderer.renderImage(garments: garments, container: container) {
+                shareImage = SharedImage(image: image)
+            }
+        }
     }
 
     // MARK: - Footer
@@ -163,4 +165,10 @@ private struct OutfitCelebration: Identifiable {
     let leadGarment: Garment
     let isFirstWear: Bool
     let undoEvent: WearEvent
+}
+
+/// Wraps a rendered collage image so it can drive `.sheet(item:)`.
+private struct SharedImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
 }

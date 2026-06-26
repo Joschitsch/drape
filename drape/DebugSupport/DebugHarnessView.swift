@@ -54,6 +54,7 @@ final class DebugHarnessModel {
         appContainer = AppContainer(
             imageProcessor: live.imageProcessor,
             imageStore: store,
+            cutout: ImageCutoutService(store: store),
             classifier: live.classifier,
             styleArchetype: live.styleArchetype,
             weather: live.weather,

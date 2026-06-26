@@ -8,6 +8,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct RecommendationsView: View {
     @Query(filter: #Predicate<Garment> { !$0.isArchived })
@@ -253,17 +254,11 @@ private struct OutfitSuggestionCard: View {
 
                     Divider().overlay(Theme.line)
 
-                    // Garment rows
-                    let sorted = sortedGarments(garments)
-                    ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, garment in
-                        GarmentStackRow(garment: garment, compact: true)
-                        if idx < sorted.count - 1 {
-                            HStack { Color.clear.frame(height: 0) }
-                                .overlay(alignment: .leading) {
-                                    Theme.line.frame(height: 0.5).padding(.leading, 78)
-                                }
-                        }
-                    }
+                    // Collage preview
+                    MoodboardThumbnail(garments: garments)
+                        .frame(height: 220)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
                 }
                 .contentShape(Rectangle())
             }
@@ -376,48 +371,64 @@ private struct SuggestionDetailView: View {
     let suggestion: OutfitSuggestion
     let label: String
 
-    // This detail is itself pushed via a binding-based `navigationDestination`,
-    // which doesn't compose with a value-based push on top of it (the bar updates
-    // but the destination never renders). So we open the garment with the same
-    // self-contained zoom `fullScreenCover` the wardrobe grid uses.
-    @Namespace private var zoomNamespace
+    @Environment(AppContainer.self) private var container
     @State private var selectedGarment: Garment? = nil
+    @State private var shareImage: SharedSuggestionImage? = nil
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if let rationale = suggestion.rationale.first {
-                    Text(rationale)
-                        .font(Theme.body(15))
-                        .foregroundStyle(Theme.inkSoft)
-                }
-
-                VStack(spacing: 0) {
-                    let sorted = sortedGarments(garments)
-                    ForEach(Array(sorted.enumerated()), id: \.element.id) { idx, garment in
-                        Button { selectedGarment = garment } label: {
-                            DetailGarmentRow(garment: garment)
-                        }
-                        .buttonStyle(.plain)
-                        .matchedTransitionSource(id: garment.id, in: zoomNamespace)
-                        if idx < sorted.count - 1 {
-                            Theme.line.frame(height: 0.5).padding(.leading, 96)
-                        }
-                    }
-                }
-                .drapeCard(radius: 18)
+        VStack(spacing: 0) {
+            if let rationale = suggestion.rationale.first {
+                Text(rationale)
+                    .font(Theme.body(15))
+                    .foregroundStyle(Theme.inkSoft)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Theme.contentPadding)
+                    .padding(.top, Theme.contentPadding)
             }
-            .padding(Theme.contentPadding)
+
+            // Read-only collage — tap a piece to open its garment.
+            MoodboardThumbnail(
+                garments: garments,
+                useFullResolution: true,
+                onTapPiece: { selectedGarment = $0 }
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .background(Theme.paper.ignoresSafeArea())
         .navigationTitle(label)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { share() } label: { Image(systemName: "square.and.arrow.up") }
+                    .accessibilityLabel("Share outfit")
+            }
+        }
+        .sheet(item: $shareImage) { item in
+            ShareSheet(items: [item.image])
+        }
+        // A binding-based push doesn't compose with the ancestor value-based
+        // destination, so open the garment with a self-contained cover.
         .fullScreenCover(item: $selectedGarment) { garment in
             NavigationStack {
                 GarmentDetailView(garment: garment)
             }
-            .navigationTransition(.zoom(sourceID: garment.id, in: zoomNamespace))
         }
     }
+
+    private func share() {
+        let items = garments
+        Task {
+            if let image = await MoodboardRenderer.renderImage(garments: items, container: container) {
+                shareImage = SharedSuggestionImage(image: image)
+            }
+        }
+    }
+}
+
+/// Wraps a rendered collage image so it can drive `.sheet(item:)`.
+private struct SharedSuggestionImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
 }
 
 #Preview {

@@ -21,6 +21,8 @@ import Observation
 final class AppContainer {
     let imageProcessor: any ImageProcessingService
     let imageStore: any ImageStore
+    /// Transparent garment cut-outs for the Moodboard collage (see ImageCutoutService).
+    let cutout: ImageCutoutService
     let classifier: any GarmentClassifier
     /// Infers a garment's style archetype at add-time (Foundation Models, with a
     /// heuristic fallback). Separate from `classifier` because it's semantic, not
@@ -39,6 +41,7 @@ final class AppContainer {
     init(
         imageProcessor: any ImageProcessingService,
         imageStore: any ImageStore,
+        cutout: ImageCutoutService,
         classifier: any GarmentClassifier,
         styleArchetype: any StyleArchetypeInferring,
         weather: any WeatherService,
@@ -48,6 +51,7 @@ final class AppContainer {
     ) {
         self.imageProcessor = imageProcessor
         self.imageStore = imageStore
+        self.cutout = cutout
         self.classifier = classifier
         self.styleArchetype = styleArchetype
         self.weather = weather
@@ -59,9 +63,11 @@ final class AppContainer {
     /// The container used by the running app. As later steps land their real
     /// implementations, swap the placeholders here (one line each).
     static func live() -> AppContainer {
-        AppContainer(
+        let imageStore = FileImageStore()
+        return AppContainer(
             imageProcessor: VisionImageProcessingService(),
-            imageStore: FileImageStore(),
+            imageStore: imageStore,
+            cutout: ImageCutoutService(store: imageStore),
             classifier: VisionGarmentClassifier(),
             styleArchetype: FoundationModelsStyleArchetypeModel(),
             weather: OpenMeteoWeatherService(),          // free, no key (Step 4)
@@ -73,9 +79,11 @@ final class AppContainer {
 
     /// A container for SwiftUI previews and tests (deterministic, in-memory).
     static func preview(tier: SubscriptionTier = .free) -> AppContainer {
-        AppContainer(
+        let imageStore = InMemoryImageStore()
+        return AppContainer(
             imageProcessor: PassthroughImageProcessingService(),
-            imageStore: InMemoryImageStore(),
+            imageStore: imageStore,
+            cutout: ImageCutoutService(store: imageStore),
             classifier: StubGarmentClassifier(),
             styleArchetype: HeuristicStyleArchetypeModel(),
             weather: MockWeatherService(),

@@ -38,7 +38,7 @@ struct VisionImageProcessingService: ImageProcessingService {
         }
 
         // Subject cut-out (transparent background) or fallback to the full frame.
-        let subject = (try? Self.subjectCutout(from: cgImage, context: context))
+        let subject = (try? VisionForegroundCutout.maskedImage(from: cgImage))
             ?? CIImage(cgImage: cgImage)
 
         let full = try render(subject: subject, side: fullSide)
@@ -49,27 +49,6 @@ struct VisionImageProcessingService: ImageProcessingService {
             thumbnailData: thumb,
             pixelSize: CGSize(width: fullSide, height: fullSide)
         )
-    }
-
-    // MARK: - Vision
-
-    /// Returns the foreground subject as a `CIImage` with a transparent
-    /// background, cropped to the subject's extent. Throws if no subject.
-    private static func subjectCutout(from cgImage: CGImage, context: CIContext) throws -> CIImage {
-        let request = VNGenerateForegroundInstanceMaskRequest()
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        try handler.perform([request])
-
-        guard let result = request.results?.first, !result.allInstances.isEmpty else {
-            throw ImageProcessingError.subjectNotFound
-        }
-
-        let masked = try result.generateMaskedImage(
-            ofInstances: result.allInstances,
-            from: handler,
-            croppedToInstancesExtent: true
-        )
-        return CIImage(cvPixelBuffer: masked)
     }
 
     // MARK: - Compositing

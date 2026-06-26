@@ -219,7 +219,7 @@ struct DebugGroundTruthView: View {
             draft.apply(classification: suggestion)
             if let a = await container.styleArchetype.inferArchetype(
                     descriptor: suggestion.descriptor, category: draft.category, styles: []) {
-                draft.archetype = a
+                draft.styles.insert(a.rawValue)
             }
             store.setFresh(AttributeSnapshot(draft: draft), for: g.id)
             store.setFeatures(GarmentFeatures(
@@ -298,12 +298,4 @@ struct DebugGroundTruthView: View {
     }
 }
 
-/// Minimal UIKit share-sheet bridge for handing the export files to AirDrop / Files.
-private struct ShareSheet: UIViewControllerRepresentable {
-    let items: [URL]
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
-}
 #endif

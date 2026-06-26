@@ -1,0 +1,102 @@
+//
+//  WardrobeDrawer.swift
+//  drape
+//
+//  The wardrobe browser embedded in the Moodboard's persistent bottom panel.
+//  Browse by category and tap to add / swap / remove a piece on the board above
+//  — the board stays pinned and visible, so styling feels live and tactile.
+//
+
+import SwiftUI
+import SwiftData
+
+struct WardrobeDrawer: View {
+    let model: MoodboardViewModel
+    /// Called when a tile is tapped (parent toggles it on the board and loads
+    /// its cut-out).
+    let onTap: (Garment) -> Void
+
+    @Query(filter: #Predicate<Garment> { !$0.isArchived }, sort: \Garment.createdAt, order: .reverse)
+    private var garments: [Garment]
+
+    @State private var categoryFilter: GarmentCategory?
+    @State private var tapTick = 0
+
+    private let columns = [GridItem(.adaptive(minimum: 100), spacing: Theme.tileSpacing)]
+
+    private var results: [Garment] {
+        guard let categoryFilter else { return garments }
+        return garments.filter { $0.category == categoryFilter }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            categoryBar
+            Divider().overlay(Theme.line)
+            content
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: tapTick)
+    }
+
+    private var categoryBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                DrapeChip(label: "All", active: categoryFilter == nil) { categoryFilter = nil }
+                ForEach(GarmentCategory.allCases) { category in
+                    DrapeChip(label: category.displayName, active: categoryFilter == category) {
+                        categoryFilter = (categoryFilter == category) ? nil : category
+                    }
+                }
+            }
+            .padding(.horizontal, Theme.contentPadding)
+            .padding(.vertical, 10)
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if results.isEmpty {
+            ContentUnavailableView {
+                Label("Nothing here yet", image: "drape.wardrobe")
+            } description: {
+                Text("Add pieces to your wardrobe to style them here.")
+            }
+        } else {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
+                    ForEach(results) { garment in
+                        Button {
+                            tapTick += 1
+                            onTap(garment)
+                        } label: {
+                            GarmentTile(garment: garment)
+                                .overlay(alignment: .topLeading) { onBoardBadge(garment) }
+                        }
+                        .buttonStyle(PressableScale())
+                    }
+                }
+                .padding(Theme.contentPadding)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func onBoardBadge(_ garment: Garment) -> some View {
+        if model.isOnBoard(garment) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(Theme.paper, Theme.ink)
+                .padding(8)
+        }
+    }
+}
+
+/// A press-scale button style for the drawer tiles — a small pulse on touch that
+/// makes browsing feel tactile (paired with haptic feedback in the drawer).
+private struct PressableScale: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .animation(.drapePress, value: configuration.isPressed)
+    }
+}
