@@ -5,3 +5,6 @@
 
 # Ground-truth evaluation exports (data, not code)
 results/
+
+# ML training dataset (large; regenerate locally, not tracked)
+Tools/data/
