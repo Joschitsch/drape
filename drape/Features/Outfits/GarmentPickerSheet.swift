@@ -55,7 +55,7 @@ struct GarmentPickerSheet: View {
                                 } label: {
                                     GarmentTile(garment: garment)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PressableScale(scale: 0.94))
                             }
                         }
                         .padding(Theme.contentPadding)

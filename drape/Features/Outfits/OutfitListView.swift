@@ -2,34 +2,65 @@
 //  OutfitListView.swift
 //  drape
 //
-//  Saved outfits as vertical garment-stack cards. Each row shows garments in
-//  layer order (outerwear → top → bottom → footwear → accessory) with portrait
-//  thumbnails and an inset separator, consistent with the Style tab cards.
+//  Saved outfits as an editorial Cover Flow gallery: one collage large and
+//  centred, neighbours peeking with depth. The focused outfit's name fades in
+//  below the gallery; tapping it reveals occasion + piece count, and a control
+//  zone offers share / edit / delete / wore-today.
 //
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct OutfitListView: View {
     @Query(sort: \Outfit.createdAt, order: .reverse)
     private var outfits: [Outfit]
 
+    @Environment(\.modelContext) private var modelContext
+    @Environment(AppContainer.self) private var container
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var showingBuilder = false
-    @Namespace private var zoomNamespace
+    @State private var outfitToEdit: Outfit? = nil
+    @State private var outfitToDelete: Outfit? = nil
+    @State private var shareImage: SharedImage? = nil
+    @State private var sharingID: Outfit.ID? = nil
+    @State private var celebration: OutfitCelebration? = nil
+
+    @State private var focusedID: Outfit.ID? = nil
+    @State private var metadataExpanded = false
+    @State private var tappedGarment: Garment? = nil
+
+    private var focusedOutfit: Outfit? {
+        guard let focusedID else { return outfits.first }
+        return outfits.first { $0.id == focusedID } ?? outfits.first
+    }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if outfits.isEmpty { emptyState } else { list }
+            ZStack {
+                Group {
+                    if outfits.isEmpty { emptyState } else { content }
+                }
+
+                if let entry = celebration {
+                    WoreTodayCelebration(
+                        garment: entry.leadGarment,
+                        isFirstWear: entry.isFirstWear,
+                        onDismiss: { withAnimation { celebration = nil } },
+                        onUndo: {
+                            undoWearEvent(entry.undoEvent, context: modelContext)
+                            withAnimation { celebration = nil }
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(10)
+                }
             }
             .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Outfits")
             .navigationSubtitle("\(outfits.count) look\(outfits.count == 1 ? "" : "s")")
-            .navigationDestination(for: Outfit.self)  { OutfitDetailView(outfit: $0, zoomNamespace: zoomNamespace) }
-            .navigationDestination(for: Garment.self) { garment in
-                GarmentDetailView(garment: garment)
-                    .navigationTransition(.zoom(sourceID: garment.id, in: zoomNamespace))
-            }
+            .navigationDestination(item: $tappedGarment) { GarmentDetailView(garment: $0) }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { showingBuilder = true } label: { Image(systemName: "plus") }
@@ -39,17 +70,123 @@ struct OutfitListView: View {
                 if FeatureFlags.useMoodboardBuilder { MoodboardView() }
                 else { OutfitBuilderView() }
             }
+            .sheet(item: $outfitToEdit) { outfit in
+                if FeatureFlags.useMoodboardBuilder { MoodboardView(editing: outfit) }
+                else { OutfitBuilderView(editing: outfit) }
+            }
+            .sheet(item: $shareImage) { item in
+                ShareSheet(items: [item.image])
+            }
+            .drapeDeleteConfirmation(
+                title: "Delete \u{201C}\(outfitToDelete?.name ?? "")\u{201D}?",
+                message: "The garments in it stay in your wardrobe.",
+                isPresented: Binding(
+                    get: { outfitToDelete != nil },
+                    set: { if !$0 { outfitToDelete = nil } }
+                )
+            ) {
+                if let o = outfitToDelete {
+                    deleteOutfit(o, context: modelContext)
+                    outfitToDelete = nil
+                }
+            }
         }
     }
 
-    private var list: some View {
-        ScrollView {
-            LazyVStack(spacing: 18) {
-                ForEach(outfits) { outfit in
-                    DeletableOutfitCard(outfit: outfit)
-                }
+    // MARK: - Content
+
+    private var content: some View {
+        VStack(spacing: 0) {
+            CoverFlowGallery(items: outfits, selection: $focusedID, itemWidthFraction: 0.6) { outfit in
+                outfitItem(outfit)
             }
-            .padding(Theme.contentPadding)
+            .frame(maxHeight: .infinity)
+
+            focusedPanel
+                .animation(.drapeContent, value: focusedID)
+        }
+        .onAppear { syncFocus() }
+        .onChange(of: outfits.map(\.id)) { syncFocus() }
+        .onChange(of: focusedID) { metadataExpanded = false }
+    }
+
+    @ViewBuilder
+    private func outfitItem(_ outfit: Outfit) -> some View {
+        // The collage can briefly outlive its outfit during a delete (the @Query
+        // updates a beat before SwiftUI drops the view); reading garments on the
+        // detached model would trap, so render nothing the moment it's gone.
+        if outfit.modelContext == nil {
+            Color.clear
+        } else {
+            MoodboardThumbnail(
+                garments: outfit.garments,
+                useFullResolution: true,
+                onTapPiece: { tappedGarment = $0 },
+                showsBackground: false,
+                fillsContent: true
+            )
+            .padding(.vertical, 6)
+            .accessibilityLabel("\(outfit.name), \(outfit.occasion.displayName)")
+        }
+    }
+
+    @ViewBuilder
+    private var focusedPanel: some View {
+        if let o = focusedOutfit, o.modelContext != nil {
+            VStack(spacing: 14) {
+                Button {
+                    withAnimation(.drapeContent) { metadataExpanded.toggle() }
+                } label: {
+                    VStack(spacing: 5) {
+                        SerifText(o.name, size: 24).lineLimit(1)
+                        HStack(spacing: 6) {
+                            MonoLabel(o.occasion.displayName, size: 10)
+                            Image(systemName: metadataExpanded ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(Theme.inkFaint)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .frame(minHeight: 44)
+
+                if metadataExpanded { metadata(o) }
+
+                controlZone(o)
+            }
+            .padding(.horizontal, Theme.contentPadding)
+            .padding(.top, 6)
+            .padding(.bottom, 14)
+            .id(o.id)
+            .transition(.opacity)
+        }
+    }
+
+    private func metadata(_ o: Outfit) -> some View {
+        VStack(spacing: 6) {
+            MonoLabel("\(o.occasion.displayName) · \(o.garments.count) piece\(o.garments.count == 1 ? "" : "s")", size: 10)
+            if o.wearCount > 0 {
+                MonoLabel("Worn \(o.wearCount)×", size: 10)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private func controlZone(_ o: Outfit) -> some View {
+        // One prominent primary (log a wear — the core ritual), Share as a
+        // subordinate icon, and management/destructive actions tucked into the
+        // overflow menu so Delete can't be mistapped next to "Wore today".
+        HStack(spacing: 12) {
+            PrimaryActionButton(title: "Wore today", systemImage: "checkmark") { logWear(o) }
+            CircleIconButton(systemName: "square.and.arrow.up", accessibilityLabel: "Share outfit",
+                             isLoading: sharingID == o.id) { share(o) }
+            CircleMenuButton(accessibilityLabel: "More actions") {
+                Button { outfitToEdit = o } label: { Label("Edit", systemImage: "pencil") }
+                Button(role: .destructive) { outfitToDelete = o } label: { Label("Delete", systemImage: "trash") }
+            }
         }
     }
 
@@ -63,53 +200,55 @@ struct OutfitListView: View {
                 .padding(.horizontal, Theme.contentPadding)
         }
     }
-}
 
-// MARK: - Deletable outfit card
+    // MARK: - Actions
 
-/// An outfit stack card with a long-press context menu (Delete). The
-/// confirmation dialog lives on this view so iOS 26 anchors it to the card
-/// being acted on, matching Photos.app behaviour.
-private struct DeletableOutfitCard: View {
-    let outfit: Outfit
-
-    @Environment(\.modelContext) private var modelContext
-
-    @State private var showingEdit = false
-    @State private var showingDelete = false
-
-    var body: some View {
-        NavigationLink(value: outfit) {
-            OutfitStackCard(outfit: outfit)
+    private func syncFocus() {
+        if focusedID == nil || !outfits.contains(where: { $0.id == focusedID }) {
+            focusedID = outfits.first?.id
         }
-        .buttonStyle(.plain)
-        .contextMenu {
-            Button {
-                Task { @MainActor in showingEdit = true }
-            } label: {
-                Label("Edit", systemImage: "pencil")
-            }
-            Button(role: .destructive) {
-                Task { @MainActor in showingDelete = true }
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
+    }
+
+    private func share(_ outfit: Outfit) {
+        guard sharingID == nil else { return }   // ignore repeat taps while rendering
+        let garments = outfit.garments
+        let scheme = colorScheme
+        sharingID = outfit.id
+        Task {
+            let image = await MoodboardRenderer.renderImage(garments: garments, container: container, colorScheme: scheme)
+            sharingID = nil
+            if let image { shareImage = SharedImage(image: image) }
         }
-        .sheet(isPresented: $showingEdit) {
-            if FeatureFlags.useMoodboardBuilder { MoodboardView(editing: outfit) }
-            else { OutfitBuilderView(editing: outfit) }
-        }
-        .drapeDeleteConfirmation(
-            title: "Delete \u{201C}\(outfit.name)\u{201D}?",
-            message: "The garments in it stay in your wardrobe.",
-            isPresented: $showingDelete
-        ) {
-            deleteOutfit(outfit, context: modelContext)
+    }
+
+    private func logWear(_ outfit: Outfit) {
+        guard let lead = sortedGarments(outfit.garments).first else { return }
+        let isFirst = outfit.wearCount == 0
+        let event = WearEvent(date: .now, outfit: outfit, garments: outfit.garments)
+        modelContext.insert(event)
+        try? modelContext.save()
+        withAnimation {
+            celebration = OutfitCelebration(leadGarment: lead, isFirstWear: isFirst, undoEvent: event)
         }
     }
 }
 
-// MARK: - Shared outfit stack card (also used by Style tab)
+// MARK: - Supporting types
+
+private struct OutfitCelebration: Identifiable {
+    let id = UUID()
+    let leadGarment: Garment
+    let isFirstWear: Bool
+    let undoEvent: WearEvent
+}
+
+/// Wraps a rendered collage image so it can drive `.sheet(item:)`.
+private struct SharedImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+// MARK: - Shared outfit ordering (used by Style + detail screens)
 
 /// Slot order from head to toe.
 let outfitSlotOrder: [GarmentCategory] = [.outerwear, .top, .bottom, .dress, .footwear, .accessory]
@@ -122,55 +261,7 @@ func sortedGarments(_ garments: [Garment]) -> [Garment] {
     }
 }
 
-struct OutfitStackCard: View {
-    let outfit: Outfit
-
-    var body: some View {
-        // The card can briefly outlive its outfit: deleting an outfit updates the
-        // @Query, but SwiftUI may re-evaluate this card once more before dropping
-        // it from the list. The model's backing data is detached by then, so
-        // reading a persisted attribute (occasion, name…) would trap. Bail out.
-        if outfit.modelContext == nil {
-            EmptyView()
-        } else {
-            content
-        }
-    }
-
-    private var content: some View {
-        VStack(spacing: 0) {
-            // ── Header ───────────────────────────────────────────────
-            HStack(alignment: .firstTextBaseline) {
-                SerifText(outfit.name, size: 18).lineLimit(1)
-                Spacer()
-                MonoLabel(outfit.occasion.displayName, size: 10)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-
-            Divider().overlay(Theme.line)
-
-            // ── Collage preview ──────────────────────────────────────
-            MoodboardThumbnail(garments: outfit.garments)
-                .frame(height: 220)
-                .frame(maxWidth: .infinity)
-                .clipped()
-
-            Divider().overlay(Theme.line)
-
-            // ── Footer: wear count ───────────────────────────────────
-            HStack {
-                MonoLabel(outfit.wearCount > 0 ? "Worn \(outfit.wearCount)×" : "Not worn yet", size: 10)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 11)
-        }
-        .drapeCard(radius: 18)
-    }
-}
-
-/// A single garment row inside an outfit stack card.
+/// A single garment row inside an outfit stack (used by Style This Piece).
 struct GarmentStackRow: View {
     let garment: Garment
     var compact: Bool = true

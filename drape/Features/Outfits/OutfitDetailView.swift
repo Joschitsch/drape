@@ -24,6 +24,7 @@ struct OutfitDetailView: View {
     @State private var celebration: OutfitCelebration? = nil
     @State private var tappedGarment: Garment? = nil
     @State private var shareImage: SharedImage? = nil
+    @State private var isSharing = false
 
     private var lastWorn: Date? { outfit.wearEvents.map(\.date).max() }
 
@@ -91,8 +92,15 @@ struct OutfitDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { share() } label: { Image(systemName: "square.and.arrow.up") }
-                    .accessibilityLabel("Share outfit")
+                Button { share() } label: {
+                    if isSharing {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+                .disabled(isSharing)
+                .accessibilityLabel("Share outfit")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") { isEditing = true }
@@ -121,12 +129,14 @@ struct OutfitDetailView: View {
     }
 
     private func share() {
+        guard !isSharing else { return }
         let garments = outfit.garments
         let scheme = colorScheme
+        isSharing = true
         Task {
-            if let image = await MoodboardRenderer.renderImage(garments: garments, container: container, colorScheme: scheme) {
-                shareImage = SharedImage(image: image)
-            }
+            let image = await MoodboardRenderer.renderImage(garments: garments, container: container, colorScheme: scheme)
+            isSharing = false
+            if let image { shareImage = SharedImage(image: image) }
         }
     }
 

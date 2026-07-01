@@ -51,6 +51,7 @@ struct WardrobeDrawer: View {
             .padding(.horizontal, Theme.contentPadding)
             .padding(.vertical, 10)
         }
+        .horizontalScrollFade()
     }
 
     @ViewBuilder
@@ -69,10 +70,10 @@ struct WardrobeDrawer: View {
                             tapTick += 1
                             onTap(garment)
                         } label: {
-                            GarmentTile(garment: garment)
+                            PickerGarmentTile(garment: garment)
                                 .overlay(alignment: .topLeading) { onBoardBadge(garment) }
                         }
-                        .buttonStyle(PressableScale())
+                        .buttonStyle(PressableScale(scale: 0.94))
                     }
                 }
                 .padding(Theme.contentPadding)
@@ -91,12 +92,22 @@ struct WardrobeDrawer: View {
     }
 }
 
-/// A press-scale button style for the drawer tiles — a small pulse on touch that
-/// makes browsing feel tactile (paired with haptic feedback in the drawer).
-private struct PressableScale: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .animation(.drapePress, value: configuration.isPressed)
+/// A compact picker tile — image + category only, no name or worn-status label,
+/// so the drawer reads as a clean grid of pieces to tap in and out.
+private struct PickerGarmentTile: View {
+    let garment: Garment
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            NormalizedImageView(assetID: garment.thumbnailAssetID)
+                .frame(maxWidth: .infinity)
+                .aspectRatio(1, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                .shadow(color: Theme.shadow, radius: 11, x: 0, y: 8)
+
+            MonoLabel(garment.category.displayName, size: 10)
+                .lineLimit(1)
+        }
+        .contentShape(Rectangle())
     }
 }

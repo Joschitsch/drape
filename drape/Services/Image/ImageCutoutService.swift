@@ -3,9 +3,10 @@
 //  drape
 //
 //  Produces transparent garment cut-outs for the Moodboard collage. Stored
-//  garment PNGs are opaque (the capture pipeline flattens the subject onto a
-//  neutral canvas), so the floating-collage look re-extracts a transparent
-//  subject from the normalized full image with Vision, on-device, and caches it.
+//  garment PNGs already have a transparent canvas, but the Moodboard's
+//  floating-collage look needs a tightly cropped subject (no canvas padding),
+//  so this re-extracts it from the normalized full image with Vision,
+//  on-device, and caches it.
 //
 
 import Foundation

@@ -113,10 +113,12 @@ final class MoodboardViewModel {
     // MARK: - Cut-out loading
 
     /// Loads transparent cut-outs (and opaque fallbacks) for every selected
-    /// garment that isn't cached yet. Safe to call repeatedly.
-    func loadAssets(cutout service: ImageCutoutService, store: any ImageStore) async {
+    /// garment that isn't cached yet. Safe to call repeatedly. `canvasSize` is a
+    /// stable reference size (not the live, drag-reactive board size) used to
+    /// size each garment's sticker outline.
+    func loadAssets(cutout service: ImageCutoutService, store: any ImageStore, canvasSize: CGSize) async {
         for garment in selectedGarments {
-            await loadAsset(for: garment, cutout: service, store: store)
+            await loadAsset(for: garment, cutout: service, store: store, canvasSize: canvasSize)
         }
     }
 
@@ -124,13 +126,20 @@ final class MoodboardViewModel {
     /// appears as soon as its cut-out is ready. Resolves the transparent cut-out
     /// first and only uses the opaque thumbnail as a fallback if Vision finds no
     /// subject, so the flat canvas is never shown while processing.
-    func loadAsset(for garment: Garment, cutout service: ImageCutoutService, store: any ImageStore) async {
+    func loadAsset(for garment: Garment, cutout service: ImageCutoutService, store: any ImageStore,
+                   canvasSize: CGSize) async {
         let id = garment.id
         guard cutouts[id] == nil, fallbacks[id] == nil, !pending.contains(id) else { return }
 
         pending.insert(id)
+        let displaySize = placements.first { $0.id == id }.map {
+            CGSize(width: $0.widthFraction * canvasSize.width, height: $0.heightFraction * canvasSize.height)
+        } ?? canvasSize
         if let image = await CutoutImageCache.shared.cutoutImage(forAssetID: garment.imageAssetID, via: service) {
-            cutouts[id] = image
+            cutouts[id] = await StickerOutlineCache.shared.outlinedImage(
+                forAssetID: garment.imageAssetID, source: image,
+                displaySize: displaySize, thicknessPoints: Theme.stickerOutlineThickness
+            ) ?? image
         } else if let data = try? await store.loadThumbnailData(id: garment.thumbnailAssetID),
                   let image = UIImage(data: data) {
             fallbacks[id] = image

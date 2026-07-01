@@ -30,6 +30,10 @@ struct VisionImageProcessingService: ImageProcessingService {
     /// Fully transparent canvas so the garment cut-out floats on whatever surface
     /// shows it (the app's Warm Linen background).
     var canvasColor = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+    /// Mild blur applied to the subject's alpha before compositing, in pixels at
+    /// `fullSide` resolution (scaled proportionally for the thumbnail) — softens
+    /// Vision's native mask blockiness so the cut-out's own edge reads cleanly.
+    var alphaSmoothingRadius: CGFloat = 1.5
 
     private let context = CIContext()
 
@@ -73,8 +77,9 @@ struct VisionImageProcessingService: ImageProcessingService {
         let tx = (side - scaledExtent.width) / 2 - scaledExtent.origin.x
         let ty = (side - scaledExtent.height) / 2 - scaledExtent.origin.y
         let centered = scaled.transformed(by: CGAffineTransform(translationX: tx, y: ty))
+        let smoothed = smoothedEdge(of: centered, radiusPx: alphaSmoothingRadius * (side / fullSide))
 
-        let composite = centered.composited(over: canvas).cropped(to: canvasRect)
+        let composite = smoothed.composited(over: canvas).cropped(to: canvasRect)
 
         guard let cgImage = context.createCGImage(composite, from: canvasRect) else {
             throw ImageProcessingError.renderingFailed
@@ -83,6 +88,16 @@ struct VisionImageProcessingService: ImageProcessingService {
             throw ImageProcessingError.renderingFailed
         }
         return data
+    }
+
+    /// Softens Vision's native mask blockiness with a mild Gaussian blur, then
+    /// re-clamps to the blurred extent so the blur doesn't shrink the subject's
+    /// apparent bounds.
+    private func smoothedEdge(of subject: CIImage, radiusPx: CGFloat) -> CIImage {
+        guard radiusPx > 0 else { return subject }
+        return subject
+            .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: radiusPx])
+            .cropped(to: subject.extent.insetBy(dx: -radiusPx, dy: -radiusPx))
     }
 }
 

@@ -35,7 +35,7 @@ final class OutfitBuilderViewModel {
     var isEditing: Bool { editingOutfit != nil }
 
     /// Saving needs at least one garment; the name always resolves to a sensible
-    /// default, so it never blocks the save in the morning ritual.
+    /// default, so it never blocks a quick save.
     var isValid: Bool { !selections.isEmpty }
 
     /// A ready-made name so the user never has to type to save. Prefers the lead

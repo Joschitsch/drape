@@ -98,13 +98,19 @@ struct MoodboardCanvas: View {
 
 /// Makes a piece tappable only when a handler is provided (read-only collage);
 /// otherwise the piece stays inert so the editor/thumbnails are unaffected.
+///
+/// A `Button` + `PressableScale` keeps the piece scroll-safe (it yields to the
+/// surrounding horizontal gallery, so dragging across a cutout still scrolls the
+/// rack) and accessible (a real button trait), while scaling **on press** so it
+/// reads as tappable the moment you touch it — no opacity dim, one animation.
 private struct TapPiece: ViewModifier {
     let id: UUID
     let onTap: ((UUID) -> Void)?
 
     func body(content: Content) -> some View {
         if let onTap {
-            content.onTapGesture { onTap(id) }
+            Button { onTap(id) } label: { content }
+                .buttonStyle(PressableScale(scale: 0.92))
         } else {
             content
         }

@@ -21,10 +21,17 @@ enum MoodboardRenderer {
                             size: CGSize = exportSize) async -> UIImage? {
         var cutouts: [UUID: UIImage] = [:]
         var fallbacks: [UUID: UIImage] = [:]
+        let placements = MoodboardLayout.place(garments)
         for garment in garments {
+            let displaySize = placements.first { $0.id == garment.id }.map {
+                CGSize(width: $0.widthFraction * size.width, height: $0.heightFraction * size.height)
+            } ?? size
             if let image = await CutoutImageCache.shared.cutoutImage(
                 forAssetID: garment.imageAssetID, via: container.cutout) {
-                cutouts[garment.id] = image
+                cutouts[garment.id] = await StickerOutlineCache.shared.outlinedImage(
+                    forAssetID: garment.imageAssetID, source: image,
+                    displaySize: displaySize, thicknessPoints: Theme.stickerOutlineThickness
+                ) ?? image
             } else if let data = try? await container.imageStore.loadThumbnailData(id: garment.thumbnailAssetID),
                       let image = UIImage(data: data) {
                 fallbacks[garment.id] = image
