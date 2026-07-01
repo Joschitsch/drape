@@ -32,6 +32,31 @@ final class CoreLocationProvider: NSObject, LocationProvider, @unchecked Sendabl
         return reps?.cityName ?? reps?.cityWithContext ?? item.name
     }
 
+    /// Forward city search via MapKit. Returns matching places (cities/addresses)
+    /// for the query so the user can plan looks for somewhere they aren't.
+    func search(query: String) async -> [PlaceSuggestion] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = trimmed
+        request.resultTypes = [.address]
+
+        let search = MKLocalSearch(request: request)
+        guard let response = try? await search.start() else { return [] }
+
+        return response.mapItems.compactMap { item -> PlaceSuggestion? in
+            let coordinate = item.location.coordinate
+            let reps = item.addressRepresentations
+            guard let name = reps?.cityWithContext ?? reps?.cityName ?? item.name else { return nil }
+            return PlaceSuggestion(
+                name: name,
+                coordinate: Coordinate(latitude: coordinate.latitude,
+                                       longitude: coordinate.longitude)
+            )
+        }
+    }
+
     func currentCoordinate() async throws -> Coordinate {
         switch manager.authorizationStatus {
         case .denied, .restricted:
