@@ -14,7 +14,10 @@ struct GarmentCard: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             // ── Full-bleed photo ─────────────────────────────────────
-            NormalizedImageView(assetID: garment.imageAssetID, useThumbnail: false)
+            GeometryReader { geo in
+                NormalizedImageView(assetID: garment.imageAssetID, useThumbnail: false,
+                                    displaySize: geo.size)
+            }
 
             // ── Overlays ─────────────────────────────────────────────
             GlassEffectContainer {

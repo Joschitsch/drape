@@ -2,8 +2,10 @@
 //  WardrobeListView.swift
 //  drape
 //
-//  The wardrobe grid: browse, add (with free-tier cap), and open item details.
-//  Includes the "Honest Mirror" nudge for long-neglected favorites.
+//  The wardrobe: an editorial Cover Flow gallery (default) or the classic grid,
+//  toggleable and remembered across launches. The category filter bar stays
+//  pinned above the content in both modes. Includes the "Honest Mirror" nudge
+//  for long-neglected favorites (grid mode).
 //
 
 import SwiftUI
@@ -28,8 +30,16 @@ struct WardrobeListView: View {
     @State private var showingFilter = false
     @State private var garmentToEdit: Garment? = nil
     @State private var garmentToDelete: Garment? = nil
+    @State private var garmentToStyle: Garment? = nil
     @State private var selectedGarment: Garment? = nil
     @Namespace private var zoomNamespace
+
+    /// Cover Flow is the default; the choice persists across launches.
+    @AppStorage("wardrobeCoverFlow") private var coverFlow = true
+    /// The garment snapped to centre in the gallery (drives the name + panel).
+    @State private var focusedID: Garment.ID? = nil
+    @State private var metadataExpanded = false
+    @State private var celebration: WardrobeCelebration? = nil
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: Theme.tileSpacing)]
 
@@ -45,6 +55,11 @@ struct WardrobeListView: View {
         return list.filter(filter.matches)
     }
 
+    private var focusedGarment: Garment? {
+        guard let focusedID else { return filteredGarments.first }
+        return filteredGarments.first { $0.id == focusedID } ?? filteredGarments.first
+    }
+
     /// Most-neglected favorited garment (60+ days without a wear).
     private var neglectedFavorite: Garment? {
         garments
@@ -56,20 +71,49 @@ struct WardrobeListView: View {
             .max { ($0.daysSinceLastWear ?? Int.max) < ($1.daysSinceLastWear ?? Int.max) }
     }
 
+    private var subtitleText: String {
+        if let limit = container.entitlements.tier.garmentLimit {
+            return "\(garments.count) of \(limit) pieces"
+        }
+        return "\(garments.count) piece\(garments.count == 1 ? "" : "s")"
+    }
+
     var body: some View {
         NavigationStack {
-            Group {
-                if garments.isEmpty {
-                    emptyState
-                } else {
-                    scrollContent
+            ZStack {
+                Group {
+                    if garments.isEmpty {
+                        emptyState
+                    } else {
+                        mainContent
+                    }
+                }
+
+                if let entry = celebration {
+                    WoreTodayCelebration(
+                        garment: entry.garment,
+                        isFirstWear: entry.isFirstWear,
+                        onDismiss: { withAnimation { celebration = nil } },
+                        onUndo: {
+                            undoWearEvent(entry.undoEvent, context: modelContext)
+                            withAnimation { celebration = nil }
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(10)
                 }
             }
             .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Wardrobe")
-            .navigationSubtitle("\(garments.count) of \(SubscriptionTier.free.garmentLimit ?? 30) pieces")
+            .navigationSubtitle(subtitleText)
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        withAnimation(.drapeContent) { coverFlow.toggle() }
+                    } label: {
+                        Image(systemName: coverFlow ? "square.grid.2x2" : "rectangle.stack")
+                    }
+                    .accessibilityLabel(coverFlow ? "Grid view" : "Gallery view")
                     Button { showingFilter = true } label: {
                         Image(systemName: filter.isActive
                               ? "line.3.horizontal.decrease.circle.fill"
@@ -81,6 +125,7 @@ struct WardrobeListView: View {
             }
             .sheet(isPresented: $showingAdd) { AddGarmentView() }
             .sheet(item: $garmentToEdit) { EditGarmentView(garment: $0) }
+            .sheet(item: $garmentToStyle) { StyleThisPieceView(garment: $0) }
             .drapeDeleteConfirmation(
                 title: "Delete \u{201C}\(garmentToDelete?.displayName ?? "")\u{201D}?",
                 message: "This removes it from your wardrobe permanently.",
@@ -134,10 +179,157 @@ struct WardrobeListView: View {
 
     // MARK: - Content
 
-    private var scrollContent: some View {
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            pinnedFilterBar
+            if coverFlow { coverFlowContent } else { gridContent }
+        }
+    }
+
+    // ── Pinned filter bar (both modes) ───────────────────────────────────────
+
+    private var pinnedFilterBar: some View {
+        VStack(spacing: 0) {
+            if availableCategories.count > 1 {
+                filterPills
+                    .padding(.horizontal, Theme.contentPadding)
+                    .padding(.vertical, 12)
+            }
+            activeFilterSummary
+                .padding(.horizontal, Theme.contentPadding)
+        }
+    }
+
+    // ── Cover Flow ───────────────────────────────────────────────────────────
+
+    private var coverFlowContent: some View {
+        VStack(spacing: 0) {
+            if filteredGarments.isEmpty {
+                emptyFilterState
+                    .padding(.top, 32)
+                Spacer(minLength: 0)
+            } else {
+                CoverFlowGallery(items: filteredGarments, selection: $focusedID) { garment in
+                    galleryItem(garment)
+                }
+                .frame(maxHeight: .infinity)
+
+                focusedPanel
+                    .animation(.drapeContent, value: focusedID)
+            }
+        }
+        .onAppear { syncFocus() }
+        .onChange(of: filteredGarments.map(\.id)) { syncFocus() }
+        .onChange(of: focusedID) { metadataExpanded = false }
+    }
+
+    private func galleryItem(_ garment: Garment) -> some View {
+        // Scales on press (no opacity dim) so it reads as tappable; no
+        // `.contextMenu` — the focused panel below already exposes Favorite /
+        // Edit / Delete via the "⋯" overflow, so the long-press is redundant
+        // here. The grid tiles keep their context menu (no overflow).
+        Button { selectedGarment = garment } label: {
+            NormalizedImageView(assetID: garment.imageAssetID, useThumbnail: false)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableScale(scale: 0.96))
+        .matchedTransitionSource(id: garment.id, in: zoomNamespace)
+        .accessibilityLabel(garment.displayName)
+        .accessibilityHint("Double-tap to open")
+    }
+
+    @ViewBuilder
+    private var focusedPanel: some View {
+        if let g = focusedGarment {
+            VStack(spacing: 14) {
+                Button {
+                    withAnimation(.drapeContent) { metadataExpanded.toggle() }
+                } label: {
+                    VStack(spacing: 5) {
+                        SerifText(g.displayName, size: 24).lineLimit(1)
+                        HStack(spacing: 6) {
+                            MonoLabel([g.category.displayName, g.subcategory]
+                                .compactMap { $0 }.joined(separator: " · "), size: 10)
+                            Image(systemName: metadataExpanded ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(Theme.inkFaint)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .frame(minHeight: 44)
+
+                if metadataExpanded { metadata(g) }
+
+                controlZone(g)
+            }
+            .padding(.horizontal, Theme.contentPadding)
+            .padding(.top, 6)
+            .padding(.bottom, 14)
+            .id(g.id)
+            .transition(.opacity)
+        }
+    }
+
+    private func metadata(_ g: Garment) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let brand = g.brand, !brand.isEmpty {
+                Text(brand).font(Theme.body(14)).foregroundStyle(Theme.inkSoft)
+            }
+            MonoLabel(g.lastWornLabel, size: 10)
+            FlowLayout(spacing: 8) {
+                TagChip(g.primaryColor.displayName, swatch: g.displayColor)
+                ForEach(metadataTags(g), id: \.self) { TagChip($0) }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    /// Every non-color attribute, in a stable reading order (mirrors the detail
+    /// view). Color leads the row separately since it carries a swatch.
+    private func metadataTags(_ g: Garment) -> [String] {
+        var seenStyles = Set<Archetype>()
+        let styleNames = g.styles.compactMap { raw -> String? in
+            guard let a = Archetype.from(style: raw), seenStyles.insert(a).inserted else { return nil }
+            return a.displayName
+        }
+        return [g.formality.displayName, g.warmth.displayName + " warmth"]
+            + [g.fit?.displayName].compactMap { $0 }
+            + g.seasons.map(\.displayName)
+            + styleNames
+    }
+
+    private func controlZone(_ g: Garment) -> some View {
+        // "Style This Piece" is the forward action this screen is built around →
+        // the primary. Wore-today stays a subordinate icon; Edit/Delete move into
+        // the overflow so the destructive action is contained and separated.
+        HStack(spacing: 12) {
+            PrimaryActionButton(title: "Style This Piece", systemImage: "sparkles") { garmentToStyle = g }
+            CircleIconButton(systemName: "checkmark.circle", accessibilityLabel: "Wore today") { logWear(g) }
+            CircleMenuButton(accessibilityLabel: "More actions") {
+                Button {
+                    g.isFavorite.toggle()
+                    try? modelContext.save()
+                } label: {
+                    Label(g.isFavorite ? "Unfavorite" : "Favorite",
+                          systemImage: g.isFavorite ? "heart.slash" : "heart")
+                }
+                Button { garmentToEdit = g } label: { Label("Edit", systemImage: "pencil") }
+                Divider()
+                Button(role: .destructive) { garmentToDelete = g } label: { Label("Delete", systemImage: "trash") }
+            }
+        }
+    }
+
+    // ── Grid ───────────────────────────────────────────────────────────────
+
+    private var gridContent: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // ── Honest Mirror nudge ──────────────────────────────
                 if let g = neglectedFavorite,
                    selectedCategory == nil,
                    !favoritesOnly {
@@ -150,72 +342,67 @@ struct WardrobeListView: View {
                     .padding(.bottom, 4)
                 }
 
-                // ── Category chips ───────────────────────────────────
-                if availableCategories.count > 1 {
-                    filterPills
-                        .padding(.horizontal, Theme.contentPadding)
-                        .padding(.vertical, 12)
-                }
-
-                // ── Active secondary filter chips ────────────────────
-                activeFilterSummary
-                    .padding(.horizontal, Theme.contentPadding)
-
-                // ── Grid ─────────────────────────────────────────────
                 if filteredGarments.isEmpty {
-                    if filter.isActive {
-                        ContentUnavailableView {
-                            Label("No matches", image: "drape.wardrobe")
-                        } description: {
-                            Text("No items match these filters.")
-                        } actions: {
-                            CTAButton(title: "Clear filters") { filter.clear() }
-                                .padding(.horizontal, Theme.contentPadding)
-                        }
+                    emptyFilterState
                         .padding(.top, 32)
-                    } else {
-                        ContentUnavailableView {
-                            Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet",
-                                  image: selectedCategory?.iconName ?? "drape.wardrobe")
-                        } description: {
-                            Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
-                        } actions: {
-                            Button("Add Item") { addTapped() }.buttonStyle(.borderedProminent)
-                        }
-                        .padding(.top, 32)
-                    }
                 } else {
                     LazyVGrid(columns: columns, spacing: Theme.tileSpacing) {
                         ForEach(filteredGarments) { garment in
                             Button { selectedGarment = garment } label: {
                                 GarmentTile(garment: garment)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(PressableScale(scale: 0.94))
                             .matchedTransitionSource(id: garment.id, in: zoomNamespace)
-                            .contextMenu {
-                                Button {
-                                    garment.isFavorite.toggle()
-                                    try? modelContext.save()
-                                } label: {
-                                    Label(
-                                        garment.isFavorite ? "Unfavorite" : "Favorite",
-                                        systemImage: garment.isFavorite ? "heart.slash" : "heart"
-                                    )
-                                }
-                                Button { garmentToEdit = garment } label: {
-                                    Label("Edit", systemImage: "pencil")
-                                }
-                                Divider()
-                                Button(role: .destructive) {
-                                    garmentToDelete = garment
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
+                            .contextMenu { contextMenu(garment) }
                         }
                     }
                     .padding(Theme.contentPadding)
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func contextMenu(_ garment: Garment) -> some View {
+        Button {
+            garment.isFavorite.toggle()
+            try? modelContext.save()
+        } label: {
+            Label(
+                garment.isFavorite ? "Unfavorite" : "Favorite",
+                systemImage: garment.isFavorite ? "heart.slash" : "heart"
+            )
+        }
+        Button { garmentToEdit = garment } label: {
+            Label("Edit", systemImage: "pencil")
+        }
+        Divider()
+        Button(role: .destructive) {
+            garmentToDelete = garment
+        } label: {
+            Label("Delete", systemImage: "trash")
+        }
+    }
+
+    @ViewBuilder
+    private var emptyFilterState: some View {
+        if filter.isActive {
+            ContentUnavailableView {
+                Label("No matches", image: "drape.wardrobe")
+            } description: {
+                Text("No items match these filters.")
+            } actions: {
+                CTAButton(title: "Clear filters") { filter.clear() }
+                    .padding(.horizontal, Theme.contentPadding)
+            }
+        } else {
+            ContentUnavailableView {
+                Label("No \(selectedCategory?.displayName.lowercased() ?? "items") yet",
+                      image: selectedCategory?.iconName ?? "drape.wardrobe")
+            } description: {
+                Text("Add a \(selectedCategory?.displayName.lowercased() ?? "garment") to see it here.")
+            } actions: {
+                Button("Add Item") { addTapped() }.buttonStyle(.borderedProminent)
             }
         }
     }
@@ -237,6 +424,7 @@ struct WardrobeListView: View {
                 }
             }
         }
+        .horizontalScrollFade()
     }
 
     private func chip(label: String, active: Bool, action: @escaping () -> Void) -> some View {
@@ -317,6 +505,24 @@ struct WardrobeListView: View {
         }
     }
 
+    // MARK: - Actions
+
+    private func syncFocus() {
+        if focusedID == nil || !filteredGarments.contains(where: { $0.id == focusedID }) {
+            focusedID = filteredGarments.first?.id
+        }
+    }
+
+    private func logWear(_ g: Garment) {
+        let isFirst = g.wearCount == 0
+        let event = WearEvent(date: .now, outfit: nil, garments: [g])
+        modelContext.insert(event)
+        try? modelContext.save()
+        withAnimation {
+            celebration = WardrobeCelebration(garment: g, isFirstWear: isFirst, undoEvent: event)
+        }
+    }
+
     private func addTapped() {
         if container.entitlements.canAddGarment(currentCount: garments.count) {
             showingAdd = true
@@ -324,6 +530,15 @@ struct WardrobeListView: View {
             showLimitAlert = true
         }
     }
+}
+
+// MARK: - Supporting types
+
+private struct WardrobeCelebration: Identifiable {
+    let id = UUID()
+    let garment: Garment
+    let isFirstWear: Bool
+    let undoEvent: WearEvent
 }
 
 // MARK: - Honest Mirror nudge card

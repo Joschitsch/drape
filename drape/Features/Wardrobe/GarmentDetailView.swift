@@ -148,7 +148,7 @@ struct GarmentDetailView: View {
                 .background(AppBackground())
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScale(scale: 0.985))
         .accessibilityLabel("Garment photo")
         .accessibilityHint("Double-tap to enlarge")
     }

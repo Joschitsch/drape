@@ -15,7 +15,9 @@ struct GarmentTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             // ── Image / canvas ───────────────────────────────────────
-            NormalizedImageView(assetID: garment.thumbnailAssetID)
+            GeometryReader { geo in
+                NormalizedImageView(assetID: garment.thumbnailAssetID, displaySize: geo.size)
+            }
                 .frame(maxWidth: .infinity)
                 .aspectRatio(1, contentMode: .fit)   // square garment images
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
