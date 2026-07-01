@@ -120,7 +120,7 @@ struct WardrobeAnalyticsView: View {
                 .padding(.bottom, 40)
             }
         }
-        .background(Theme.paper.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
         .navigationTitle("Analytics")
         .navigationBarTitleDisplayMode(.large)
     }

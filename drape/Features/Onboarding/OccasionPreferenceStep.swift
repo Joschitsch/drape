@@ -33,6 +33,6 @@ struct OccasionPreferenceStep: View {
         .padding(.horizontal, 24)
         .padding(.top, 32)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.paper.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
     }
 }

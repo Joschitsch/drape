@@ -48,7 +48,7 @@ struct ProfileView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 60)
             }
-            .background(Theme.paper.ignoresSafeArea())
+            .background(AppBackground().ignoresSafeArea())
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showingPaywall) {

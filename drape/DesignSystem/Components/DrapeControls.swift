@@ -71,7 +71,6 @@ struct CTAButton: View {
     var enabled: Bool = true
     let action: () -> Void
 
-    @State private var pressed = false
     @State private var tapCount = 0
 
     var body: some View {
@@ -83,13 +82,10 @@ struct CTAButton: View {
                 .contentTransition(.opacity)
                 .drapePrimaryFill()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScale(scale: 0.97))
         .opacity(enabled ? 1 : 0.4)
         .disabled(!enabled)
-        .scaleEffect(pressed ? 0.97 : 1)
-        .animation(.drapePress, value: pressed)
         .animation(.drapeContent, value: title)
-        ._onPressGesture { pressed = $0 }
         // A light confirmation on every primary action — the ritual taps
         // ("Find me something", "I wore this today", "Add to wardrobe").
         .sensoryFeedback(.impact(weight: .light), trigger: tapCount)
@@ -107,8 +103,13 @@ struct SecondaryButton: View {
     var systemImage: String? = nil
     let action: () -> Void
 
+    @State private var tapCount = 0
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            tapCount += 1
+            action()
+        } label: {
             HStack(spacing: 8) {
                 if let systemImage {
                     Image(systemName: systemImage)
@@ -118,7 +119,53 @@ struct SecondaryButton: View {
             }
             .drapeSecondaryFill()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScale())
+        .sensoryFeedback(.impact(weight: .light), trigger: tapCount)
+    }
+}
+
+// MARK: - Primary action (row-sharing)
+
+/// The primary action for a panel's action bar — ink fill, paper label, optional
+/// leading glyph — that **flexes to fill** the row it shares with a secondary
+/// icon and an overflow menu. The row-sharing sibling of `CTAButton` (which stays
+/// full-bleed for sticky footers). One prominent CTA per panel; everything else
+/// is visually subordinate.
+struct PrimaryActionButton: View {
+    let title: String
+    var systemImage: String? = nil
+    var isLoading: Bool = false
+    let action: () -> Void
+
+    @State private var tapCount = 0
+
+    var body: some View {
+        Button {
+            tapCount += 1
+            action()
+        } label: {
+            HStack(spacing: 8) {
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(Theme.paper)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                Text(title)
+                    .font(Theme.body(17, weight: .semibold))
+                    .contentTransition(.opacity)
+            }
+            .foregroundStyle(Theme.paper)
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Theme.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(PressableScale(scale: 0.97))
+        .disabled(isLoading)
+        .animation(.drapeContent, value: title)
+        .sensoryFeedback(.impact(weight: .light), trigger: tapCount)
     }
 }
 
@@ -130,19 +177,64 @@ struct CircleIconButton: View {
     let systemName: String
     var accessibilityLabel: String
     var filled: Bool = false
+    /// When true the glyph is replaced by a spinner and the button is disabled —
+    /// used to acknowledge async work (e.g. rendering a collage to share).
+    var isLoading: Bool = false
     let action: () -> Void
 
+    @State private var tapCount = 0
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            tapCount += 1
+            action()
+        } label: {
+            Group {
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(filled ? Theme.paper : Theme.ink)
+                } else {
+                    Image(systemName: systemName)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(filled ? Theme.paper : Theme.ink)
+                }
+            }
+            .frame(width: 44, height: 44)
+            .background(filled ? Theme.ink : Theme.surface, in: Circle())
+            .overlay(Circle().strokeBorder(Theme.line, lineWidth: filled ? 0 : 1))
+            .contentShape(Circle())
+        }
+        .buttonStyle(PressableScale())
+        .disabled(isLoading)
+        .accessibilityLabel(accessibilityLabel)
+        .sensoryFeedback(.impact(weight: .light), trigger: tapCount)
+    }
+}
+
+// MARK: - Circular overflow menu
+
+/// A `Menu` wrapped in the exact 44pt circular chrome of `CircleIconButton`, so
+/// an overflow ("⋯") menu sits in an action row looking identical to the other
+/// icon buttons. Use it to contain management/destructive actions (Edit, Delete)
+/// so they stay subordinate to the panel's primary action.
+struct CircleMenuButton<MenuItems: View>: View {
+    var systemName: String = "ellipsis"
+    var accessibilityLabel: String
+    @ViewBuilder var menuItems: () -> MenuItems
+
+    var body: some View {
+        Menu {
+            menuItems()
+        } label: {
             Image(systemName: systemName)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(filled ? Theme.paper : Theme.ink)
+                .foregroundStyle(Theme.ink)
                 .frame(width: 44, height: 44)
-                .background(filled ? Theme.ink : Theme.surface, in: Circle())
-                .overlay(Circle().strokeBorder(Theme.line, lineWidth: filled ? 0 : 1))
+                .background(Theme.surface, in: Circle())
+                .overlay(Circle().strokeBorder(Theme.line, lineWidth: 1))
                 .contentShape(Circle())
         }
-        .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
     }
 }
@@ -157,8 +249,13 @@ struct SwatchButton: View {
     var diameter: CGFloat = 28
     let action: () -> Void
 
+    @State private var tapCount = 0
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            tapCount += 1
+            action()
+        } label: {
             Circle()
                 .fill(colorTag.color)
                 .frame(width: diameter, height: diameter)
@@ -173,9 +270,10 @@ struct SwatchButton: View {
                 .frame(width: 44, height: 44)
                 .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScale())
         .accessibilityLabel(colorTag.displayName)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+        .sensoryFeedback(.selection, trigger: tapCount)
     }
 }
 
@@ -200,6 +298,31 @@ extension LabelStyle where Self == DrapeIconLabelStyle {
     static var drapeIcon: DrapeIconLabelStyle { .init() }
 }
 
+// MARK: - Horizontal scroll edge fade
+
+extension View {
+    /// Softly fades the leading & trailing edges of a horizontally-scrolling row
+    /// so it's visually obvious there's more content to swipe to. Masks alpha
+    /// (background-agnostic), so it works over the textured app background and
+    /// doesn't affect hit-testing.
+    func horizontalScrollFade(_ width: CGFloat = 16) -> some View {
+        mask {
+            GeometryReader { geo in
+                let f = width / max(geo.size.width, 1)
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: f),
+                        .init(color: .black, location: 1 - f),
+                        .init(color: .clear, location: 1),
+                    ],
+                    startPoint: .leading, endPoint: .trailing
+                )
+            }
+        }
+    }
+}
+
 // MARK: - Sticky footer
 
 /// The bottom CTA chrome shared by detail screens: a short paper gradient that
@@ -221,21 +344,48 @@ struct StickyFooter<Content: View>: View {
     }
 }
 
-// MARK: - Press gesture helper
+// MARK: - Press feedback (shared)
 
-private struct PressGesture: ViewModifier {
-    let onPress: (Bool) -> Void
+/// The one press-scale `ButtonStyle` for the whole app — a small depress pulse on
+/// touch that makes every tappable control feel tactile. Like `GalleryMetrics`
+/// and the `Theme` motion tokens, this is the single source of truth: tune the
+/// scale here and every button in the app changes together.
+///
+/// Use on anything built on `Button`. For tap-gesture tiles/rows that aren't a
+/// `Button`, use the `.pressable()` modifier instead.
+struct PressableScale: ButtonStyle {
+    /// Resting → pressed scale. Default suits buttons; pass `0.94` for large tiles.
+    var scale: CGFloat = 0.96
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(.drapePress, value: configuration.isPressed)
+    }
+}
+
+/// Press-scale feedback for tappable surfaces that use `.onTapGesture` rather
+/// than a `Button` (grid tiles, collage pieces, rows). Mirrors `PressableScale`
+/// so the whole app depresses with the same rhythm.
+private struct PressableModifier: ViewModifier {
+    var scale: CGFloat
+    @State private var pressed = false
+
     func body(content: Content) -> some View {
-        content.simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in onPress(true) }
-                .onEnded { _ in onPress(false) }
-        )
+        content
+            .scaleEffect(pressed ? scale : 1)
+            .animation(.drapePress, value: pressed)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in pressed = true }
+                    .onEnded { _ in pressed = false }
+            )
     }
 }
 
 extension View {
-    fileprivate func _onPressGesture(_ onPress: @escaping (Bool) -> Void) -> some View {
-        modifier(PressGesture(onPress: onPress))
+    /// Adds the shared press-scale feedback to a non-`Button` tappable surface.
+    func pressable(scale: CGFloat = 0.96) -> some View {
+        modifier(PressableModifier(scale: scale))
     }
 }

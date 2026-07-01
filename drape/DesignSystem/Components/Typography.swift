@@ -56,7 +56,7 @@ struct DrapeChip: View {
                 .background(active ? Theme.ink : .clear, in: Capsule())
                 .overlay(Capsule().strokeBorder(active ? Theme.ink : Theme.line, lineWidth: 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScale())
         .animation(.drapeContent, value: active)
         .sensoryFeedback(.selection, trigger: tapCount)
     }

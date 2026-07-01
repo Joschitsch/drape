@@ -38,8 +38,7 @@ struct ZoomableImageView: View {
         // system glyph inside a toolbar, so the viewer provides one.
         NavigationStack {
             ZStack {
-                Color.black
-                    .opacity(backdropOpacity)
+                AppBackground()
                     .ignoresSafeArea()
 
                 NormalizedImageView(assetID: assetID, useThumbnail: false)
@@ -63,12 +62,6 @@ struct ZoomableImageView: View {
         }
     }
 
-    // Backdrop fades as the photo is pulled down to dismiss.
-    private var backdropOpacity: CGFloat {
-        let fade = min(abs(dragDownProgress) / 240, 0.6)
-        return 1 - fade
-    }
-
     // MARK: - Gestures
 
     private var magnification: some Gesture {
@@ -90,13 +83,18 @@ struct ZoomableImageView: View {
                 if scale > minScale { state = value.translation }
             }
             .onChanged { value in
-                if scale <= minScale {
+                // Only treat a downward drag as a dismiss pull when at rest AND
+                // not mid-pinch — gestureScale stays 1 unless a magnification is
+                // live, so the two-finger centroid can't masquerade as a swipe.
+                if scale <= minScale && gestureScale == 1 {
                     dragDownProgress = max(0, value.translation.height)
                 }
             }
             .onEnded { value in
                 if scale <= minScale {
-                    if value.translation.height > 120 {
+                    // dragDownProgress is only ever set when not pinching, so a
+                    // pinch that happens to drift down can't trip the dismiss.
+                    if dragDownProgress > 120 {
                         dismiss()
                     } else {
                         applyAnimated { dragDownProgress = 0 }

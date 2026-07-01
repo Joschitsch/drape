@@ -78,7 +78,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
         }
-        .background(Theme.paper.ignoresSafeArea())
+        .background(AppBackground().ignoresSafeArea())
     }
 
     // MARK: - Steps

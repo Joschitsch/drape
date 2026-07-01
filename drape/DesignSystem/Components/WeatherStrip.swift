@@ -9,12 +9,13 @@ import SwiftUI
 
 struct WeatherStrip: View {
     let weather: WeatherSnapshot
-    /// Home city, shown in the "{city} · now" kicker when known.
+    /// Location name, shown in the "{city} · now" kicker when known. Location is
+    /// now owned by `LocationButton`; pass nil here to show a plain "Now".
     var city: String? = nil
 
     var body: some View {
         HStack(alignment: .center) {
-            // ── Left: location + condition ───────────────────────────
+            // ── Left: timing + condition ─────────────────────────────
             VStack(alignment: .leading, spacing: 6) {
                 MonoLabel(city.map { "\($0) · now" } ?? "Now")
                 SerifText(weather.condition.displayName, size: 22)

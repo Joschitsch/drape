@@ -51,7 +51,8 @@ struct WoreTodayCelebration: View {
                         .opacity(ringOpacity)
 
                     // Garment image
-                    NormalizedImageView(assetID: garment.thumbnailAssetID, useThumbnail: true)
+                    NormalizedImageView(assetID: garment.thumbnailAssetID, useThumbnail: true,
+                                       displaySize: CGSize(width: 150, height: 150))
                     .frame(width: 150, height: 150)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .shadow(color: Theme.shadow, radius: 24, x: 0, y: 12)

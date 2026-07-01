@@ -36,6 +36,9 @@ enum Theme {
     static let lineSoft = adaptive(Color(hex: "1C1A17").opacity(0.06), Color(hex: "F2EEE6").opacity(0.07))
     /// Drop-shadow color — subtle in light, deeper in dark where shadows read less.
     static let shadow  = adaptive(Color.black.opacity(0.15), Color.black.opacity(0.45))
+    /// Standard "sticker" white-outline thickness, in points — one constant
+    /// weight everywhere, like a physical sticker sheet's die-cut border.
+    static let stickerOutlineThickness: CGFloat = 3
 
     /// Resolves to `light` or `dark` based on the active `userInterfaceStyle`.
     static func adaptive(_ light: Color, _ dark: Color) -> Color {
