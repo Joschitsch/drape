@@ -49,6 +49,14 @@ final class RecommendationsViewModel {
     var isLoadingWeather = false
     /// Reverse-geocoded current location name — shown in WeatherStrip.
     var locationName: String?
+    /// A location the user chose to plan for instead of where they are. nil means
+    /// "use my current location". Session-only — never persisted, so the tab
+    /// resets to live location on relaunch.
+    var plannedPlace: PlaceSuggestion?
+
+    /// Name of the location the picks are responding to: the planned override if
+    /// set, otherwise the reverse-geocoded current location.
+    var activeLocationName: String? { plannedPlace?.name ?? locationName }
 
     /// Eagerly loads weather + location name (no engine run) so the weather
     /// widget is populated as soon as the Style tab appears. Cheap to call;
@@ -57,15 +65,25 @@ final class RecommendationsViewModel {
         guard lastWeather == nil else { return }
         isLoadingWeather = true
         defer { isLoadingWeather = false }
-        do {
-            let coord = try await container.location.currentCoordinate()
-            async let name = container.location.placeName(for: coord)
-            let weather = try await container.weather.currentWeather(at: coord)
-            lastWeather = weather
-            locationName = await name
-        } catch {
-            // Leave weather unset; the idle view simply omits the strip.
-        }
+        lastWeather = await fetchWeather(container: container)
+    }
+
+    /// Switches the location the tab plans for. Pass a place to plan for it, or
+    /// nil to revert to the current location. Re-fetches weather for the new
+    /// coordinate; the caller re-runs the engine if looks are already showing.
+    func selectPlace(_ place: PlaceSuggestion?, container: AppContainer) async {
+        plannedPlace = place
+        lastWeather = nil
+        isLoadingWeather = true
+        defer { isLoadingWeather = false }
+        lastWeather = await fetchWeather(container: container)
+    }
+
+    /// The coordinate the tab is planning against: the planned override if set,
+    /// otherwise the device's current location.
+    private func activeCoordinate(container: AppContainer) async throws -> Coordinate {
+        if let plannedPlace { return plannedPlace.coordinate }
+        return try await container.location.currentCoordinate()
     }
 
     func refresh(
@@ -73,7 +91,10 @@ final class RecommendationsViewModel {
         profile: UserProfile?,
         container: AppContainer
     ) async {
-        suggestions = []
+        // Don't clear `suggestions` up front: the prior set stays visible (dimmed
+        // by the view while generating) and is replaced atomically below once the
+        // new results resolve, so switching occasion crossfades instead of flashing
+        // the empty state mid-load.
 
         // Reuse the weather cached by `loadWeather` — the recommendation engine
         // runs in-memory, so blocking it on a fresh network round-trip is what
@@ -113,6 +134,7 @@ final class RecommendationsViewModel {
             weather: weather,
             profile: prefs,
             recentWears: recentWears,
+            // The curated set the Style tab shows (swipe through up to 5).
             desiredCount: 5
         )
 
@@ -174,11 +196,16 @@ final class RecommendationsViewModel {
 
     private func fetchWeather(container: AppContainer) async -> WeatherSnapshot? {
         do {
-            let coord = try await container.location.currentCoordinate()
-            async let name = container.location.placeName(for: coord)
-            let weather = try await container.weather.currentWeather(at: coord)
-            locationName = await name
-            return weather
+            let coord = try await activeCoordinate(container: container)
+            // When planning for a chosen place, its name is already known; only
+            // reverse-geocode for the live current location.
+            if plannedPlace == nil {
+                async let name = container.location.placeName(for: coord)
+                let weather = try await container.weather.currentWeather(at: coord)
+                locationName = await name
+                return weather
+            }
+            return try await container.weather.currentWeather(at: coord)
         } catch {
             return nil
         }
